@@ -1,0 +1,53 @@
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# Build output
+target/
+**/target/
+
+# Maven
+settings.xml
+.mvn/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# IntelliJ
+out/
+
+# Misc
+*.swp
+
+# Node
+node_modules/
+
+# Generated sources
+**/generated-sources/
+
+# Application properties local
+src/main/resources/*.local
+
+# Other
+.secrets
+
+# keep this repo-specific
+README.md
+
+
