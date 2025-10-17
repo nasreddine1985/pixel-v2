@@ -1,0 +1,30 @@
+id: "k-mq-receipt"
+title: "K-MQ Receipt"
+description: "Consumes messages from IBM MQ and persists them via JPA into Oracle DB"
+labels:
+  - "mq"
+  - "jpa"
+  - "oracle"
+properties:
+  destination:
+    title: "MQ destination (queue)"
+    type: string
+    required: true
+    default: "${mq.destination}"
+  jmsConnectionFactoryRef:
+    title: "JMS Connection Factory Bean name"
+    type: string
+    required: false
+    default: "${mq.connectionFactoryRef}"
+definition:
+  title: "K-MQ Receipt Kamelet"
+  description: "Listens on an MQ queue and persists messages to DB"
+  required: [destination]
+  steps:
+    - from:
+        uri: "jms:queue:{{destination}}?connectionFactory=#{{jmsConnectionFactoryRef}}"
+        parameters: {}
+        steps:
+          - set-body:
+              constant: "@body"
+          - to: "bean:messagePersistenceProcessor"

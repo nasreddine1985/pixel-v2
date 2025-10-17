@@ -1,0 +1,46 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.pixel.v2</groupId>
+    <artifactId>PIXEL-V2</artifactId>
+    <version>1.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>PIXEL-V2</name>
+    <description>PIXEL-V2 Payment Message Processing System</description>
+
+    <modules>
+        <module>k-ref-loader</module>
+        <module>k-pacs-008-to-cdm</module>
+        <module>k-pan-001-to-cdm</module>
+        <module>k-mq-receipt</module>
+        <module>flow-pacs-008</module>
+    </modules>
+
+    <properties>
+        <camel.version>4.3.0</camel.version>
+        <saxon.version>12.3</saxon.version>
+        <hibernate.version>6.2.7.Final</hibernate.version>
+        <postgresql.version>42.6.0</postgresql.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+    </properties>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                    <release>21</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
