@@ -1,0 +1,170 @@
+- route:
+    id: payment-ingestion-orchestrator
+    from:
+      uri: direct:payment-ingestion
+      steps:
+        - log:
+            message: "Starting payment ingestion orchestration for message: ${body}"
+        - setHeader:
+            name: IngestionStartTime
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        - setHeader:
+            name: ProcessingStage
+            constant: INGESTION_START
+        - to:
+            uri: direct:reference-enrichment
+        - to:
+            uri: direct:validation
+        - to:
+            uri: direct:idempotence-check
+        - choice:
+            when:
+              - simple: "${header.CanProcess} == true"
+                steps:
+                  - to:
+                      uri: direct:kafka-publisher
+            otherwise:
+              steps:
+                - to:
+                    uri: direct:rejection-handler
+
+- route:
+    id: reference-enrichment
+    from:
+      uri: direct:reference-enrichment
+      steps:
+        - log:
+            message: "Enriching message with reference data"
+        - setHeader:
+            name: ProcessingStage
+            constant: REFERENCE_ENRICHMENT
+        - to:
+            uri: kamelet:k-ref-loader
+        - log:
+            message: "Reference data enrichment completed"
+
+- route:
+    id: validation-step
+    from:
+      uri: direct:validation
+      steps:
+        - log:
+            message: "Starting message validation"
+        - setHeader:
+            name: ProcessingStage
+            constant: VALIDATION
+        - to:
+            uri: kamelet:k-ingest-validation
+        - choice:
+            when:
+              - simple: "${header.IsValid} == true"
+                steps:
+                  - log:
+                      message: "Message validation passed"
+            otherwise:
+              steps:
+                - log:
+                    message: "Message validation failed: ${header.ValidationResult}"
+                - setHeader:
+                    name: RejectionReason
+                    constant: VALIDATION_FAILED
+
+- route:
+    id: idempotence-check
+    from:
+      uri: direct:idempotence-check
+      steps:
+        - log:
+            message: "Starting idempotence check"
+        - setHeader:
+            name: ProcessingStage
+            constant: IDEMPOTENCE
+        - to:
+            uri: kamelet:k-idempotence?messageId=${header.MessageId}&checkMode=PROCESS
+        - choice:
+            when:
+              - simple: "${header.IsDuplicate} == true"
+                steps:
+                  - log:
+                      message: "Duplicate message detected, checking action"
+                  - choice:
+                      when:
+                        - simple: "${header.ShouldReject} == true"
+                          steps:
+                            - setHeader:
+                                name: RejectionReason
+                                constant: DUPLICATE_MESSAGE
+                            - setHeader:
+                                name: CanProcess
+                                constant: false
+                        - simple: "${header.ShouldIgnore} == true"
+                          steps:
+                            - log:
+                                message: "Ignoring duplicate message as per configuration"
+                            - setHeader:
+                                name: CanProcess
+                                constant: false
+                      otherwise:
+                        steps:
+                          - log:
+                              message: "Processing duplicate with warning"
+            otherwise:
+              steps:
+                - log:
+                    message: "Message idempotence check passed"
+
+- route:
+    id: kafka-publisher
+    from:
+      uri: direct:kafka-publisher
+      steps:
+        - log:
+            message: "Publishing message to Kafka"
+        - setHeader:
+            name: ProcessingStage
+            constant: KAFKA_PUBLISH
+        - setHeader:
+            name: PublishTimestamp
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        - choice:
+            when:
+              - simple: "${header.ExpectedMessageType} == 'pacs.008'"
+                steps:
+                  - setHeader:
+                      name: KafkaTopic
+                      simple: "{{ingestion.kafka.topic.pacs008:payments-pacs008}}"
+              - simple: "${header.ExpectedMessageType} == 'pan.001'"
+                steps:
+                  - setHeader:
+                      name: KafkaTopic
+                      simple: "{{ingestion.kafka.topic.pan001:payments-pan001}}"
+            otherwise:
+              steps:
+                - setHeader:
+                    name: KafkaTopic
+                    simple: "{{ingestion.kafka.topic.default:payments-processed}}"
+        - setHeader:
+            name: kafka.KEY
+            simple: "${header.PrimaryIdentifier:${exchangeId}}"
+        - toD:
+            uri: "kafka:${header.KafkaTopic}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
+        - log:
+            message: "Message successfully published to Kafka topic: ${header.KafkaTopic}"
+
+- route:
+    id: api-receipt-route
+    from:
+      uri: platform-http:/api/v1/payments?httpMethodRestrict=POST
+      steps:
+        - log:
+            message: "Received message from API: ${body}"
+        - setHeader:
+            name: ReceiptChannel
+            constant: REST_API
+        - setHeader:
+            name: ReceiptTimestamp
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        - to:
+            uri: kamelet:k-api-receipt
+        - to:
+            uri: direct:payment-ingestion
