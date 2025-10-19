@@ -47,7 +47,5 @@ src/main/resources/*.local
 # Other
 .secrets
 
-# keep this repo-specific
-README.md
 
 
