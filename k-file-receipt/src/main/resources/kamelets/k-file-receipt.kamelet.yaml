@@ -1,0 +1,54 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-file-receipt
+  labels:
+    camel.apache.org/kamelet.type: "source"
+spec:
+  definition:
+    title: "K-File Receipt"
+    description: "Monitors NAS folder for new files, reads XML payment messages line by line and persists them via JPA into Oracle DB"
+    required: [directoryPath]
+    properties:
+      directoryPath:
+        title: "NAS Directory Path"
+        type: string
+        default: "/nas/incoming"
+      filePattern:
+        title: "File Pattern"
+        type: string
+        default: ".*\\.xml"
+      processedDirectory:
+        title: "Processed files directory"
+        type: string
+        default: "/nas/processed"
+      errorDirectory:
+        title: "Error files directory"
+        type: string
+        default: "/nas/error"
+      delay:
+        title: "Polling delay in milliseconds"
+        type: integer
+        default: 5000
+  template:
+    from:
+      uri: "file:{{directoryPath}}"
+      parameters:
+        include: "{{filePattern}}"
+        delay: "{{delay}}"
+        move: "{{processedDirectory}}"
+        moveFailed: "{{errorDirectory}}"
+        readLock: "changed"
+        readLockTimeout: "10000"
+      steps:
+        - log: "Processing file: ${header.CamelFileName}"
+        - split:
+            tokenize: "\n"
+            streaming: true
+            steps:
+              - filter:
+                  simple: "${body} != null && ${body.trim()} != ''"
+                  steps:
+                    - log: "Processing XML message line: ${body}"
+                    - to: "bean:fileMessagePersistenceProcessor?method=process"
+        - log: "Completed processing file: ${header.CamelFileName}"

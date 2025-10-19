@@ -1,0 +1,43 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-api-receipt
+  labels:
+    camel.apache.org/kamelet.type: "source"
+spec:
+  definition:
+    title: "K-API Receipt"
+    description: "Consumes JSON messages from REST API and persists them via JPA into Oracle DB"
+    required: [path]
+    properties:
+      path:
+        title: "REST API path"
+        type: string
+        default: "/api/messages"
+      port:
+        title: "HTTP port"
+        type: integer
+        default: 8080
+      consumes:
+        title: "Content type consumed"
+        type: string
+        default: "application/json"
+      produces:
+        title: "Content type produced"
+        type: string
+        default: "application/json"
+  template:
+    from:
+      uri: "platform-http:{{path}}"
+      parameters:
+        httpMethodRestrict: "POST"
+      steps:
+        - log: "API received message: ${body}"
+        - set-header:
+            name: "Content-Type"
+            constant: "{{produces}}"
+        - set-body:
+            simple: "${body}"
+        - to: "bean:messagePersistenceProcessor?method=process"
+        - set-body:
+            constant: '{"status": "success", "message": "Message received and persisted"}'

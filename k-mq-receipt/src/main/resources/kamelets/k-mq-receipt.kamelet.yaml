@@ -1,0 +1,30 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-mq-receipt
+  labels:
+    camel.apache.org/kamelet.type: "source"
+spec:
+  definition:
+    title: "K-MQ Receipt"
+    description: "Consumes messages from IBM MQ and persists them via JPA into Oracle DB"
+    required: [destination]
+    properties:
+      destination:
+        title: "MQ destination (queue)"
+        type: string
+        default: "${mq.destination}"
+      jmsConnectionFactoryRef:
+        title: "JMS Connection Factory Bean name"
+        type: string
+        default: "${mq.connectionFactoryRef}"
+  template:
+    from:
+      uri: "jms:queue:{{destination}}"
+      parameters:
+        connectionFactory: "#{{jmsConnectionFactoryRef}}"
+      steps:
+        - log: "MQ received message: ${body}"
+        - set-body:
+            simple: "${body}"
+        - to: "bean:messagePersistenceProcessor?method=process"

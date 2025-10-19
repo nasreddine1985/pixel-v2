@@ -9,15 +9,20 @@
         <version>1.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>k-mq-receipt</artifactId>
+    <artifactId>k-file-receipt</artifactId>
     <packaging>jar</packaging>
 
-    <name>k-mq-receipt kamelet</name>
+    <name>k-file-receipt kamelet</name>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.camel</groupId>
-            <artifactId>camel-jms</artifactId>
+            <artifactId>camel-file</artifactId>
+            <version>${camel.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-bean</artifactId>
             <version>${camel.version}</version>
         </dependency>
         <dependency>
@@ -29,6 +34,14 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-context</artifactId>
             <version>6.1.15</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.10.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

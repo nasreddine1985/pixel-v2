@@ -16,7 +16,11 @@
         <module>k-pacs-008-to-cdm</module>
         <module>k-pan-001-to-cdm</module>
         <module>k-mq-receipt</module>
-        <module>flow-pacs-008</module>
+        <module>k-api-receipt</module>
+        <module>k-file-receipt</module>
+        <module>k-ingest-validation</module>
+        <module>k-idempotence</module>
+        <module>ingestion</module>
     </modules>
 
     <properties>
