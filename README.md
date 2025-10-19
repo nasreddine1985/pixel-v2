@@ -2,7 +2,7 @@
 
 ## Overview
 
-The PIXEL-V2 project is a Maven multi-module project implementing a PACS.008 payment message processing system. It provides a modular architecture with Apache Camel kamelets for message transformation, persistence, and orchestration.
+The PIXEL-V2 project is a Maven multi-module project implementing a payment message processing system. It provides a modular architecture with Apache Camel kamelets for message transformation, persistence, and orchestration.
 
 ## Project Structure
 
