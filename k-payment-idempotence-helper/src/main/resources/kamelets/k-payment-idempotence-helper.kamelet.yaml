@@ -1,0 +1,16 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-payment-idempotence-helper
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "K-Payment Idempotence Helper"
+    description: "Payment message idempotence helper for duplicate transaction prevention"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - log: "Processing with k-idempotence"
+        - to: "kamelet:sink"

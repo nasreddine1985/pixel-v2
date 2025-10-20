@@ -1,0 +1,96 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-referentiel-data-loader
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "K-Referentiel Data Loader"
+    description: "Loads configuration from external REST service and adds metadata to message headers for enrichment processing."
+    required: [serviceUrl]
+    properties:
+      serviceUrl:
+        title: "Service URL"
+        description: "The HTTP endpoint used to retrieve configuration metadata."
+        type: string
+        default: "${refloader.serviceUrl}"
+      configEndpoint:
+        title: "Configuration Endpoint Path"
+        description: "Path to append to serviceUrl for configuration retrieval (e.g., /config)"
+        type: string
+        default: "/config"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - log: "Loading configuration metadata for message processing"
+        - set-header:
+            name: "OriginalBody"
+            simple: "${body}"
+        - set-header:
+            name: "CamelHttpMethod"
+            constant: "GET"
+        - set-header:
+            name: "Content-Type"
+            constant: "application/json"
+        - set-body:
+            constant: ""
+        - to: "http:{{serviceUrl}}{{configEndpoint}}?bridgeEndpoint=true&throwExceptionOnFailure=false"
+        - choice:
+            when:
+              - simple: "${body} != null && ${body} != ''"
+                steps:
+                  - log: "Configuration retrieved successfully: ${body}"
+                  - set-header:
+                      name: "CmdMapping"
+                      jsonpath: "$.cmdMapping"
+                  - set-header:
+                      name: "Rail"
+                      jsonpath: "$.rail"
+                  - set-header:
+                      name: "Mode"
+                      jsonpath: "$.mode"
+                  - set-header:
+                      name: "NeedSplit"
+                      jsonpath: "$.needSplit"
+                  - set-header:
+                      name: "SplitExpr"
+                      jsonpath: "$.splitExpr"
+                  - set-header:
+                      name: "ChunkSize"
+                      jsonpath: "$.chunkSize"
+                  - set-header:
+                      name: "Outputs"
+                      jsonpath: "$.outputs"
+                  - log: "Configuration headers set - CmdMapping: ${header.CmdMapping}, Rail: ${header.Rail}, Mode: ${header.Mode}"
+            otherwise:
+              steps:
+                - log: "Failed to retrieve configuration, using defaults"
+                - set-header:
+                    name: "CmdMapping"
+                    constant: "default"
+                - set-header:
+                    name: "Rail"
+                    constant: "standard"
+                - set-header:
+                    name: "Mode"
+                    constant: "normal"
+                - set-header:
+                    name: "NeedSplit"
+                    constant: "false"
+                - set-header:
+                    name: "SplitExpr"
+                    constant: ""
+                - set-header:
+                    name: "ChunkSize"
+                    constant: "1000"
+                - set-header:
+                    name: "Outputs"
+                    constant: "[]"
+        - set-body:
+            simple: "${header.OriginalBody}"
+        - remove-header:
+            name: "OriginalBody"
+        - log: "Message enriched with configuration headers, original payload preserved"
+        - to: "kamelet:sink"

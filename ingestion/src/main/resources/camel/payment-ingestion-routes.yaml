@@ -39,7 +39,7 @@
             name: ProcessingStage
             constant: REFERENCE_ENRICHMENT
         - to:
-            uri: kamelet:k-ref-loader
+            uri: kamelet:k-referentiel-data-loader
         - log:
             message: "Reference data enrichment completed"
 
@@ -54,7 +54,7 @@
             name: ProcessingStage
             constant: VALIDATION
         - to:
-            uri: kamelet:k-ingest-validation
+            uri: kamelet:k-ingestion-technical-validation
         - choice:
             when:
               - simple: "${header.IsValid} == true"
@@ -80,7 +80,7 @@
             name: ProcessingStage
             constant: IDEMPOTENCE
         - to:
-            uri: kamelet:k-idempotence?messageId=${header.MessageId}&checkMode=PROCESS
+            uri: kamelet:k-payment-idempotence-helper?messageId=${header.MessageId}&checkMode=PROCESS
         - choice:
             when:
               - simple: "${header.IsDuplicate} == true"
@@ -165,6 +165,6 @@
             name: ReceiptTimestamp
             simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
         - to:
-            uri: kamelet:k-api-receipt
+            uri: kamelet:k-http-message-receiver
         - to:
             uri: direct:payment-ingestion

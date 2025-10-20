@@ -10,14 +10,14 @@ The PIXEL-V2 project is a Maven multi-module project implementing a payment mess
 PIXEL-V2/
 ├── pom.xml                    # Parent POM
 ├── ingestion/                # Spring Boot orchestrator application
-├── k-mq-receipt/             # Kamelet for MQ message receipt and persistence
-├── k-api-receipt/            # Kamelet for API message receipt
-├── k-file-receipt/           # Kamelet for file-based message receipt
-├── k-ref-loader/             # Kamelet for XML enrichment via REST services
-├── k-pacs-008-to-cdm/        # Kamelet for PACS.008 to CDM transformation
-├── k-pan-001-to-cdm/         # Kamelet for PAN001 to CDM transformation
-├── k-ingest-validation/      # Kamelet for message validation
-└── k-idempotence/            # Kamelet for duplicate detection
+├── k-mq-message-receiver/    # Kamelet for MQ message receipt and persistence
+├── k-http-message-receiver/  # Kamelet for HTTP API message receipt
+├── k-cft-message-receiver/   # Kamelet for CFT file-based message receipt
+├── k-referentiel-data-loader/ # Kamelet for reference data loading via REST services
+├── k-pacs008-to-cdm-transformer/  # Kamelet for PACS.008 to CDM transformation
+├── k-pan001-to-cdm-transformer/   # Kamelet for PAN001 to CDM transformation
+├── k-ingestion-technical-validation/  # Kamelet for technical message validation
+└── k-payment-idempotence-helper/     # Kamelet for payment duplicate detection
 ```
 
 ## Modules
@@ -35,7 +35,7 @@ Spring Boot application that orchestrates payment message processing flow using 
 - Error handling and redelivery
 - Health check endpoints
 
-### k-mq-receipt
+### k-mq-message-receiver
 
 Kamelet for receiving messages from IBM MQ and persisting them using JPA.
 
@@ -45,7 +45,7 @@ Kamelet for receiving messages from IBM MQ and persisting them using JPA.
 - JMS connection factory reference
 - JPA entity persistence
 
-### k-ref-loader
+### k-referentiel-data-loader
 
 Kamelet for enriching XML messages by calling external REST services.
 
@@ -55,7 +55,7 @@ Kamelet for enriching XML messages by calling external REST services.
 - HTTP POST request handling
 - XML payload processing
 
-### k-pacs-008-to-cdm
+### k-pacs008-to-cdm-transformer
 
 Kamelet for transforming PACS.008 XML messages to Common Data Model (CDM) format using XSLT.
 
@@ -65,7 +65,7 @@ Kamelet for transforming PACS.008 XML messages to Common Data Model (CDM) format
 - PACS.008 to CDM transformation
 - Configurable XSLT resource
 
-### k-pan-001-to-cdm
+### k-pan001-to-cdm-transformer
 
 Kamelet for transforming PAN001 XML messages to Common Data Model (CDM) format using XSLT.
 
@@ -124,8 +124,9 @@ payment.kafka.topic.errors=error-messages
 
 **Core Technologies:**
 
-- Spring Boot 3.1.5
-- Apache Camel 4.3.0
+- Spring Boot 3.5.0
+- Apache Camel 4.1.0
+- Spring Framework 6.2.0
 - Jakarta Persistence API 3.1.0
 - Saxon XSLT Processor
 - PostgreSQL JDBC Driver

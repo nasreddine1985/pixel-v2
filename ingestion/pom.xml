@@ -17,8 +17,8 @@
     <description>Spring Boot application for payment message ingestion orchestration</description>
 
     <properties>
-        <spring-boot.version>3.2.12</spring-boot.version>
-        <camel-spring-boot.version>4.3.0</camel-spring-boot.version>
+        <spring-boot.version>3.5.0</spring-boot.version>
+        <camel-spring-boot.version>4.1.0</camel-spring-boot.version>
     </properties>
 
     <dependencies>
@@ -123,32 +123,32 @@
         <!-- Kamelet Dependencies -->
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-api-receipt</artifactId>
+            <artifactId>k-http-message-receiver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-mq-receipt</artifactId>
+            <artifactId>k-mq-message-receiver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-file-receipt</artifactId>
+            <artifactId>k-cft-message-receiver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-ref-loader</artifactId>
+            <artifactId>k-referentiel-data-loader</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-ingest-validation</artifactId>
+            <artifactId>k-ingestion-technical-validation</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-idempotence</artifactId>
+            <artifactId>k-payment-idempotence-helper</artifactId>
             <version>${project.version}</version>
         </dependency>
 

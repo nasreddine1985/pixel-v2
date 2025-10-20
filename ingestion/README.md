@@ -17,8 +17,8 @@ The Payment Ingestion Service provides a unified entry point for payment message
           └──────────────────────┼───────────────────────┘
                                  │
                     ┌────────────▼─────────────┐
-                    │   k-mq-receipt           │
-                    │   k-api-receipt          │
+                    │   k-mq-message-receiver  │
+                    │   k-http-message-receiver │
                     │   k-file-receipt         │
                     └────────────┬─────────────┘
                                  │
@@ -154,7 +154,7 @@ GET /ingestion/metrics
 
 ```yaml
 # MQ Message Reception
-- Receive: MQ Series Queue → k-mq-receipt
+- Receive: MQ Series Queue → k-mq-message-receiver
 - Enrich: k-ref-loader → Add reference data headers
 - Validate: k-ingest-validation → Check message structure
 - Dedupe: k-idempotence → Verify uniqueness
@@ -165,7 +165,7 @@ GET /ingestion/metrics
 
 ```yaml
 # Failed Validation Flow
-- Receive: REST API → k-api-receipt
+- Receive: REST API → k-http-message-receiver
 - Enrich: k-ref-loader → Add reference data headers
 - Validate: k-ingest-validation → Validation fails
 - Reject: Kafka Topic → payments-rejected
@@ -304,8 +304,8 @@ curl http://localhost:8080/ingestion/health
 
 ### Required Kamelets
 
-- `k-mq-receipt`: MQ Series message reception
-- `k-api-receipt`: REST API message reception
+- `k-mq-message-receiver`: MQ Series message reception
+- `k-http-message-receiver`: REST API message reception
 - `k-file-receipt`: File-based message reception
 - `k-ref-loader`: Reference data enrichment
 - `k-ingest-validation`: Message validation

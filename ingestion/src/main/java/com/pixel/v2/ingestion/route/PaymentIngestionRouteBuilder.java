@@ -63,7 +63,7 @@ public class PaymentIngestionRouteBuilder extends RouteBuilder {
                 .log("Received message from MQ Series: ${body}")
                 .setHeader("ReceiptChannel", constant("MQ_SERIES"))
                 .setHeader("ReceiptTimestamp", simple("${date:now:yyyy-MM-dd HH:mm:ss}"))
-                .to("kamelet:k-mq-receipt")
+                .to("kamelet:k-mq-message-receiver")
                 .to("direct:payment-ingestion");
         }
 
@@ -73,7 +73,7 @@ public class PaymentIngestionRouteBuilder extends RouteBuilder {
             .log("Received message from API: ${body}")
             .setHeader("ReceiptChannel", constant("REST_API"))
             .setHeader("ReceiptTimestamp", simple("${date:now:yyyy-MM-dd HH:mm:ss}"))
-            .to("kamelet:k-api-receipt")
+            .to("kamelet:k-http-message-receiver")
             .to("direct:payment-ingestion");
 
         // File (CFT) receipt route
@@ -83,7 +83,7 @@ public class PaymentIngestionRouteBuilder extends RouteBuilder {
             .setHeader("ReceiptChannel", constant("FILE_CFT"))
             .setHeader("ReceiptTimestamp", simple("${date:now:yyyy-MM-dd HH:mm:ss}"))
             .setHeader("FileName", simple("${header.CamelFileName}"))
-            .to("kamelet:k-file-receipt")
+            .to("kamelet:k-cft-message-receiver")
             .to("direct:payment-ingestion");
 
         // Reference data enrichment step
@@ -91,7 +91,7 @@ public class PaymentIngestionRouteBuilder extends RouteBuilder {
             .routeId("reference-enrichment")
             .log("Enriching message with reference data")
             .setHeader("ProcessingStage", constant("REFERENCE_ENRICHMENT"))
-            .to("kamelet:k-ref-loader")
+            .to("kamelet:k-referentiel-data-loader")
             .log("Reference data enrichment completed");
 
         // Validation step
@@ -99,7 +99,7 @@ public class PaymentIngestionRouteBuilder extends RouteBuilder {
             .routeId("validation-step")
             .log("Starting message validation")
             .setHeader("ProcessingStage", constant("VALIDATION"))
-            .to("kamelet:k-ingest-validation")
+            .to("kamelet:k-ingestion-technical-validation")
             .choice()
                 .when(header("IsValid").isEqualTo(true))
                     .log("Message validation passed")
@@ -114,8 +114,8 @@ public class PaymentIngestionRouteBuilder extends RouteBuilder {
             .log("Starting idempotence check")
             .setHeader("ProcessingStage", constant("IDEMPOTENCE"))
             
-            // Use k-idempotence kamelet
-            .to("kamelet:k-idempotence?messageId=${header.MessageId}&checkMode=PROCESS")
+            // Use k-payment-idempotence-helper kamelet
+            .to("kamelet:k-payment-idempotence-helper?messageId=${header.MessageId}&checkMode=PROCESS")
             
             .choice()
                 .when(header("IsDuplicate").isEqualTo(true))
