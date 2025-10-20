@@ -49,7 +49,7 @@ Before contributing, ensure you have:
    ```
 3. Add the original repository as upstream:
    ```bash
-   git remote add upstream https://github.com/nasreddine1985/pixel-v2.git
+   git remote add upstream https://bnp-cib-git/pixel-v2.git
    ```
 
 ## Development Setup
@@ -125,7 +125,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 ### 1. Choose an Issue
 
-- Check the [Issues](https://github.com/nasreddine1985/pixel-v2/issues) page
+- Check the [Issues](https://bnp-cib-git/pixel-v2/issues) page
 - Look for issues labeled `good first issue` or `help wanted`
 - Comment on the issue to express your interest
 
@@ -169,7 +169,6 @@ git commit -m "test(k-mq-message-receiver): add integration tests for error scen
 - `test`: Test additions or modifications
 - `refactor`: Code refactoring
 - `perf`: Performance improvements
-- `chore`: Maintenance tasks
 
 ### 5. Push and Create Pull Request
 
@@ -924,7 +923,7 @@ Use the bug report template and include:
 
 Current project maintainers:
 
-- **BNB CIB** ([@nasreddine1985](https://github.com/nasreddine1985)) - Project Lead
+- **BNP CIB** ([@nasreddine1985](https://bnp-cib-git)) - Project Lead
 
 ### Resources
 

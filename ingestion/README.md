@@ -19,21 +19,21 @@ The Payment Ingestion Service provides a unified entry point for payment message
                     ┌────────────▼─────────────┐
                     │   k-mq-message-receiver  │
                     │   k-http-message-receiver │
-                    │   k-file-receipt         │
+                    │   k-cft-message-receiver │
                     └────────────┬─────────────┘
                                  │
                     ┌────────────▼─────────────┐
-                    │   k-ref-loader           │
+                    │   k-referentiel-data-loader │
                     │   (Reference Enrichment) │
                     └────────────┬─────────────┘
                                  │
                     ┌────────────▼─────────────┐
-                    │   k-ingest-validation    │
+                    │   k-ingestion-technical-validation │
                     │   (Message Validation)   │
                     └────────────┬─────────────┘
                                  │
                     ┌────────────▼─────────────┐
-                    │   k-idempotence          │
+                    │   k-payment-idempotence-helper │
                     │   (Duplicate Prevention) │
                     └────────────┬─────────────┘
                                  │
@@ -55,18 +55,18 @@ The Payment Ingestion Service provides a unified entry point for payment message
 
 ### 2. Reference Data Enrichment
 
-- Uses `k-ref-loader` kamelet to call reference APIs
+- Uses `k-referentiel-data-loader` kamelet to call reference APIs
 - Enriches message headers with configuration and mapping data
 
 ### 3. Message Validation
 
-- Uses `k-ingest-validation` kamelet for comprehensive validation
+- Uses `k-ingestion-technical-validation` kamelet for comprehensive validation
 - Checks message structure, format, and compliance
 - Supports both strict and lenient validation modes
 
 ### 4. Idempotence Checking
 
-- Uses `k-idempotence` kamelet to prevent duplicate processing
+- Uses `k-payment-idempotence-helper` kamelet to prevent duplicate processing
 - Tracks unique identifiers (InstrId, EndToEndId, MsgId)
 - Configurable duplicate handling (ERROR, IGNORE, WARN)
 
@@ -155,9 +155,9 @@ GET /ingestion/metrics
 ```yaml
 # MQ Message Reception
 - Receive: MQ Series Queue → k-mq-message-receiver
-- Enrich: k-ref-loader → Add reference data headers
-- Validate: k-ingest-validation → Check message structure
-- Dedupe: k-idempotence → Verify uniqueness
+- Enrich: k-referentiel-data-loader → Add reference data headers
+- Validate: k-ingestion-technical-validation → Check message structure
+- Dedupe: k-payment-idempotence-helper → Verify uniqueness
 - Publish: Kafka Topic → payments-pacs008
 ```
 
@@ -166,8 +166,8 @@ GET /ingestion/metrics
 ```yaml
 # Failed Validation Flow
 - Receive: REST API → k-http-message-receiver
-- Enrich: k-ref-loader → Add reference data headers
-- Validate: k-ingest-validation → Validation fails
+- Enrich: k-referentiel-data-loader → Add reference data headers
+- Validate: k-ingestion-technical-validation → Validation fails
 - Reject: Kafka Topic → payments-rejected
 ```
 
@@ -175,10 +175,10 @@ GET /ingestion/metrics
 
 ```yaml
 # Duplicate Detection Flow
-- Receive: File CFT → k-file-receipt
-- Enrich: k-ref-loader → Add reference data headers
-- Validate: k-ingest-validation → Message valid
-- Dedupe: k-idempotence → Duplicate detected
+- Receive: File CFT → k-cft-message-receiver
+- Enrich: k-referentiel-data-loader → Add reference data headers
+- Validate: k-ingestion-technical-validation → Message valid
+- Dedupe: k-payment-idempotence-helper → Duplicate detected
 - Handle: Based on duplicate action (ERROR/IGNORE/WARN)
 ```
 
@@ -306,10 +306,10 @@ curl http://localhost:8080/ingestion/health
 
 - `k-mq-message-receiver`: MQ Series message reception
 - `k-http-message-receiver`: REST API message reception
-- `k-file-receipt`: File-based message reception
-- `k-ref-loader`: Reference data enrichment
-- `k-ingest-validation`: Message validation
-- `k-idempotence`: Duplicate prevention
+- `k-cft-message-receiver`: File-based message reception
+- `k-referentiel-data-loader`: Reference data enrichment
+- `k-ingestion-technical-validation`: Message validation
+- `k-payment-idempotence-helper`: Duplicate prevention
 
 ### External Services
 
