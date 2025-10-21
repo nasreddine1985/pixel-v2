@@ -89,7 +89,7 @@ class PaymentIngestionIntegrationTest {
 
     private void mockDatabasePersistence() throws Exception {
         AdviceWith.adviceWith(camelContext, "database-persistence", route -> {
-            route.mockEndpoints("kamelet:k-database-transaction");
+            route.mockEndpoints("kamelet:k-db-tx");
         });
     }
 
@@ -129,7 +129,7 @@ class PaymentIngestionIntegrationTest {
     @DisplayName("Complete successful payment processing flow")
     void testSuccessfulPaymentFlow() throws Exception {
         // Setup database persistence mock
-        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-database-transaction", MockEndpoint.class);
+        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-db-tx", MockEndpoint.class);
         databaseMock.expectedMessageCount(1);
         databaseMock.whenExchangeReceived(1, exchange -> {
             exchange.getIn().setHeader("persistenceStatus", "SUCCESS");
@@ -197,7 +197,7 @@ class PaymentIngestionIntegrationTest {
     @DisplayName("Database persistence failure handling")
     void testDatabasePersistenceFailure() throws Exception {
         // Setup database persistence mock to fail
-        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-database-transaction", MockEndpoint.class);
+        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-db-tx", MockEndpoint.class);
         databaseMock.expectedMessageCount(1);
         databaseMock.whenExchangeReceived(1, exchange -> {
             exchange.getIn().setHeader("persistenceStatus", "FAILED");
@@ -230,7 +230,7 @@ class PaymentIngestionIntegrationTest {
     @DisplayName("Validation failure routing to rejection handler")
     void testValidationFailure() throws Exception {
         // Setup successful database persistence
-        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-database-transaction", MockEndpoint.class);
+        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-db-tx", MockEndpoint.class);
         databaseMock.expectedMessageCount(1);
         databaseMock.whenExchangeReceived(1, exchange -> {
             exchange.getIn().setHeader("persistenceStatus", "SUCCESS");
@@ -290,7 +290,7 @@ class PaymentIngestionIntegrationTest {
     @DisplayName("Duplicate message handling")
     void testDuplicateMessageHandling() throws Exception {
         // Setup successful database persistence
-        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-database-transaction", MockEndpoint.class);
+        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-db-tx", MockEndpoint.class);
         databaseMock.expectedMessageCount(1);
         databaseMock.whenExchangeReceived(1, exchange -> {
             exchange.getIn().setHeader("persistenceStatus", "SUCCESS");
@@ -373,7 +373,7 @@ class PaymentIngestionIntegrationTest {
 
     private void setupSuccessfulFlow() throws Exception {
         // Helper method to setup all mocks for successful flow
-        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-database-transaction", MockEndpoint.class);
+        MockEndpoint databaseMock = camelContext.getEndpoint("mock:kamelet:k-db-tx", MockEndpoint.class);
         databaseMock.whenAnyExchangeReceived(exchange -> {
             exchange.getIn().setHeader("persistenceStatus", "SUCCESS");
             exchange.getIn().setHeader("persistedMessageId", "DB12345");

@@ -4,7 +4,7 @@ A powerful Camel Kamelet for persisting payment messages and CDM (Common Data Mo
 
 ## Overview
 
-The `k-database-transaction` kamelet provides unified persistence capabilities for both:
+The `k-db-tx` kamelet provides unified persistence capabilities for both:
 
 - **ReceivedMessage entities**: Raw payment messages from various sources (MQ, HTTP API, CFT files)
 - **CdmMessage entities**: Transformed CDM objects after processing through transformation kamelets
@@ -53,10 +53,10 @@ This kamelet handles dual entity types with flexible operation modes for complet
 
 ```yaml
 # Direct usage
-- to: "kamelet:k-database-transaction"
+- to: "kamelet:k-db-tx"
 
 # With custom configuration
-- to: "kamelet:k-database-transaction?enableAuditTrail=false&batchSize=10"
+- to: "kamelet:k-db-tx?enableAuditTrail=false&batchSize=10"
 ```
 
 ### In Integration Files
@@ -72,7 +72,7 @@ spec:
         uri: "direct:persistMessage"
         steps:
           - to:
-              uri: "kamelet:k-database-transaction"
+              uri: "kamelet:k-db-tx"
               parameters:
                 entityManagerRef: "paymentEntityManager"
                 enableAuditTrail: true
@@ -188,7 +188,7 @@ mvn verify
             - simple: "${body} != null"
               steps:
                 # Persist to database
-                - to: "kamelet:k-database-transaction"
+                - to: "kamelet:k-db-tx"
 
                 # Check persistence result
                 - choice:

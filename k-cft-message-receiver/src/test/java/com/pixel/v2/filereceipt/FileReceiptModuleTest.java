@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for CFT Message Receiver Kamelet
  * 
  * Note: ReceivedMessage and MessagePersistenceProcessor have been moved to 
- * k-database-transaction kamelet as part of the architecture refactoring.
+ * k-db-tx kamelet as part of the architecture refactoring.
  */
 class FileReceiptModuleTest {
 

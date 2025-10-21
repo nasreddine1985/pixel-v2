@@ -131,7 +131,7 @@
         </dependency>
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-database-transaction</artifactId>
+            <artifactId>k-db-tx</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

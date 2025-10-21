@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @UseAdviceWith
 class PaymentIngestionRouteBuilderTest {
 
-    private static final String MOCK_DATABASE_ENDPOINT = "mock:kamelet:k-database-transaction";
+    private static final String MOCK_DATABASE_ENDPOINT = "mock:kamelet:k-db-tx";
     private static final String MOCK_REFERENCE_ENDPOINT = "mock:kamelet:k-referentiel-data-loader";
     private static final String MOCK_VALIDATION_ENDPOINT = "mock:kamelet:k-ingestion-technical-validation";
     private static final String MOCK_IDEMPOTENCE_ENDPOINT = "mock:kamelet:k-payment-idempotence-helper";
@@ -60,7 +60,7 @@ class PaymentIngestionRouteBuilderTest {
     void setupMocks() throws Exception {
         // Mock all kamelet endpoints
         AdviceWith.adviceWith(camelContext, "database-persistence", 
-            route -> route.mockEndpoints("kamelet:k-database-transaction"));
+            route -> route.mockEndpoints("kamelet:k-db-tx"));
         
         AdviceWith.adviceWith(camelContext, "reference-enrichment", 
             route -> route.mockEndpoints("kamelet:k-referentiel-data-loader"));

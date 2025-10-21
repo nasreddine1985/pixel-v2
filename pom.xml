@@ -14,7 +14,7 @@
     <modules>
         <module>ingestion</module>
         <module>k-cft-message-receiver</module>
-        <module>k-database-transaction</module>
+        <module>k-db-tx</module>
         <module>k-http-message-receiver</module>
         <module>k-ingestion-technical-validation</module>
         <module>k-kafka-message-receiver</module>

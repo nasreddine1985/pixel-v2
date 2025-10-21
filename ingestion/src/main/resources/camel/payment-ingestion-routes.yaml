@@ -123,7 +123,7 @@
       uri: direct:database-persistence
       steps:
           log:
-            message: "Persisting message to database via k-database-transaction"
+            message: "Persisting message to database via k-db-tx"
             level: INFO
             
         - set-header:
@@ -131,7 +131,7 @@
             constant: "DATABASE_PERSISTENCE"
             
         - to:
-            uri: kamelet:k-database-transaction
+            uri: kamelet:k-db-tx
         - choice:
             when:
               - simple: "${header.persistenceStatus} == 'SUCCESS'"
@@ -185,7 +185,7 @@
             name: PersistenceType
             constant: ENRICHED
         - to:
-            uri: kamelet:k-database-transaction
+            uri: kamelet:k-db-tx
         - choice:
             when:
               - simple: "${header.persistenceStatus} == 'SUCCESS'"

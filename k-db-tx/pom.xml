@@ -12,7 +12,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>k-database-transaction</artifactId>
+    <artifactId>k-db-tx</artifactId>
     <packaging>jar</packaging>
 
     <name>K-Database Transaction Kamelet</name>

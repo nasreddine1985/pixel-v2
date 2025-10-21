@@ -110,7 +110,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 - **`k-pan001-to-cdm-transformer/`** - PAN001 to CDM transformation kamelet
 - **`k-ingestion-technical-validation/`** - Message validation kamelet
 - **`k-payment-idempotence-helper/`** - Payment duplicate detection kamelet
-- **`k-database-transaction/`** - Unified database persistence kamelet
+- **`k-db-tx/`** - Unified database persistence kamelet
 
 ### Key Technologies
 

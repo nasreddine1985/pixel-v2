@@ -29,7 +29,7 @@ PIXEL-V2/
 ├── k-pan001-to-cdm-transformer/        # Kamelet for PAN001 to CDM transformation
 ├── k-ingestion-technical-validation/   # Kamelet for technical message validation
 ├── k-payment-idempotence-helper/       # Kamelet for payment duplicate detection
-└── k-database-transaction/             # Kamelet for unified database persistence
+└── k-db-tx/                           # Kamelet for unified database persistence
 ```
 
 ### 🔄 Intelligent Routing Architecture
@@ -157,7 +157,7 @@ Kamelet for consuming messages from Kafka topics and routing them to processing 
 - Integration with processing module
 - Error handling and dead letter topic support
 
-### k-database-transaction (Enhanced Kamelet)
+### k-db-tx (Enhanced Kamelet)
 
 Kamelet for unified database persistence operations supporting both initial and enriched data storage.
 

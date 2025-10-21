@@ -48,13 +48,10 @@ The Payment Message Processing Service is a Spring Boot Apache Camel application
                      │
                      ▼
          ┌─────────────────────────┐
-         │  k-database-transaction │
+         │      k-db-tx           │
          │                         │
          │ • CDM Persistence       │
-         │ • CdmMessage Entity     │
          │ • Audit Trail          │
-         │ • Link to Source       │
-         └─────────────────────────┘
 ```
 
 ## Features
@@ -62,7 +59,7 @@ The Payment Message Processing Service is a Spring Boot Apache Camel application
 - **Dual Input Support**: Processes messages from both Kafka (batch) and direct endpoints (real-time)
 - **Message Type Detection**: Automatically detects pacs.008 and pan.001 message types from XML and JSON formats
 - **Dynamic Routing**: Routes messages to appropriate transformer kamelets based on detected type
-- **🆕 CDM Persistence**: Automatically persists transformed CDM objects using `k-database-transaction` kamelet
+- **🆕 CDM Persistence**: Automatically persists transformed CDM objects using `k-db-tx` kamelet
 - **🆕 Audit Trail**: Links transformed CDM objects to original payment messages
 - **Error Handling**: Comprehensive error handling for unknown message types and processing failures
 - **🆕 Real-time Processing**: Direct integration with ingestion module for low-latency processing
@@ -95,7 +92,7 @@ processing.error.endpoint=direct:error-handling
 
 # 🆕 CDM Persistence Configuration
 processing.cdm.persistence.enabled=true
-processing.cdm.persistence.kamelet=k-database-transaction
+processing.cdm.persistence.kamelet=k-db-tx
 processing.cdm.persistence.mode=CDM
 processing.cdm.audit.enabled=true
 
@@ -135,7 +132,7 @@ ingestion.realtime.endpoint=direct:kafka-message-processing
 - k-pacs-008-to-cdm kamelet
 - k-pan-001-to-cdm kamelet
 - k-kafka-message-receiver kamelet (for batch processing)
-- **🆕 k-database-transaction kamelet** (for CDM persistence)
+- **🆕 k-db-tx kamelet** (for CDM persistence)
 - **🆕 Oracle Database** (for CDM and message persistence)
 - **🆕 Ingestion Module** (for real-time integration)
 
@@ -193,7 +190,7 @@ spec:
 3. **Header Setting**: Sets `MessageType` and `RouteTarget` headers
 4. **Dynamic Routing**: Routes to appropriate transformer based on headers
 5. **Transformation**: Calls transformer kamelet (k-pacs-008-to-cdm or k-pan-001-to-cdm)
-6. **🆕 CDM Persistence**: Automatically persists CDM objects using `k-database-transaction`
+6. **🆕 CDM Persistence**: Automatically persists CDM objects using `k-db-tx`
 7. **🆕 Audit Trail**: Links CDM records to original payment messages
 
 **Real-time Processing (HTTP/MQ Messages via Ingestion)**
@@ -204,7 +201,7 @@ spec:
 4. **Dynamic Routing**: Routes to appropriate transformer based on headers
 5. **Transformation**: Calls transformer kamelet with real-time optimization
 6. **🆕 CDM Output Endpoint**: Routes to `cdmOutputEndpoint` for persistence
-7. **🆕 CDM Persistence**: `k-database-transaction` saves CDM objects to `CdmMessage` entity
+7. **🆕 CDM Persistence**: `k-db-tx` saves CDM objects to `CdmMessage` entity
 8. **🆕 Relationship Tracking**: Maintains links between CDM objects and source messages
 
 ### Message Headers
@@ -254,7 +251,7 @@ The service adds the following headers to processed messages:
 | `direct:pacs-008-transform`       | pacs.008 processing        | Internal routing                       |
 | `direct:pan-001-transform`        | pan.001 processing         | Internal routing                       |
 | `direct:unknown-message`          | Unknown message handling   | Error cases                            |
-| `🆕 direct:cdm-persistence`       | CDM persistence processing | Routes to k-database-transaction       |
+| `🆕 direct:cdm-persistence`       | CDM persistence processing | Routes to k-db-tx                      |
 | `direct:error-handling`           | Error processing           | Error cases                            |
 | `direct:health-check`             | Health status              | Monitoring                             |
 | `direct:metrics`                  | Metrics collection         | Monitoring                             |
@@ -271,7 +268,7 @@ After successful transformation to CDM format, the processing module automatical
 - Transform: pacs.008/pan.001 → CDM JSON format
 - Validate: CDM schema validation
 - Route: cdmOutputEndpoint → direct:cdm-persistence
-- Persist: k-database-transaction → CdmMessage entity
+- Persist: k-db-tx → CdmMessage entity
 - Audit: Link CDM record to source message
 - Response: Processing completion status
 ```
@@ -327,7 +324,7 @@ logging.level.org.springframework.kafka=WARN
 - `[PROCESSING-MAIN] Message type: {type}, routing to: {route}`
 - `[PACS-008-TRANSFORM] Successfully transformed pacs.008 to CDM`
 - `[PAN-001-TRANSFORM] Successfully transformed pan.001 to CDM`
-- `🆕 [CDM-PERSISTENCE] Routing CDM object to k-database-transaction`
+- `🆕 [CDM-PERSISTENCE] Routing CDM object to k-db-tx`
 - `🆕 [CDM-PERSISTENCE] CDM object persisted successfully: {cdmId}`
 - `🆕 [CDM-AUDIT] Linked CDM record {cdmId} to source message {messageId}`
 - `[UNKNOWN-MESSAGE] Received message with unknown type`
@@ -344,7 +341,7 @@ Available through Spring Boot Actuator:
 - **🆕 Real-time vs batch processing latency**
 - Error rates and types
 - Route execution times
-- **🆕 k-database-transaction kamelet performance**
+- **🆕 k-db-tx kamelet performance**
 - Memory and CPU usage
 - Camel route status
 
@@ -356,7 +353,7 @@ Available through Spring Boot Actuator:
 2. **JSON Parsing Errors**: Invalid JSON format in message body
 3. **Transformation Errors**: Failures in kamelet transformation
 4. **Routing Errors**: Issues with message routing
-5. **🆕 CDM Persistence Errors**: Failures in k-database-transaction kamelet
+5. **🆕 CDM Persistence Errors**: Failures in k-db-tx kamelet
 6. **🆕 CDM Validation Errors**: Invalid CDM schema or field mapping issues
 7. **🆕 Audit Trail Errors**: Issues linking CDM objects to source messages
 
@@ -461,7 +458,7 @@ mvn test -Dspring.profiles.active=test
 
 2. **🆕 CDM Persistence Issues**
 
-   - Verify k-database-transaction kamelet is available
+   - Verify k-db-tx kamelet is available
    - Check database connection and CdmMessage table schema
    - Ensure cdmOutputEndpoint is properly configured
    - Validate CDM JSON schema and field mappings
@@ -483,6 +480,7 @@ mvn test -Dspring.profiles.active=test
    - Verify transformer kamelet compatibility
    - Review error logs for specific failures
    - **🆕 Check CDM persistence logs for transformation issues**
+   - **🆕 Verify k-db-tx kamelet configuration and availability**
 
 ### Debug Mode
 
@@ -498,9 +496,9 @@ logging.level.org.apache.camel=DEBUG
 ### Required Kamelets
 
 - `k-kafka-message-receiver`: Message source (batch processing)
-- `k-pacs-008-to-cdm`: pacs.008 transformer
-- `k-pan-001-to-cdm`: pan.001 transformer
-- **🆕 `k-database-transaction`: CDM persistence and audit trail**
+- k-pacs-008-to-cdm: pacs.008 transformer
+- k-pan-001-to-cdm: pan.001 transformer
+- **🆕 `k-db-tx`: CDM persistence and audit trail**
 
 ### Integration Dependencies
 
@@ -525,7 +523,7 @@ logging.level.org.apache.camel=DEBUG
 ## Version History
 
 - **1.0.1-SNAPSHOT**: Enhanced release with CDM persistence and dual input support
-- **🆕 CDM Persistence**: Automatic CDM object persistence using k-database-transaction
+- **🆕 CDM Persistence**: Automatic CDM object persistence using k-db-tx
 - **🆕 Dual Input Architecture**: Supports both Kafka (batch) and direct (real-time) processing
 - **🆕 Ingestion Integration**: Direct integration with ingestion module for real-time processing
 - **🆕 Audit Trail**: Complete CDM object lifecycle tracking and source message linking

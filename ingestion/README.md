@@ -206,7 +206,7 @@ The ingestion service now supports **intelligent message routing** based on the 
 
 🔧 SUPPORTING KAMELETS & COMPONENTS:
 ════════════════════════════════════
-• k-database-transaction: Unified persistence (initial + enriched)
+• k-db-tx: Unified persistence (initial + enriched)
 • k-referentiel-data-loader: REST API data enrichment
 • k-ingestion-technical-validation: Message structure validation
 • k-payment-idempotence-helper: Duplicate prevention & tracking
@@ -246,7 +246,7 @@ All receiver kamelets focus solely on message receipt, logging, and routing - th
 
 ### 2. Database Persistence (First Step)
 
-- Uses `k-database-transaction` kamelet immediately after message receipt
+- Uses `k-db-tx` kamelet immediately after message receipt
 - Persists all received messages to Oracle database with unified data model
 - **NEW**: Supports both standard MESSAGE persistence and CDM (Common Data Model) objects
 - Handles transaction management and error scenarios
@@ -266,7 +266,7 @@ All receiver kamelets focus solely on message receipt, logging, and routing - th
 
 ### 4. Enriched Data Persistence (Second Database Save)
 
-- Uses `k-database-transaction` kamelet again after reference enrichment
+- Uses `k-db-tx` kamelet again after reference enrichment
 - Persists the enriched message data including reference information loaded
 - **Enhanced**: Supports both MESSAGE and CDM entity updates with enriched data
 - Updates the database record with additional reference data and metadata
@@ -384,7 +384,7 @@ ingestion.processing.endpoint=direct:kafka-message-processing
 ingestion.processing.enabled=true
 ```
 
-#### Database Configuration (for k-database-transaction kamelet)
+#### Database Configuration (for k-db-tx kamelet)
 
 ```properties
 # Database connection settings
@@ -402,9 +402,9 @@ persistence.cdm.json-validation.enabled=true
 # CDM Output Endpoint Configuration
 processing.cdm.output.endpoint=direct:cdm-persistence
 processing.cdm.output.enabled=true
-processing.cdm.persistence.kamelet=k-database-transaction
+processing.cdm.persistence.kamelet=k-db-tx
 
-# Persistence Configuration (for k-database-transaction)
+# Persistence Configuration (for k-db-tx)
 persistence.transaction.timeout=30000
 persistence.retry.max-attempts=3
 persistence.retry.delay=1000
@@ -451,9 +451,9 @@ GET /ingestion/metrics
 # MQ Message Reception & Processing - NEW: Direct to Processing Module
 - Receipt: k-mq-message-receiver → Log message, set MQ metadata headers (ReceiptChannel: "MQ")
 - Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-database-transaction → Initial database storage with transaction management
+- Persist: k-db-tx → Initial database storage with transaction management
 - Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-database-transaction → Save enriched data to database
+- Persist Enriched: k-db-tx → Save enriched data to database
 - Validate: k-ingestion-technical-validation → Check message structure
 - Dedupe: k-payment-idempotence-helper → Verify uniqueness
 - Smart Route: Intelligent Routing → ReceiptChannel = "MQ" → direct:processing-publisher
@@ -468,9 +468,9 @@ GET /ingestion/metrics
 # REST API Message Reception & Processing - NEW: Direct to Processing Module
 - Receipt: k-http-message-receiver → Log request, set HTTP metadata headers (ReceiptChannel: "HTTP"), return receipt confirmation
 - Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-database-transaction → Initial database storage with transaction management
+- Persist: k-db-tx → Initial database storage with transaction management
 - Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-database-transaction → Save enriched data to database
+- Persist Enriched: k-db-tx → Save enriched data to database
 - Validate: k-ingestion-technical-validation → Check message structure
 - Dedupe: k-payment-idempotence-helper → Verify uniqueness
 - Smart Route: Intelligent Routing → ReceiptChannel = "HTTP" → direct:processing-publisher
@@ -485,9 +485,9 @@ GET /ingestion/metrics
 # File CFT Message Reception & Processing - UNCHANGED: Continues to Kafka
 - Receipt: k-cft-message-receiver → Monitor directory, process file line-by-line, set file metadata headers (ReceiptChannel: "CFT")
 - Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-database-transaction → Initial database storage with transaction management
+- Persist: k-db-tx → Initial database storage with transaction management
 - Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-database-transaction → Save enriched data to database
+- Persist Enriched: k-db-tx → Save enriched data to database
 - Validate: k-ingestion-technical-validation → Check message structure
 - Dedupe: k-payment-idempotence-helper → Verify uniqueness
 - Smart Route: Intelligent Routing → ReceiptChannel = "CFT" → direct:kafka-publisher
@@ -501,9 +501,9 @@ GET /ingestion/metrics
 # Failed Validation Flow (Any Channel)
 - Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata
 - Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-database-transaction → Initial database storage with transaction management
+- Persist: k-db-tx → Initial database storage with transaction management
 - Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-database-transaction → Save enriched data to database
+- Persist Enriched: k-db-tx → Save enriched data to database
 - Validate: k-ingestion-technical-validation → Validation fails
 - Reject: Kafka Topic → payments-rejected
 ```
@@ -514,7 +514,7 @@ GET /ingestion/metrics
 # Initial Database Failure Flow (Any Channel)
 - Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata
 - Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-database-transaction → Initial database failure
+- Persist: k-db-tx → Initial database failure
 - Error: Route to error handler → payments-errors topic
 ```
 
@@ -524,9 +524,9 @@ GET /ingestion/metrics
 # Enriched Data Persistence Failure Flow (Any Channel)
 - Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata
 - Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-database-transaction → Initial database storage with transaction management
+- Persist: k-db-tx → Initial database storage with transaction management
 - Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-database-transaction → Enriched data persistence failure
+- Persist Enriched: k-db-tx → Enriched data persistence failure
 - Error: Route to error handler → payments-errors topic
 ```
 
@@ -629,12 +629,12 @@ The kamelet supports two processing modes based on message content:
 
 #### 🆕 CDM Transformation and Persistence Flow
 
-After the processing module transforms payment messages to CDM objects, the system automatically persists these CDM objects using the `k-database-transaction` kamelet:
+After the processing module transforms payment messages to CDM objects, the system automatically persists these CDM objects using the `k-db-tx` kamelet:
 
 ````yaml
 # CDM Post-Processing Flow (HTTP/MQ Messages) - Handled by Processing Module
 - Processing Module: Transform payment message to CDM format
-- Processing Module: Internally routes CDM to k-database-transaction
+- Processing Module: Internally routes CDM to k-db-tx
 - Processing Module: Saves CDM objects to CdmMessage entity
 - Processing Module: Links CDM records to original payment messages
 - Processing Module: Updates processing status and CDM references
@@ -961,7 +961,7 @@ delay: 5000
 - `k-mq-message-receiver`: MQ message receipt and logging
 - `k-http-message-receiver`: HTTP API message receipt and logging
 - `k-cft-message-receiver`: File system message receipt and logging
-- `k-database-transaction`: Unified database persistence
+- `k-db-tx`: Unified database persistence
 - `k-referentiel-data-loader`: Reference data enrichment
 - `k-ingestion-technical-validation`: Message validation
 - `k-payment-idempotence-helper`: Duplicate prevention
@@ -993,7 +993,7 @@ delay: 5000
 
 #### For CDM Persistence (Post-Processing)
 
-- **🆕 `k-database-transaction` kamelet must be available for CDM persistence**
+- **🆕 `k-db-tx` kamelet must be available for CDM persistence**
 - **🆕 `CdmMessage` entity and database table must be configured**
 - **🆕 Processing module must set `cdmPersistenceRequired=true` for CDM objects**
 - **🆕 CDM output endpoint `direct:cdm-persistence` must be configured**
@@ -1066,7 +1066,7 @@ export REFERENCE_API_URL=http://reference-service:8080
    - Review CDM field extraction logs for parsing errors
    - Validate CDM type detection and routing logic
    - **🆕 CDM Processing Issues**: Verify processing module is handling CDM persistence correctly
-   - **🆕 CDM Persistence Failures**: Check `k-database-transaction` kamelet is available for CDM mode
+   - **🆕 CDM Persistence Failures**: Check `k-db-tx` kamelet is available for CDM mode
 
 7. **Performance Issues**
    - Monitor memory usage and GC
