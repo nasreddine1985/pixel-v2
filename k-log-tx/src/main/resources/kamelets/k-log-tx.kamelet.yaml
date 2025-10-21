@@ -1,0 +1,219 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: k-log-tx
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "4.1.0"
+    camel.apache.org/kamelet.icon: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgNEgxNFYxMkgyVjRaIiBzdHJva2U9IiM2ODc5OEYiIGZpbGw9Im5vbmUiLz4KPC9zdmc+"
+    camel.apache.org/provider: "Pixel V2"
+    camel.apache.org/kamelet.group: "Logging"
+    camel.apache.org/kamelet.namespace: "Persistence"
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+    camel.apache.org/kamelet.version: "1.0.1-SNAPSHOT"
+spec:
+  definition:
+    title: "K-Log Transaction Kamelet"
+    description: |-
+      Centralized logging kamelet that receives log events from various application components 
+      and persists them to a dedicated log database table.
+      
+      Supports multiple log levels (TRACE, DEBUG, INFO, WARN, ERROR) and categories 
+      (ROUTE, BUSINESS, ERROR, AUDIT, PERFORMANCE).
+      
+      Automatically enriches log entries with Camel exchange metadata including:
+      - Exchange ID, Route ID, Breadcrumb ID
+      - Processing time and message size
+      - Thread information and custom headers
+    required:
+      - logLevel
+      - logSource
+    type: object
+    properties:
+      logLevel:
+        title: "Log Level"
+        description: "The severity level of the log entry (TRACE, DEBUG, INFO, WARN, ERROR)"
+        type: string
+        default: "INFO"
+        enum: ["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]
+        
+      logSource:
+        title: "Log Source"
+        description: "The source component generating the log (e.g., ingestion, processing, k-db-tx)"
+        type: string
+        example: "ingestion"
+        
+      logCategory:
+        title: "Log Category"
+        description: "Optional category for log classification (ROUTE, BUSINESS, ERROR, AUDIT, PERFORMANCE)"
+        type: string
+        enum: ["ROUTE", "BUSINESS", "ERROR", "AUDIT", "PERFORMANCE"]
+        
+      correlationId:
+        title: "Correlation ID"
+        description: "Optional correlation ID for tracing related log entries across components"
+        type: string
+        
+      enableAuditTrail:
+        title: "Enable Audit Trail"
+        description: "Whether to create detailed audit trails with exchange metadata"
+        type: boolean
+        default: true
+        
+      batchSize:
+        title: "Batch Size"
+        description: "Number of log entries to batch before committing (for performance optimization)"
+        type: integer
+        default: 1
+        minimum: 1
+        maximum: 100
+        
+      asyncMode:
+        title: "Async Mode"
+        description: "Whether to process log entries asynchronously for better performance"
+        type: boolean
+        default: false
+        
+      includeExchangeHeaders:
+        title: "Include Exchange Headers"
+        description: "Whether to include Camel exchange headers in additional data"
+        type: boolean
+        default: true
+        
+      maxMessageLength:
+        title: "Max Message Length"
+        description: "Maximum length of log message (will be truncated if longer)"
+        type: integer
+        default: 4000
+        minimum: 100
+        maximum: 4000
+
+  dependencies:
+    - "camel:jackson"
+    - "camel:jpa"
+    - "camel:log"
+    - "mvn:org.springframework.boot:spring-boot-starter-data-jpa"
+    - "mvn:com.oracle.database.jdbc:ojdbc11"
+    - "mvn:org.hibernate.orm:hibernate-core"
+
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - log:
+            message: "Processing log entry from {{logSource}} with level {{logLevel}}"
+            
+        - setHeader:
+            name: "LogLevel"
+            constant: "{{logLevel}}"
+            
+        - setHeader:
+            name: "LogSource"
+            constant: "{{logSource}}"
+            
+        - setHeader:
+            name: "LogCategory"
+            constant: "{{?logCategory}}"
+            
+        - setHeader:
+            name: "CorrelationId"
+            constant: "{{?correlationId}}"
+            
+        - setHeader:
+            name: "EnableAuditTrail"
+            constant: "{{enableAuditTrail}}"
+            
+        - setHeader:
+            name: "IncludeExchangeHeaders"
+            constant: "{{includeExchangeHeaders}}"
+            
+        - setHeader:
+            name: "MaxMessageLength"
+            constant: "{{maxMessageLength}}"
+            
+        - setHeader:
+            name: "ProcessingStartTime"
+            simple: "${date:now}"
+            
+        - choice:
+            when:
+              - simple: "{{asyncMode}} == true"
+                steps:
+                  - log:
+                      message: "[ASYNC] Queuing log entry for asynchronous processing"
+                  - to:
+                      uri: "seda:asyncLogProcessing?size=1000&concurrentConsumers=2"
+            otherwise:
+              steps:
+                - to:
+                    uri: "direct:syncLogProcessing"
+                    
+        - setHeader:
+            name: "ProcessingEndTime"
+            simple: "${date:now}"
+            
+        - setHeader:
+            name: "ProcessingTime"
+            simple: "${header.ProcessingEndTime} - ${header.ProcessingStartTime}"
+
+  routes:
+    # Synchronous processing route
+    - route:
+        id: "sync-log-processing"
+        from:
+          uri: "direct:syncLogProcessing"
+          steps:
+            - log:
+                message: "[SYNC] Processing log entry synchronously"
+            - bean:
+                ref: "#logPersistenceProcessor"
+            - choice:
+                when:
+                  - simple: "${header.LogPersistenceStatus} == 'SUCCESS'"
+                    steps:
+                      - log:
+                          message: "Log entry persisted successfully with ID: ${header.LogEntryId}"
+                otherwise:
+                  steps:
+                    - log:
+                        message: "Failed to persist log entry: ${header.LogPersistenceError}"
+                        loggingLevel: ERROR
+
+    # Asynchronous processing route
+    - route:
+        id: "async-log-processing"
+        from:
+          uri: "seda:asyncLogProcessing"
+          steps:
+            - log:
+                message: "[ASYNC] Processing log entry asynchronously"
+            - bean:
+                ref: "#logPersistenceProcessor"
+            - choice:
+                when:
+                  - simple: "${header.LogPersistenceStatus} == 'SUCCESS'"
+                    steps:
+                      - log:
+                          message: "[ASYNC] Log entry persisted successfully with ID: ${header.LogEntryId}"
+                otherwise:
+                  steps:
+                    - log:
+                        message: "[ASYNC] Failed to persist log entry: ${header.LogPersistenceError}"
+                        loggingLevel: ERROR
+
+    # Error handling route
+    - route:
+        id: "log-error-handler"
+        from:
+          uri: "direct:logErrorHandler"
+          steps:
+            - log:
+                message: "Handling log processing error: ${exception.message}"
+                loggingLevel: ERROR
+            - setHeader:
+                name: "LogPersistenceStatus"
+                constant: "FAILED"
+            - setHeader:
+                name: "LogPersistenceError"
+                simple: "${exception.message}"

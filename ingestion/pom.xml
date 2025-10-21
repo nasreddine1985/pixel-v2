@@ -149,6 +149,11 @@
             <artifactId>k-payment-idempotence-helper</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.pixel.v2</groupId>
+            <artifactId>k-log-tx</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <!-- Test Dependencies -->
         <dependency>

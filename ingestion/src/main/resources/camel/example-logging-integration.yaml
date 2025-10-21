@@ -1,0 +1,191 @@
+# ===================================================================
+# EXAMPLE INTEGRATION WITH K-LOG-TX KAMELET
+# ===================================================================
+# This example shows how to integrate the centralized logging kamelet
+# with existing application routes
+
+# Example 1: Basic Route Logging
+- route:
+    id: example-business-logging
+    from:
+      uri: direct:business-event
+      steps:
+        # Set logging parameters
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        
+        # Send business event to logging kamelet
+        - setBody:
+            simple: "Processing payment message with ID: ${header.MessageId}, Amount: ${header.Amount}"
+        - to: "kamelet:k-log-tx"
+        
+        # Continue with business processing...
+        - log:
+            message: "Business event logged successfully"
+
+# Example 2: Error Logging with Exception Details
+- route:
+    id: example-error-logging
+    from:
+      uri: direct:error-event
+      steps:
+        - doTry:
+            steps:
+              # Simulate some processing that might fail
+              - log:
+                  message: "Processing that might fail..."
+              
+              # If processing fails, this will be caught
+              - choice:
+                  when:
+                    - simple: "${header.SimulateError} == true"
+                      steps:
+                        - throwException:
+                            exceptionType: "java.lang.RuntimeException"
+                            message: "Simulated processing error"
+                  otherwise:
+                    steps:
+                      - log:
+                          message: "Processing completed successfully"
+            
+            doCatch:
+              - exception:
+                  - "java.lang.RuntimeException"
+                steps:
+                  # Log the error using k-log-tx
+                  - setHeader:
+                      name: "LogLevel"
+                      constant: "ERROR"
+                  - setHeader:
+                      name: "LogSource"
+                      constant: "ingestion"
+                  - setHeader:
+                      name: "LogCategory"
+                      constant: "ERROR"
+                  - setHeader:
+                      name: "CorrelationId"
+                      simple: "${header.MessageId}"
+                  
+                  # Include exception details in the log message
+                  - setBody:
+                      simple: "Processing failed for message ${header.MessageId}: ${exception.message}"
+                  
+                  # Send to logging kamelet
+                  - to: "kamelet:k-log-tx"
+
+# Example 3: Performance Logging
+- route:
+    id: example-performance-logging
+    from:
+      uri: direct:performance-tracking
+      steps:
+        # Record start time
+        - setHeader:
+            name: "ProcessingStartTime"
+            simple: "${date:now}"
+        
+        # Simulate some processing
+        - delay:
+            constant: "100" # 100ms delay
+        
+        # Record end time and calculate duration
+        - setHeader:
+            name: "ProcessingEndTime"
+            simple: "${date:now}"
+        - setHeader:
+            name: "ProcessingDuration"
+            simple: "${header.ProcessingEndTime} - ${header.ProcessingStartTime}"
+        
+        # Log performance metrics
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "performance-monitor"
+        - setHeader:
+            name: "LogCategory"
+            constant: "PERFORMANCE"
+        - setHeader:
+            name: "ProcessingTime"
+            simple: "${header.ProcessingDuration}"
+        
+        - setBody:
+            simple: "Message processing completed in ${header.ProcessingDuration}ms for message ${header.MessageId}"
+        
+        # Send performance data to logging kamelet
+        - to: "kamelet:k-log-tx"
+
+# Example 4: Audit Trail Logging
+- route:
+    id: example-audit-logging
+    from:
+      uri: direct:audit-event
+      steps:
+        # Create comprehensive audit log entry
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "audit-trail"
+        - setHeader:
+            name: "LogCategory"
+            constant: "AUDIT"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        
+        # Create detailed audit message
+        - setBody:
+            simple: |
+              AUDIT EVENT: ${header.AuditAction}
+              User: ${header.UserId}
+              Message ID: ${header.MessageId}
+              Timestamp: ${date:now:yyyy-MM-dd HH:mm:ss}
+              Source IP: ${header.SourceIP}
+              Details: ${header.AuditDetails}
+        
+        # Enable detailed audit trail with exchange metadata
+        - to:
+            uri: "kamelet:k-log-tx"
+            parameters:
+              enableAuditTrail: true
+              includeExchangeHeaders: true
+
+# Example 5: High-Volume Async Logging
+- route:
+    id: example-async-logging
+    from:
+      uri: direct:high-volume-logs
+      steps:
+        # For high-volume scenarios, use async mode
+        - setHeader:
+            name: "LogLevel"
+            constant: "DEBUG"
+        - setHeader:
+            name: "LogSource"
+            constant: "bulk-processor"
+        - setHeader:
+            name: "LogCategory"
+            constant: "ROUTE"
+        
+        - setBody:
+            simple: "Bulk processing message ${exchangeProperty.CamelLoopIndex} of ${header.BatchSize}"
+        
+        # Use async mode with batching for performance
+        - to:
+            uri: "kamelet:k-log-tx"
+            parameters:
+              asyncMode: true
+              batchSize: 50

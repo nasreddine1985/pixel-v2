@@ -29,7 +29,8 @@ PIXEL-V2/
 ├── k-pan001-to-cdm-transformer/        # Kamelet for PAN001 to CDM transformation
 ├── k-ingestion-technical-validation/   # Kamelet for technical message validation
 ├── k-payment-idempotence-helper/       # Kamelet for payment duplicate detection
-└── k-db-tx/                           # Kamelet for unified database persistence
+├── k-db-tx/                           # Kamelet for unified database persistence
+└── k-log-tx/                          # 🆕 Kamelet for centralized log management
 ```
 
 ### 🔄 Intelligent Routing Architecture
@@ -145,6 +146,53 @@ Kamelet for transforming PAN001 XML messages to Common Data Model (CDM) format u
 - Saxon XSLT processor
 - PAN001 to CDM transformation
 - Configurable XSLT resource
+
+### k-log-tx (New Kamelet)
+
+Centralized logging kamelet for collecting, enriching, and persisting log events from all application components.
+
+**Features:**
+
+- **Multi-Level Support**: Handles TRACE, DEBUG, INFO, WARN, ERROR levels
+- **Category Classification**: Supports ROUTE, BUSINESS, ERROR, AUDIT, PERFORMANCE categories
+- **Metadata Enrichment**: Automatically captures Camel exchange metadata (Exchange ID, Route ID, etc.)
+- **Performance Tracking**: Records processing times and message sizes
+- **Correlation Support**: Links related log entries across components
+- **Async Processing**: Optional asynchronous mode for high-volume logging
+- **Database Persistence**: Structured storage in LOG_ENTRIES table with indexes
+
+**Configuration:**
+
+```yaml
+- to:
+    uri: "kamelet:k-log-tx"
+    parameters:
+      logLevel: "INFO"
+      logSource: "ingestion"
+      logCategory: "BUSINESS"
+      asyncMode: false
+```
+
+**Integration Example:**
+
+```yaml
+# Business event logging
+- setHeader:
+    name: "LogSource"
+    constant: "payment-processing"
+- setBody:
+    simple: "Payment processed for ${header.MessageId}"
+- to: "kamelet:k-log-tx"
+
+# Error logging with correlation
+- setHeader:
+    name: "LogLevel"
+    constant: "ERROR"
+- setHeader:
+    name: "CorrelationId"
+    simple: "${header.MessageId}"
+- to: "kamelet:k-log-tx"
+```
 
 ### k-kafka-message-receiver (New Kamelet)
 

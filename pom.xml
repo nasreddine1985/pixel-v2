@@ -18,6 +18,7 @@
         <module>k-http-message-receiver</module>
         <module>k-ingestion-technical-validation</module>
         <module>k-kafka-message-receiver</module>
+        <module>k-log-tx</module>
         <module>k-mq-message-receiver</module>
         <module>k-pacs008-to-cdm-transformer</module>
         <module>k-pan001-to-cdm-transformer</module>
