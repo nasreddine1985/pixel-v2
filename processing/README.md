@@ -2,13 +2,13 @@
 
 ## Overview
 
-The Payment Message Processing Service is a Spring Boot Apache Camel application that processes payment messages received from Kafka topics and routes them to appropriate CDM (Common Data Model) transformers based on message type detection.
+The Payment Message Processing Service is a Spring Boot Apache Camel application that processes payment messages received from Kafka topics and routes them to appropriate CDM (Common Data Model) transformers based on message type detection. **Enhanced with intelligent conditional routing** that distributes processed messages based on their origin.
 
 ## Architecture
 
 ```
-🔄 DUAL INPUT ARCHITECTURE - Kafka & Direct Integration 🔄
-══════════════════════════════════════════════════════════
+🔄 DUAL INPUT WITH CONDITIONAL OUTPUT ARCHITECTURE 🔄
+════════════════════════════════════════════════════════
 
 📥 INPUT SOURCES
 ┌─────────────────────┐    ┌─────────────────────┐
@@ -47,11 +47,23 @@ The Payment Message Processing Service is a Spring Boot Apache Camel application
             (cdmOutputEndpoint)
                      │
                      ▼
-         ┌─────────────────────────┐
-         │      k-db-tx           │
-         │                         │
-         │ • CDM Persistence       │
-         │ • Audit Trail          │
+        🔀 CONDITIONAL ROUTING ENGINE
+        ════════════════════════════
+        Based on messageSource header
+                     │
+        ┌────────────┼────────────┐
+        ▼                         ▼
+ messageSource =            messageSource ≠
+ "KAFKA_TOPIC"              "KAFKA_TOPIC"
+        │                         │
+        ▼                         ▼
+ ┌─────────────┐         ┌─────────────┐
+ │ Kafka Output│         │ Outbound    │
+ │ Broker      │         │ Service     │
+ │ Topic: cdm- │         │ HTTP POST   │
+ │ processed-  │         │ :8082       │
+ │ messages    │         │             │
+ └─────────────┘         └─────────────┘
 ```
 
 ## Features
@@ -59,10 +71,11 @@ The Payment Message Processing Service is a Spring Boot Apache Camel application
 - **Dual Input Support**: Processes messages from both Kafka (batch) and direct endpoints (real-time)
 - **Message Type Detection**: Automatically detects pacs.008 and pan.001 message types from XML and JSON formats
 - **Dynamic Routing**: Routes messages to appropriate transformer kamelets based on detected type
-- **🆕 CDM Persistence**: Automatically persists transformed CDM objects using `k-db-tx` kamelet
-- **🆕 Audit Trail**: Links transformed CDM objects to original payment messages
+- **🆕 Conditional Distribution**: Intelligent routing of processed CDM messages based on origin
+  - **Kafka-originated messages** → Routes back to Kafka output broker
+  - **Non-Kafka messages** (HTTP/MQ) → Routes to outbound service
 - **Error Handling**: Comprehensive error handling for unknown message types and processing failures
-- **🆕 Real-time Processing**: Direct integration with ingestion module for low-latency processing
+- **Real-time Processing**: Direct integration with ingestion module for low-latency processing
 - **Monitoring**: Built-in health checks, metrics, and logging
 - **Spring Boot Integration**: Full Spring Boot auto-configuration and management endpoints
 
@@ -87,14 +100,13 @@ The Payment Message Processing Service is a Spring Boot Apache Camel application
 ```properties
 # Processing Configuration
 processing.kafka.input.endpoint=direct:kafka-message-processing
-processing.cdm.output.endpoint=direct:cdm-persistence
+processing.cdm.output.endpoint=direct:cdm-output
 processing.error.endpoint=direct:error-handling
 
-# 🆕 CDM Persistence Configuration
-processing.cdm.persistence.enabled=true
-processing.cdm.persistence.kamelet=k-db-tx
-processing.cdm.persistence.mode=CDM
-processing.cdm.audit.enabled=true
+# 🆕 Conditional Routing Configuration
+outbound.service.endpoint=http://localhost:8082/outbound/submit
+kafka.output.broker=localhost:9092
+kafka.output.topic=cdm-processed-messages
 
 # Kafka Configuration (for batch processing)
 spring.kafka.bootstrap-servers=localhost:9092
@@ -105,7 +117,7 @@ kafka.topics.input=payment-events
 transformers.pacs008.endpoint=kamelet:k-pacs-008-to-cdm
 transformers.pan001.endpoint=kamelet:k-pan-001-to-cdm
 
-# 🆕 Integration with Ingestion Module
+# Integration with Ingestion Module
 ingestion.integration.enabled=true
 ingestion.realtime.endpoint=direct:kafka-message-processing
 ```
@@ -181,43 +193,58 @@ spec:
 
 ### Processing Flow
 
-#### 🔄 Dual Processing Modes
+#### 🔄 Dual Processing with Conditional Output
 
 **Batch Processing (CFT Messages via Kafka)**
 
 1. **Message Reception**: Receives from k-kafka-message-receiver via `direct:kafka-message-processing`
 2. **Type Detection**: `MessageTypeProcessor` analyzes message content
-3. **Header Setting**: Sets `MessageType` and `RouteTarget` headers
+3. **Header Setting**: Sets `MessageType`, `RouteTarget`, and `messageSource=KAFKA_TOPIC` headers
 4. **Dynamic Routing**: Routes to appropriate transformer based on headers
 5. **Transformation**: Calls transformer kamelet (k-pacs-008-to-cdm or k-pan-001-to-cdm)
-6. **🆕 CDM Persistence**: Automatically persists CDM objects using `k-db-tx`
-7. **🆕 Audit Trail**: Links CDM records to original payment messages
+6. **🆕 Conditional Routing**: Routes to Kafka output broker (based on messageSource header)
+7. **🆕 Kafka Output**: Sends to `cdm-processed-messages` topic
 
 **Real-time Processing (HTTP/MQ Messages via Ingestion)**
 
 1. **Direct Reception**: Receives from ingestion module via `direct:kafka-message-processing`
 2. **Type Detection**: `MessageTypeProcessor` analyzes message content
-3. **Header Setting**: Sets `MessageType`, `RouteTarget`, and `cdmPersistenceRequired` headers
+3. **Header Setting**: Sets `MessageType`, `RouteTarget`, and `messageSource≠KAFKA_TOPIC` headers
 4. **Dynamic Routing**: Routes to appropriate transformer based on headers
 5. **Transformation**: Calls transformer kamelet with real-time optimization
-6. **🆕 CDM Output Endpoint**: Routes to `cdmOutputEndpoint` for persistence
-7. **🆕 CDM Persistence**: `k-db-tx` saves CDM objects to `CdmMessage` entity
-8. **🆕 Relationship Tracking**: Maintains links between CDM objects and source messages
+6. **🆕 Conditional Routing**: Routes to outbound service (based on messageSource header)
+7. **🆕 HTTP Delivery**: POST to outbound service at `localhost:8082/outbound/submit`
+
+#### 🔀 Conditional Routing Logic
+
+```java
+// CDM Output Processing with Conditional Routing
+from(cdmOutputEndpoint)
+    .choice()
+        .when(header("messageSource").isEqualTo("KAFKA_TOPIC"))
+            .log("Routing Kafka-originated message to Kafka output broker")
+            .to("kafka:cdm-processed-messages?brokers=localhost:9092")
+        .otherwise()
+            .log("Routing non-Kafka message to outbound service")
+            .to("http://localhost:8082/outbound/submit")
+    .end();
+```
 
 ### Message Headers
 
 The service adds the following headers to processed messages:
 
-| Header                      | Description                | Values                            |
-| --------------------------- | -------------------------- | --------------------------------- |
-| `MessageType`               | Detected message type      | `pacs.008`, `pan.001`, `unknown`  |
-| `RouteTarget`               | Target route endpoint      | `direct:pacs-008-transform`, etc. |
-| `ProcessingTimestamp`       | Processing timestamp       | Milliseconds since epoch          |
-| `ProcessedBy`               | Processor identifier       | `MessageTypeProcessor`            |
-| `🆕 cdmPersistenceRequired` | CDM persistence flag       | `true`, `false`                   |
-| `🆕 entityType`             | Target entity type         | `CDM`, `MESSAGE`                  |
-| `🆕 transformationStatus`   | Transformation status      | `COMPLETED`, `FAILED`, `PENDING`  |
-| `🆕 sourceMessageId`        | Original message reference | UUID or message ID                |
+| Header                      | Description               | Values                                     |
+| --------------------------- | ------------------------- | ------------------------------------------ |
+| `MessageType`               | Detected message type     | `pacs.008`, `pan.001`, `unknown`           |
+| `RouteTarget`               | Target route endpoint     | `direct:pacs-008-transform`, etc.          |
+| `ProcessingTimestamp`       | Processing timestamp      | Milliseconds since epoch                   |
+| `ProcessedBy`               | Processor identifier      | `MessageTypeProcessor`                     |
+| `🆕 messageSource`          | Message origin identifier | `KAFKA_TOPIC`, `HTTP_ENDPOINT`, `MQ_QUEUE` |
+| `🆕 TransformationComplete` | CDM transformation status | `true`, `false`                            |
+| `🆕 OutputTimestamp`        | Output routing timestamp  | ISO 8601 format                            |
+| `🆕 messageType`            | Outbound message type     | `CDM_PROCESSED`                            |
+| `🆕 processingStage`        | Current processing stage  | `CDM_TRANSFORMATION_COMPLETE`              |
 
 ## API Endpoints
 
@@ -245,17 +272,17 @@ The service adds the following headers to processed messages:
 
 ### Direct Endpoints (Internal)
 
-| Endpoint                          | Purpose                    | Usage                                  |
-| --------------------------------- | -------------------------- | -------------------------------------- |
-| `direct:kafka-message-processing` | Main input (dual mode)     | Receives from Kafka & ingestion module |
-| `direct:pacs-008-transform`       | pacs.008 processing        | Internal routing                       |
-| `direct:pan-001-transform`        | pan.001 processing         | Internal routing                       |
-| `direct:unknown-message`          | Unknown message handling   | Error cases                            |
-| `🆕 direct:cdm-persistence`       | CDM persistence processing | Routes to k-db-tx                      |
-| `direct:error-handling`           | Error processing           | Error cases                            |
-| `direct:health-check`             | Health status              | Monitoring                             |
-| `direct:metrics`                  | Metrics collection         | Monitoring                             |
-| `🆕 cdmOutputEndpoint`            | CDM output routing         | External configuration point           |
+| Endpoint                          | Purpose                  | Usage                                  |
+| --------------------------------- | ------------------------ | -------------------------------------- |
+| `direct:kafka-message-processing` | Main input (dual mode)   | Receives from Kafka & ingestion module |
+| `direct:pacs-008-transform`       | pacs.008 processing      | Internal routing                       |
+| `direct:pan-001-transform`        | pan.001 processing       | Internal routing                       |
+| `direct:unknown-message`          | Unknown message handling | Error cases                            |
+| `🆕 direct:cdm-output`            | CDM output routing       | Routes to conditional router           |
+| `🆕 direct:route-to-outbound`     | Outbound service routing | HTTP calls to outbound module          |
+| `direct:error-handling`           | Error processing         | Error cases                            |
+| `direct:health-check`             | Health status            | Monitoring                             |
+| `direct:metrics`                  | Metrics collection       | Monitoring                             |
 
 ## 🆕 CDM Persistence Integration
 

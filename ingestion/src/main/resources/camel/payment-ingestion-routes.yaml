@@ -21,6 +21,21 @@
         - log:
             message: "Starting payment ingestion orchestration for message: ${body}"
         - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Starting payment ingestion orchestration for message ID: ${header.MessageId}, Receipt Channel: ${header.ReceiptChannel}"
+        - to: "kamelet:k-log-tx"
+        - setHeader:
             name: IngestionStartTime
             simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
         - setHeader:
@@ -42,18 +57,63 @@
                 steps:
                   - log:
                       message: "Routing message based on receipt channel: ${header.ReceiptChannel}"
+                  - setHeader:
+                      name: "LogLevel"
+                      constant: "INFO"
+                  - setHeader:
+                      name: "LogSource"
+                      constant: "ingestion"
+                  - setHeader:
+                      name: "LogCategory"
+                      constant: "ROUTE"
+                  - setHeader:
+                      name: "CorrelationId"
+                      simple: "${header.MessageId}"
+                  - setBody:
+                      simple: "Routing message based on receipt channel: ${header.ReceiptChannel} for message ID: ${header.MessageId}"
+                  - to: "kamelet:k-log-tx"
                   - choice:
                       when:
                         - simple: "${header.ReceiptChannel} == 'CFT'"
                           steps:
                             - log:
                                 message: "[SMART-ROUTING] CFT message - routing to Kafka for batch processing"
+                            - setHeader:
+                                name: "LogLevel"
+                                constant: "INFO"
+                            - setHeader:
+                                name: "LogSource"
+                                constant: "ingestion"
+                            - setHeader:
+                                name: "LogCategory"
+                                constant: "ROUTE"
+                            - setHeader:
+                                name: "CorrelationId"
+                                simple: "${header.MessageId}"
+                            - setBody:
+                                simple: "[SMART-ROUTING] CFT message routing to Kafka for batch processing - Message ID: ${header.MessageId}"
+                            - to: "kamelet:k-log-tx"
                             - to:
                                 uri: direct:kafka-publisher
                       otherwise:
                         steps:
                           - log:
                               message: "[SMART-ROUTING] HTTP/MQ message - routing to processing module for real-time processing"
+                          - setHeader:
+                              name: "LogLevel"
+                              constant: "INFO"
+                          - setHeader:
+                              name: "LogSource"
+                              constant: "ingestion"
+                          - setHeader:
+                              name: "LogCategory"
+                              constant: "ROUTE"
+                          - setHeader:
+                              name: "CorrelationId"
+                              simple: "${header.MessageId}"
+                          - setBody:
+                              simple: "[SMART-ROUTING] HTTP/MQ message routing to processing module for real-time processing - Message ID: ${header.MessageId}, Channel: ${header.ReceiptChannel}"
+                          - to: "kamelet:k-log-tx"
                           - to:
                               uri: direct:processing-publisher
             otherwise:
@@ -76,6 +136,21 @@
         - log:
             message: "[MQ-RECEIPT] Message received from k-mq-message-receiver kamelet"
         - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "mq-receipt"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "[MQ-RECEIPT] Message received from k-mq-message-receiver kamelet - Message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
+        - setHeader:
             name: ReceiptChannel
             constant: "MQ"
         - setHeader:
@@ -92,6 +167,21 @@
         - log:
             message: "[HTTP-RECEIPT] Message received from k-http-message-receiver kamelet"
         - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "http-receipt"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "[HTTP-RECEIPT] Message received from k-http-message-receiver kamelet - Message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
+        - setHeader:
             name: ReceiptChannel
             constant: "HTTP"
         - setHeader:
@@ -103,10 +193,25 @@
 - route:
     id: file-receipt-route
     from:
-      uri: kamelet:k-cft-message-receiver?directoryPath={{ingestion.file.input.directory:/tmp/payments-in}}&filePattern={{ingestion.file.pattern:.*\\.xml}}&processedDirectory={{ingestion.file.processed.directory:/tmp/payments-processed}}&errorDirectory={{ingestion.file.error.directory:/tmp/payments-error}}&delay={{ingestion.file.delay:5000}}
+      uri: kamelet:k-cft-data-receiver?directoryPath={{ingestion.file.input.directory:/tmp/payments-in}}&filePattern={{ingestion.file.pattern:.*\\.xml}}&processedDirectory={{ingestion.file.processed.directory:/tmp/payments-processed}}&errorDirectory={{ingestion.file.error.directory:/tmp/payments-error}}&delay={{ingestion.file.delay:5000}}
       steps:
         - log:
-            message: "[CFT-RECEIPT] Message received from k-cft-message-receiver kamelet"
+            message: "[CFT-RECEIPT] Message received from k-cft-data-receiver kamelet"
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "cft-receipt"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "[CFT-RECEIPT] Message received from k-cft-data-receiver kamelet - File: ${header.CamelFileName}, Message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
         - setHeader:
             name: ReceiptChannel
             constant: "CFT"
@@ -122,11 +227,26 @@
     from:
       uri: direct:database-persistence
       steps:
-          log:
+        - log:
             message: "Persisting message to database via k-db-tx"
             level: INFO
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Persisting message to database via k-db-tx for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
             
-        - set-header:
+        - setHeader:
             name: "ProcessingStage"
             constant: "DATABASE_PERSISTENCE"
             
@@ -139,12 +259,42 @@
                   - log:
                       message: "Message successfully persisted to database with ID: ${header.persistedMessageId}"
                   - setHeader:
+                      name: "LogLevel"
+                      constant: "INFO"
+                  - setHeader:
+                      name: "LogSource"
+                      constant: "ingestion"
+                  - setHeader:
+                      name: "LogCategory"
+                      constant: "BUSINESS"
+                  - setHeader:
+                      name: "CorrelationId"
+                      simple: "${header.MessageId}"
+                  - setBody:
+                      simple: "Message successfully persisted to database with ID: ${header.persistedMessageId} for message: ${header.MessageId}"
+                  - to: "kamelet:k-log-tx"
+                  - setHeader:
                       name: MessagePersisted
                       constant: true
             otherwise:
               steps:
                 - log:
                     message: "Database persistence failed: ${header.persistenceError}"
+                - setHeader:
+                    name: "LogLevel"
+                    constant: "ERROR"
+                - setHeader:
+                    name: "LogSource"
+                    constant: "ingestion"
+                - setHeader:
+                    name: "LogCategory"
+                    constant: "ERROR"
+                - setHeader:
+                    name: "CorrelationId"
+                    simple: "${header.MessageId}"
+                - setBody:
+                    simple: "Database persistence failed: ${header.persistenceError} for message: ${header.MessageId}"
+                - to: "kamelet:k-log-tx"
                 - setHeader:
                     name: MessagePersisted
                     constant: false
@@ -163,12 +313,42 @@
         - log:
             message: "Enriching message with reference data"
         - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Enriching message with reference data for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
+        - setHeader:
             name: ProcessingStage
             constant: REFERENCE_ENRICHMENT
         - to:
             uri: kamelet:k-referentiel-data-loader
         - log:
             message: "Reference data enrichment completed"
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Reference data enrichment completed for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
 
 # Enriched Data Persistence Step (After reference enrichment)
 - route:
@@ -178,6 +358,21 @@
       steps:
         - log:
             message: "Persisting enriched message data to database"
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Persisting enriched message data to database for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
         - setHeader:
             name: ProcessingStage
             constant: ENRICHED_DATA_PERSISTENCE
@@ -217,6 +412,21 @@
         - log:
             message: "Starting message validation"
         - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Starting message validation for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
+        - setHeader:
             name: ProcessingStage
             constant: VALIDATION
         - to:
@@ -227,10 +437,40 @@
                 steps:
                   - log:
                       message: "Message validation passed"
+                  - setHeader:
+                      name: "LogLevel"
+                      constant: "INFO"
+                  - setHeader:
+                      name: "LogSource"
+                      constant: "ingestion"
+                  - setHeader:
+                      name: "LogCategory"
+                      constant: "BUSINESS"
+                  - setHeader:
+                      name: "CorrelationId"
+                      simple: "${header.MessageId}"
+                  - setBody:
+                      simple: "Message validation passed for message ID: ${header.MessageId}"
+                  - to: "kamelet:k-log-tx"
             otherwise:
               steps:
                 - log:
                     message: "Message validation failed: ${header.ValidationResult}"
+                - setHeader:
+                    name: "LogLevel"
+                    constant: "ERROR"
+                - setHeader:
+                    name: "LogSource"
+                    constant: "ingestion"
+                - setHeader:
+                    name: "LogCategory"
+                    constant: "ERROR"
+                - setHeader:
+                    name: "CorrelationId"
+                    simple: "${header.MessageId}"
+                - setBody:
+                    simple: "Message validation failed: ${header.ValidationResult} for message ID: ${header.MessageId}"
+                - to: "kamelet:k-log-tx"
                 - setHeader:
                     name: RejectionReason
                     constant: VALIDATION_FAILED
@@ -243,6 +483,21 @@
         - log:
             message: "Starting idempotence check"
         - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Starting idempotence check for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
+        - setHeader:
             name: ProcessingStage
             constant: IDEMPOTENCE
         - to:
@@ -253,6 +508,21 @@
                 steps:
                   - log:
                       message: "Duplicate message detected, checking action"
+                  - setHeader:
+                      name: "LogLevel"
+                      constant: "WARN"
+                  - setHeader:
+                      name: "LogSource"
+                      constant: "ingestion"
+                  - setHeader:
+                      name: "LogCategory"
+                      constant: "BUSINESS"
+                  - setHeader:
+                      name: "CorrelationId"
+                      simple: "${header.MessageId}"
+                  - setBody:
+                      simple: "Duplicate message detected, checking action for message ID: ${header.MessageId}"
+                  - to: "kamelet:k-log-tx"
                   - choice:
                       when:
                         - simple: "${header.ShouldReject} == true"
@@ -268,16 +538,61 @@
                             - log:
                                 message: "Ignoring duplicate message as per configuration"
                             - setHeader:
+                                name: LogLevel
+                                constant: "WARN"
+                            - setHeader:
+                                name: LogSource
+                                constant: "IDEMPOTENCE_CHECK"
+                            - setHeader:
+                                name: LogCategory
+                                constant: "BUSINESS"
+                            - setHeader:
+                                name: CorrelationId
+                                simple: "${header.MessageId}"
+                            - setBody:
+                                simple: "Duplicate message ignored per configuration: MessageId=${header.MessageId}, ShouldIgnore=${header.ShouldIgnore}"
+                            - to: kamelet:k-log-tx
+                            - setHeader:
                                 name: CanProcess
                                 constant: false
                       otherwise:
                         steps:
                           - log:
                               message: "Processing duplicate with warning"
+                          - setHeader:
+                              name: LogLevel
+                              constant: "WARN"
+                          - setHeader:
+                              name: LogSource
+                              constant: "IDEMPOTENCE_CHECK"
+                          - setHeader:
+                              name: LogCategory
+                              constant: "BUSINESS"
+                          - setHeader:
+                              name: CorrelationId
+                              simple: "${header.MessageId}"
+                          - setBody:
+                              simple: "Processing duplicate message with warning: MessageId=${header.MessageId}"
+                          - to: kamelet:k-log-tx
             otherwise:
               steps:
                 - log:
                     message: "Message idempotence check passed"
+                - setHeader:
+                    name: LogLevel
+                    constant: "INFO"
+                - setHeader:
+                    name: LogSource
+                    constant: "IDEMPOTENCE_CHECK"
+                - setHeader:
+                    name: LogCategory
+                    constant: "BUSINESS"
+                - setHeader:
+                    name: CorrelationId
+                    simple: "${header.MessageId}"
+                - setBody:
+                    simple: "Idempotence check passed successfully: MessageId=${header.MessageId}"
+                - to: kamelet:k-log-tx
 
 - route:
     id: kafka-publisher
@@ -319,6 +634,21 @@
             uri: "kafka:${header.KafkaTopic}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
         - log:
             message: "Message successfully published to Kafka topic: ${header.KafkaTopic}"
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "kafka-publisher"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Message successfully published to Kafka topic: ${header.KafkaTopic} for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
 
 # ===================================================================
 # PROCESSING MODULE PUBLISHER - Real-time Route for HTTP/MQ Messages
@@ -334,6 +664,21 @@
       steps:
         - log:
             message: "[PROCESSING-ROUTE] Publishing message to processing module"
+        - setHeader:
+            name: "LogLevel"
+            constant: "INFO"
+        - setHeader:
+            name: "LogSource"
+            constant: "processing-publisher"
+        - setHeader:
+            name: "LogCategory"
+            constant: "ROUTE"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "[PROCESSING-ROUTE] Publishing message to processing module for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
         - setHeader:
             name: ProcessingStage
             constant: PROCESSING_PUBLISH
@@ -351,14 +696,59 @@
                 steps:
                   - log:
                       message: "[PROCESSING-ROUTE] Routing to processing module endpoint: {{ingestion.processing.endpoint:direct:kafka-message-processing}}"
+                  - setHeader:
+                      name: LogLevel
+                      constant: "INFO"
+                  - setHeader:
+                      name: LogSource
+                      constant: "PROCESSING_MODULE"
+                  - setHeader:
+                      name: LogCategory
+                      constant: "ROUTE"
+                  - setHeader:
+                      name: CorrelationId
+                      simple: "${header.MessageId}"
+                  - setBody:
+                      simple: "Routing to processing module endpoint: {{ingestion.processing.endpoint:direct:kafka-message-processing}} for message ID: ${header.MessageId}"
+                  - to: kamelet:k-log-tx
                   - toD:
                       uri: "{{ingestion.processing.endpoint:direct:kafka-message-processing}}"
                   - log:
                       message: "[PROCESSING-ROUTE] Message successfully sent to processing module"
+                  - setHeader:
+                      name: LogLevel
+                      constant: "INFO"
+                  - setHeader:
+                      name: LogSource
+                      constant: "PROCESSING_MODULE"
+                  - setHeader:
+                      name: LogCategory
+                      constant: "BUSINESS"
+                  - setHeader:
+                      name: CorrelationId
+                      simple: "${header.MessageId}"
+                  - setBody:
+                      simple: "Message successfully sent to processing module for message ID: ${header.MessageId}"
+                  - to: kamelet:k-log-tx
             otherwise:
               steps:
                 - log:
                     message: "[PROCESSING-ROUTE] Processing module integration disabled, routing to default Kafka"
+                - setHeader:
+                    name: LogLevel
+                    constant: "WARN"
+                - setHeader:
+                    name: LogSource
+                    constant: "PROCESSING_MODULE"
+                - setHeader:
+                    name: LogCategory
+                    constant: "BUSINESS"
+                - setHeader:
+                    name: CorrelationId
+                    simple: "${header.MessageId}"
+                - setBody:
+                    simple: "Processing module integration disabled, routing to default Kafka for message ID: ${header.MessageId}"
+                - to: kamelet:k-log-tx
                 - to:
                     uri: direct:kafka-publisher
 
@@ -371,6 +761,21 @@
         - log:
             message: "Processing rejected message: ${header.RejectionReason}"
         - setHeader:
+            name: "LogLevel"
+            constant: "WARN"
+        - setHeader:
+            name: "LogSource"
+            constant: "rejection-handler"
+        - setHeader:
+            name: "LogCategory"
+            constant: "ERROR"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Processing rejected message: ${header.RejectionReason} for message ID: ${header.MessageId}"
+        - to: "kamelet:k-log-tx"
+        - setHeader:
             name: ProcessingStage
             constant: REJECTION
         - setHeader:
@@ -380,6 +785,21 @@
             uri: "kafka:{{ingestion.kafka.topic.rejected:payments-rejected}}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
         - log:
             message: "Rejected message sent to dead letter topic"
+        - setHeader:
+            name: LogLevel
+            constant: "WARN"
+        - setHeader:
+            name: LogSource
+            constant: "REJECTION_HANDLER"
+        - setHeader:
+            name: LogCategory
+            constant: "BUSINESS"
+        - setHeader:
+            name: CorrelationId
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Rejected message sent to dead letter topic for message ID: ${header.MessageId}"
+        - to: kamelet:k-log-tx
 
 # Error Handler
 - route:
@@ -390,9 +810,39 @@
         - log:
             message: "Processing system error"
         - setHeader:
+            name: "LogLevel"
+            constant: "ERROR"
+        - setHeader:
+            name: "LogSource"
+            constant: "error-handler"
+        - setHeader:
+            name: "LogCategory"
+            constant: "ERROR"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Processing system error for message ID: ${header.MessageId}, Error: ${exception.message}"
+        - to: "kamelet:k-log-tx"
+        - setHeader:
             name: ProcessingStage
             constant: ERROR
         - to:
             uri: "kafka:{{ingestion.kafka.topic.errors:payments-errors}}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
         - log:
             message: "Error message sent to error topic"
+        - setHeader:
+            name: LogLevel
+            constant: "ERROR"
+        - setHeader:
+            name: LogSource
+            constant: "ERROR_HANDLER"
+        - setHeader:
+            name: LogCategory
+            constant: "ERROR"
+        - setHeader:
+            name: CorrelationId
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Error message sent to error topic for message ID: ${header.MessageId}"
+        - to: kamelet:k-log-tx

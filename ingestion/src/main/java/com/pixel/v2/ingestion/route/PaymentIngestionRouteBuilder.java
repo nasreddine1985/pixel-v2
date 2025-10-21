@@ -90,10 +90,10 @@ public class PaymentIngestionRouteBuilder extends RouteBuilder {
             .setHeader("ReceiptChannel", constant("HTTP"))
             .to("direct:payment-ingestion");
 
-        // File (CFT) receipt route using k-cft-message-receiver kamelet
-        from("kamelet:k-cft-message-receiver?directoryPath={{ingestion.file.input.directory:/tmp/payments-in}}&filePattern={{ingestion.file.pattern:.*\\.xml}}&processedDirectory={{ingestion.file.processed.directory:/tmp/payments-processed}}&errorDirectory={{ingestion.file.error.directory:/tmp/payments-error}}&delay={{ingestion.file.delay:5000}}")
-            .routeId("file-receipt-route")
-            .log("Message received from k-cft-message-receiver kamelet")
+        // File (CFT) receipt route using k-cft-data-receiver kamelet
+        from("kamelet:k-cft-data-receiver?directoryPath={{ingestion.file.input.directory:/tmp/payments-in}}&filePattern={{ingestion.file.pattern:.*\\.xml}}&processedDirectory={{ingestion.file.processed.directory:/tmp/payments-processed}}&errorDirectory={{ingestion.file.error.directory:/tmp/payments-error}}&delay={{ingestion.file.delay:5000}}")
+            .routeId("cft-receipt")
+            .log("Message received from k-cft-data-receiver kamelet")
             .setHeader("ReceiptChannel", constant("CFT"))
             .to("direct:payment-ingestion");
 

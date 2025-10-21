@@ -1,7 +1,7 @@
-apiVersion: camel.apache.org/v1alpha1
+apiVersion: camel.apache.org/v1
 kind: Kamelet
 metadata:
-  name: k-cft-message-receiver
+  name: k-cft-data-receiver
   labels:
     camel.apache.org/kamelet.type: "source"
 spec:

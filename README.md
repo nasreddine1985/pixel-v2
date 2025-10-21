@@ -2,15 +2,17 @@
 
 ## Overview
 
-The PIXEL-V2 project is a Maven multi-module project implementing an advanced payment message processing system with **intelligent routing capabilities**. It provides a modular architecture with Apache Camel kamelets for message transformation, persistence, and orchestration.
+The PIXEL-V2 project is a Maven multi-module project implementing an advanced payment message processing system with **intelligent routing capabilities** and **conditional message distribution**. It provides a modular architecture with Apache Camel kamelets for message transformation, persistence, and orchestration.
 
 ### 🚀 Key Features
 
 - **Smart Message Routing**: Automatically routes messages based on source channel for optimal processing
+- **Conditional Distribution**: Intelligent routing of processed messages based on origin (Kafka ↔ Outbound Service)
 - **Dual Processing Paths**: Batch processing for file-based messages, real-time processing for interactive channels
 - **Multi-Channel Ingestion**: Supports MQ, HTTP API, and file-based message receipt
 - **Message Type Detection**: Intelligent detection and routing of pacs.008 and pan.001 messages
 - **CDM Transformation**: Converts payment messages to Common Data Model format
+- **Outbound Distribution**: Centralized message distribution and logging service
 - **High Performance**: Optimized routing reduces latency by 50-70% for real-time channels
 
 ## Project Structure
@@ -19,10 +21,11 @@ The PIXEL-V2 project is a Maven multi-module project implementing an advanced pa
 PIXEL-V2/
 ├── pom.xml                              # Parent POM
 ├── ingestion/                          # 🔄 Smart routing orchestrator application
-├── processing/                         # 🆕 Real-time message processing module
+├── processing/                         # 🆕 Real-time message processing module with conditional routing
+├── outbound/                           # 🆕 Message distribution and outbound delivery service
 ├── k-mq-message-receiver/              # Kamelet for MQ message receipt and persistence
 ├── k-http-message-receiver/            # Kamelet for HTTP API message receipt
-├── k-cft-message-receiver/             # Kamelet for CFT file-based message receipt
+├── k-cft-data-receiver/                # Kamelet for CFT file-based message receipt
 ├── k-kafka-message-receiver/           # 🆕 Kamelet for Kafka message consumption
 ├── k-referentiel-data-loader/          # Kamelet for reference data loading via REST services
 ├── k-pacs008-to-cdm-transformer/       # Kamelet for PACS.008 to CDM transformation
@@ -46,7 +49,7 @@ PIXEL-V2/
 │ Processing  │    │ Kafka       │    │ Dead Letter │
 │ Module      │    │ Topics      │    │ Topics      │
 │ (Real-time) │    │ (Batch)     │    │ (Errors)    │
-└─────────────┘    └──────┬──────┘    └─────────────┘
+└──────┬──────┘    └──────┬──────┘    └─────────────┘
        │                  │
        │                  ▼
        │           ┌─────────────┐
@@ -61,7 +64,26 @@ PIXEL-V2/
                   │ Processing  │◀──────────┘
                   │ Module      │
                   │ (Unified)   │
-                  └─────────────┘
+                  └──────┬──────┘
+                         │
+                         ▼
+              ┌─────────────────────┐
+              │   CDM Transformer   │
+              │   (pacs.008/pan.001)│
+              └──────┬──────────────┘
+                     │
+                     ▼
+        ┌─────────────────────────────────┐
+        │      Conditional Router        │
+        │   (Based on Message Origin)    │
+        └──────┬──────────────────┬──────┘
+               │                  │
+               ▼                  ▼
+    ┌─────────────────┐  ┌─────────────────┐
+    │ Outbound Service│  │ Kafka Output    │
+    │ (Non-Kafka)     │  │ (Kafka Origin)  │
+    │ Port: 8082      │  │ Topic: cdm-out  │
+    └─────────────────┘  └─────────────────┘
 ```
 
 ## Modules
@@ -88,26 +110,73 @@ Spring Boot application that orchestrates payment message processing flow with *
 - Comprehensive error handling and monitoring
 - Health check and metrics endpoints
 
-### processing (New Module)
+### processing (Enhanced with Conditional Routing)
 
-Spring Boot Apache Camel application for real-time payment message processing.
+Spring Boot Apache Camel application for real-time payment message processing with **intelligent conditional routing**.
 
 **Key Features:**
 
 - **Message Type Detection**: Intelligent identification of pacs.008 and pan.001 formats
 - **Dynamic Routing**: Routes to appropriate CDM transformers based on message type
+- **🆕 Conditional Distribution**: Smart routing of processed CDM messages based on origin
+  - **Kafka-originated messages** → Routes back to Kafka output broker
+  - **Non-Kafka messages** (HTTP/MQ) → Routes to outbound service
 - **Format Support**: Handles both XML and JSON message formats
 - **Error Handling**: Comprehensive error processing and monitoring
-- **Integration Ready**: Seamless integration with ingestion module
+- **Integration Ready**: Seamless integration with ingestion and outbound modules
+
+**🆕 Conditional Routing Logic:**
+
+```java
+choice()
+    .when(header("messageSource").isEqualTo("KAFKA_TOPIC"))
+        .to("kafka:cdm-processed-messages?brokers=localhost:9092")
+    .otherwise()
+        .to("http://localhost:8082/outbound/submit")
+```
 
 **Processing Flow:**
 
 ```
-HTTP/MQ Messages → processing module → Message Type Detection → CDM Transformers
-CFT Messages → Kafka → k-kafka-message-receiver → processing module → CDM Transformers
+HTTP/MQ Messages → processing module → CDM Transformation → Outbound Service
+CFT Messages → Kafka → k-kafka-message-receiver → processing module → CDM → Kafka Output
 ```
 
-### k-mq-message-receiver
+### outbound (New Module)
+
+Spring Boot Apache Camel application for centralized message distribution and outbound delivery.
+
+**Key Features:**
+
+- **Multi-Channel Input**: Accepts messages from direct endpoints and Kafka topics
+- **Message Type Detection**: Intelligent classification (PAYMENT, TRANSACTION, NOTIFICATION)
+- **Centralized Logging**: Integrates with k-log-tx kamelet for comprehensive logging
+- **Flexible Routing**: Configurable routing based on message type and content
+- **REST API**: HTTP endpoints for external integration and testing
+- **Health Monitoring**: Built-in health checks and metrics collection
+
+**Integration Points:**
+
+- **From Processing Module**: Receives CDM-transformed messages via HTTP POST
+- **From Kafka**: Consumes messages using k-kafka-message-receiver kamelet
+- **Logging**: Uses k-log-tx for centralized log management
+- **Database**: Optional persistence for delivery tracking
+
+**API Endpoints:**
+
+```
+POST /outbound/submit              # Submit message for processing
+POST /outbound/submit-with-headers # Submit with custom headers
+GET  /outbound/health             # Health check
+GET  /outbound/routes             # Active Camel routes info
+```
+
+**Message Flow:**
+
+```
+External Systems → HTTP API → Message Processing → Type-specific Routing → Delivery
+Kafka Topics → k-kafka-message-receiver → Message Processing → Type-specific Routing
+```
 
 Kamelet for receiving messages from IBM MQ and persisting them using JPA.
 
@@ -251,6 +320,13 @@ Kamelet for unified database persistence operations supporting both initial and 
    mvn spring-boot:run
    ```
 
+   **Start Outbound Service:**
+
+   ```bash
+   cd outbound
+   mvn spring-boot:run
+   ```
+
    **Start Ingestion Service:**
 
    ```bash
@@ -311,6 +387,34 @@ processing.kafka.consumer.group=processing-group
 processing.transformers.pacs008.endpoint=kamelet:k-pacs-008-to-cdm
 processing.transformers.pan001.endpoint=kamelet:k-pan-001-to-cdm
 processing.transformers.default.endpoint=direct:default-handler
+
+# 🆕 Conditional Routing Configuration
+outbound.service.endpoint=http://localhost:8082/outbound/submit
+kafka.output.broker=localhost:9092
+kafka.output.topic=cdm-processed-messages
+```
+
+#### Outbound Module Configuration
+
+Configure `outbound/src/main/resources/application.properties`:
+
+```properties
+# Server Configuration
+server.port=8082
+server.servlet.context-path=/outbound
+
+# Kafka Integration (for message consumption)
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=outbound-service
+spring.kafka.consumer.auto-offset-reset=earliest
+
+# Camel Configuration
+camel.springboot.name=outbound-camel
+camel.springboot.main-run-controller=true
+
+# Logging Configuration
+logging.level.com.pixel.v2.outbound=INFO
+logging.level.org.apache.camel=INFO
 ```
 
 ## Dependencies
@@ -373,12 +477,16 @@ tail -f logs/ingestion.log | grep "CFT message - routing to Kafka"
 # Check application health
 curl http://localhost:8080/ingestion/health
 curl http://localhost:8081/processing/health
+curl http://localhost:8082/outbound/health
 
 # Monitor Camel routes
 curl http://localhost:8080/ingestion/actuator/camelroutes
+curl http://localhost:8081/processing/actuator/camelroutes
+curl http://localhost:8082/outbound/routes
 
 # View processing metrics
 curl http://localhost:8081/processing/actuator/metrics
+curl http://localhost:8082/outbound/actuator/metrics
 ```
 
 ### Performance Benefits

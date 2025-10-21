@@ -9,10 +9,10 @@
         <version>1.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>k-cft-message-receiver</artifactId>
+    <artifactId>k-cft-data-receiver</artifactId>
     <packaging>jar</packaging>
 
-    <name>k-cft-message-receiver kamelet</name>
+    <name>k-cft-data-receiver kamelet</name>
 
     <dependencies>
         <dependency>

@@ -25,6 +25,10 @@ import com.pixel.v2.processing.processors.MessageTypeProcessor;
 @Component
 public class PaymentMessageRoutes extends RouteBuilder {
 
+    // Constants to avoid duplicate string literals
+    private static final String CONTENT_TYPE_HEADER = "Content-Type";
+    private static final String APPLICATION_JSON = "application/json";
+
     @Autowired
     private MessageTypeProcessor messageTypeProcessor;
 
@@ -36,6 +40,15 @@ public class PaymentMessageRoutes extends RouteBuilder {
 
     @Value("${processing.error.endpoint:direct:error-handling}")
     private String errorEndpoint;
+
+    @Value("${processing.outbound.service.endpoint:http://localhost:8082/outbound/submit}")
+    private String outboundServiceEndpoint;
+
+    @Value("${processing.kafka.output.broker:localhost:9092}")
+    private String kafkaOutputBroker;
+
+    @Value("${processing.kafka.output.topic:cdm-processed-messages}")
+    private String kafkaOutputTopic;
 
     @Override
     public void configure() throws Exception {
@@ -79,13 +92,44 @@ public class PaymentMessageRoutes extends RouteBuilder {
             .setHeader("ErrorDescription", constant("Message type could not be determined"))
             .to(errorEndpoint);
 
-        // CDM output route - processes transformed CDM messages
+        // CDM output route - processes transformed CDM messages and routes based on origin
         from(cdmOutputEndpoint)
             .routeId("cdm-output-processing")
-            .log(LoggingLevel.INFO, "[CDM-OUTPUT] Processing transformed CDM message")
+            .log(LoggingLevel.INFO, "[CDM-OUTPUT] Processing transformed CDM message from origin: ${header.messageSource}")
             .setHeader("TransformationComplete", constant(true))
             .setHeader("OutputTimestamp", simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
-            .log(LoggingLevel.INFO, "[CDM-OUTPUT] CDM message processing complete");
+            .choice()
+                .when(header("messageSource").isEqualTo("KAFKA_TOPIC"))
+                    .log(LoggingLevel.INFO, "[CDM-OUTPUT] Message originated from Kafka, routing to Kafka output broker")
+                    .setHeader("CamelKafkaKey", simple("${header.kafkaKey}"))
+                    .to("kafka:" + kafkaOutputTopic + "?brokers=" + kafkaOutputBroker)
+                    .log(LoggingLevel.INFO, "[CDM-OUTPUT] CDM message sent to Kafka topic: " + kafkaOutputTopic)
+                .otherwise()
+                    .log(LoggingLevel.INFO, "[CDM-OUTPUT] Message originated from non-Kafka source, routing to outbound service")
+                    .setHeader(CONTENT_TYPE_HEADER, constant(APPLICATION_JSON))
+                    .setHeader("messageType", constant("CDM_PROCESSED"))
+                    .setHeader("processingStage", constant("CDM_TRANSFORMATION_COMPLETE"))
+                    .to("direct:route-to-outbound")
+                    .log(LoggingLevel.INFO, "[CDM-OUTPUT] CDM message sent to outbound service")
+            .end()
+            .log(LoggingLevel.INFO, "[CDM-OUTPUT] CDM message processing and routing complete");
+
+        // Route to outbound service - handles HTTP communication with outbound module
+        from("direct:route-to-outbound")
+            .routeId("route-to-outbound-service")
+            .log(LoggingLevel.INFO, "[OUTBOUND-ROUTING] Sending CDM message to outbound service")
+            .setHeader("CamelHttpMethod", constant("POST"))
+            .setHeader(CONTENT_TYPE_HEADER, constant(APPLICATION_JSON))
+            .removeHeaders("Camel*", "kafka*", "CamelHttp*")
+            .doTry()
+                .to(outboundServiceEndpoint)
+                .log(LoggingLevel.INFO, "[OUTBOUND-ROUTING] Successfully sent message to outbound service")
+            .doCatch(Exception.class)
+                .log(LoggingLevel.ERROR, "[OUTBOUND-ROUTING] Failed to send message to outbound service: ${exception.message}")
+                .setHeader("ErrorCode", constant("OUTBOUND_SERVICE_FAILURE"))
+                .setHeader("ErrorDescription", simple("Failed to communicate with outbound service: ${exception.message}"))
+                .to(errorEndpoint)
+            .end();
 
         // Error handling route
         from(errorEndpoint)
@@ -99,13 +143,13 @@ public class PaymentMessageRoutes extends RouteBuilder {
             .routeId("health-check")
             .log(LoggingLevel.DEBUG, "[HEALTH-CHECK] Processing health check request")
             .setBody(constant("{'status': 'UP', 'service': 'payment-message-processing'}"))
-            .setHeader("Content-Type", constant("application/json"));
+            .setHeader(CONTENT_TYPE_HEADER, constant(APPLICATION_JSON));
 
         // Metrics route for monitoring
         from("direct:metrics")
             .routeId("metrics-collection")
             .log(LoggingLevel.DEBUG, "[METRICS] Collecting processing metrics")
             .setBody(simple("{'processedMessages': '${exchangeProperty.CamelMessageHistory}', 'timestamp': '${date:now:yyyy-MM-dd HH:mm:ss}'}"))
-            .setHeader("Content-Type", constant("application/json"));
+            .setHeader(CONTENT_TYPE_HEADER, constant(APPLICATION_JSON));
     }
 }

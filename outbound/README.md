@@ -1,0 +1,387 @@
+# Outbound Message Service
+
+Spring Boot Apache Camel-based service for centralized outbound message processing, distribution, and delivery with **intelligent integration** with the processing module's conditional routing.
+
+## Overview
+
+The Outbound service is designed to:
+
+- **🆕 Receive CDM-processed messages** from the processing module via HTTP POST
+- Consume messages from direct endpoints or Kafka topics using the k-kafka-message-receiver kamelet
+- Log all messages using the k-log-tx kamelet for centralized logging and audit trails
+- Process and route messages based on their type (Payment, Transaction, Notification)
+- **🆕 Serve as the primary distribution hub** for non-Kafka originated messages
+- Provide a flexible architecture for outbound message handling and delivery
+
+## Architecture
+
+### 🔄 Integration with Processing Module Conditional Routing
+
+```
+┌─────────────────────┐    ┌─────────────────────┐
+│ Processing Module   │    │ Kafka Topics        │
+│ (Conditional Router)│    │ (Kafka-originated)  │
+│                     │    │                     │
+│ messageSource ≠     │    │ messageSource =     │
+│ "KAFKA_TOPIC"       │    │ "KAFKA_TOPIC"       │
+│                     │    │                     │
+│ HTTP POST           │    │ Direct Kafka        │
+│ :8082/submit        │    │ Output              │
+└──────────┬──────────┘    └─────────────────────┘
+           │
+           ▼
+    ┌─────────────────────┐
+    │ OUTBOUND SERVICE    │
+    │ Message Hub         │
+    │                     │
+    │ • Type Detection    │
+    │ • Centralized Log   │
+    │ • Message Routing   │
+    │ • Delivery Tracking │
+    └─────────────────────┘
+```
+
+## Architecture
+
+### Message Sources
+
+1. **🆕 Processing Module (Primary)**: Receives CDM-processed messages via HTTP POST from processing module's conditional router
+2. **Direct Endpoints**: Messages can be sent directly to `direct:outbound-input`
+3. **Kafka Topics**: Messages are consumed from configured Kafka topics using k-kafka-message-receiver
+
+### Message Flow
+
+#### 🆕 Primary Flow (from Processing Module)
+
+1. **HTTP Reception**: Processing module POSTs CDM-processed messages to `/outbound/submit`
+2. **Message Validation**: Validates CDM format and required headers
+3. **Centralized Logging**: Logs with k-log-tx for audit trail
+4. **Type Detection**: Detects message type from CDM content
+5. **Message Routing**: Routes based on detected type and business rules
+6. **Delivery Processing**: Handles final delivery to external systems
+7. **Completion Logging**: Logs successful processing and delivery status
+
+#### Traditional Flow (Kafka/Direct)
+
+1. Message Reception (direct or Kafka)
+2. Logging with k-log-tx
+3. Message Processing (type detection, validation, enrichment)
+4. Message Routing based on type
+5. Final output and audit logging
+
+### Supported Message Types
+
+- **🆕 CDM_PROCESSED**: CDM-transformed messages from processing module (primary type)
+- **PAYMENT**: Payment messages (pacs.008, JSON with payment fields)
+- **TRANSACTION**: Transaction messages (pain.001, JSON with transaction fields)
+- **NOTIFICATION**: Notification messages (text, JSON with notification fields)
+- **UNKNOWN/GENERIC**: Fallback for unrecognized message types
+
+### 🆕 CDM Message Processing
+
+The outbound service has enhanced capabilities for handling CDM-processed messages:
+
+- **CDM Validation**: Validates CDM structure and required fields
+- **Header Enrichment**: Adds outbound-specific headers for routing
+- **Correlation Tracking**: Maintains correlation with original source messages
+- **Processing Stage Awareness**: Recognizes messages are already CDM-transformed
+
+## Configuration
+
+### Application Properties
+
+Key configuration properties in `application.properties`:
+
+```properties
+# Service Configuration
+spring.application.name=outbound-service
+server.port=8082
+
+# 🆕 Processing Module Integration
+processing.integration.enabled=true
+processing.module.endpoint=http://localhost:8081/processing
+
+# Kafka Configuration
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=outbound-service-group
+spring.kafka.consumer.auto-offset-reset=earliest
+
+# Camel Configuration
+camel.springboot.name=outbound-camel
+camel.springboot.main-run-controller=true
+camel.springboot.jmx-enabled=true
+
+# Direct Endpoint Configuration
+outbound.direct.input-endpoint=direct:outbound-input
+outbound.direct.output-endpoint=direct:outbound-output
+
+# 🆕 CDM Processing Configuration
+outbound.cdm.validation.enabled=true
+outbound.cdm.correlation.tracking=true
+
+# Logging Configuration
+logging.level.com.pixel.v2.outbound=INFO
+logging.level.org.apache.camel=INFO
+```
+
+### Camel Routes
+
+Routes are defined in YAML DSL format in `src/main/resources/camel/outbound-routes.yaml`:
+
+- `outbound-direct-input`: Handles direct endpoint messages
+- `outbound-kafka-input`: Handles Kafka messages via k-kafka-message-receiver
+- `outbound-message-processor`: Main processing logic
+- `outbound-message-router`: Routes messages by type
+- Type-specific handlers: payment, transaction, notification, default
+- `outbound-error-handler`: Error handling and logging
+
+## Components
+
+### OutboundMessageProcessor
+
+Custom processor (`com.pixel.v2.outbound.processor.OutboundMessageProcessor`) that:
+
+- Detects message type based on content structure
+- Extracts message identifiers (payment ID, transaction ID, etc.)
+- Enriches messages with processing metadata
+- Handles errors gracefully
+
+### OutboundController
+
+REST controller (`com.pixel.v2.outbound.controller.OutboundController`) providing:
+
+- **🆕 `/outbound/submit`** - **Primary endpoint** for receiving CDM messages from processing module
+- `/outbound/submit-with-headers` - Submit messages with custom headers
+- `/outbound/health` - Service health check
+- `/outbound/routes` - Active Camel routes information
+
+#### 🆕 Processing Module Integration
+
+The `/outbound/submit` endpoint is specifically designed for processing module integration:
+
+```java
+@PostMapping("/submit")
+public ResponseEntity<Map<String, Object>> submitMessage(
+    @RequestBody String messageBody,
+    HttpServletRequest request) {
+
+    // Extract headers from processing module
+    Map<String, Object> headers = extractProcessingHeaders(request);
+
+    // Validate CDM format if messageType is CDM_PROCESSED
+    if ("CDM_PROCESSED".equals(headers.get("messageType"))) {
+        validateCdmMessage(messageBody);
+    }
+
+    // Send to Camel route for processing
+    producerTemplate.sendBodyAndHeaders("direct:outbound-input", messageBody, headers);
+
+    return ResponseEntity.ok(createSuccessResponse());
+}
+```
+
+## Usage
+
+### Starting the Service
+
+```bash
+mvn spring-boot:run
+```
+
+### 🆕 Submitting CDM Messages from Processing Module
+
+The primary use case - processing module sending CDM-processed messages:
+
+```bash
+# This is automatically done by the processing module's conditional router
+curl -X POST http://localhost:8082/outbound/submit \
+  -H "Content-Type: application/json" \
+  -H "messageType: CDM_PROCESSED" \
+  -H "processingStage: CDM_TRANSFORMATION_COMPLETE" \
+  -H "TransformationComplete: true" \
+  -d '{
+    "cdmType": "PAYMENT_INSTRUCTION",
+    "instructionId": "INST123",
+    "amount": 1000.00,
+    "currency": "EUR",
+    "debtorInfo": {...},
+    "creditorInfo": {...}
+  }'
+```
+
+### Direct Message Submission
+
+```bash
+curl -X POST http://localhost:8082/outbound/submit \
+  -H "Content-Type: application/json" \
+  -d '{"paymentId": "PAY123", "amount": 1000.00, "creditor": "John Doe"}'
+```
+
+#### Message with Headers
+
+```bash
+curl -X POST "http://localhost:8082/outbound/submit-with-headers?messageType=PAYMENT&priority=HIGH" \
+  -H "Content-Type: application/json" \
+  -d '{"paymentId": "PAY456", "amount": 2000.00}'
+```
+
+### Health Check
+
+```bash
+curl http://localhost:8082/outbound/health
+```
+
+### Route Information
+
+```bash
+curl http://localhost:8082/outbound/routes
+```
+
+## Dependencies
+
+### Kamelets Used
+
+- **k-kafka-message-receiver**: For consuming messages from Kafka topics
+- **k-log-tx**: For centralized logging and audit trails
+
+### Key Dependencies
+
+- Spring Boot 3.4.1
+- Apache Camel 4.1.0
+- Jackson for JSON processing
+- Oracle JDBC driver
+- Camel Kafka component
+- Camel YAML DSL
+
+## Integration
+
+### With Other Services
+
+The outbound service is designed to integrate with:
+
+- **🆕 Processing Service (Primary)**: Receives CDM-processed messages via conditional routing HTTP POST
+- **Ingestion Service**: Can receive messages from the ingestion pipeline
+- **External Systems**: Routes messages to external payment networks, notification systems, etc.
+- **🆕 Monitoring Systems**: Provides comprehensive logging and metrics for all processed messages
+
+### 🆕 Processing Module Conditional Routing Integration
+
+The outbound service is the **primary destination** for non-Kafka messages in the processing module's conditional routing:
+
+```java
+// Processing Module Route Configuration
+choice()
+    .when(header("messageSource").isEqualTo("KAFKA_TOPIC"))
+        .to("kafka:cdm-processed-messages?brokers=localhost:9092")
+    .otherwise()
+        .to("http://localhost:8082/outbound/submit")  // Routes to outbound service
+```
+
+**Message Flow:**
+
+```
+HTTP/MQ Messages → Processing Module → CDM Transformation → Outbound Service
+```
+
+**Benefits:**
+
+- **Centralized Distribution**: All non-Kafka CDM messages go through outbound service
+- **Unified Logging**: Comprehensive audit trail via k-log-tx
+- **Flexible Routing**: Outbound service can route to multiple external systems
+- **Error Handling**: Centralized error processing and retry logic
+
+### Kafka Integration
+
+Configure Kafka topics in application properties:
+
+```properties
+outbound.kafka.topics.input=processed-payments,processed-transactions,notifications
+```
+
+### Database Integration
+
+Uses the same database configuration as other PIXEL-V2 services for logging via k-log-tx.
+
+## Monitoring
+
+### Actuator Endpoints
+
+- `/actuator/health` - Spring Boot health check
+- `/actuator/camel` - Camel-specific metrics
+- `/actuator/metrics` - Application metrics
+
+### Logging
+
+All message processing is logged through k-log-tx with different log levels:
+
+- INFO: Normal processing flow
+- WARN: Unknown message types
+- ERROR: Processing failures
+
+### Custom Monitoring
+
+The service provides custom endpoints for monitoring:
+
+- Route status and statistics
+- Message processing metrics
+- Error rates and patterns
+
+## Development
+
+### Adding New Message Types
+
+1. Update `OutboundMessageProcessor.detectMessageType()` method
+2. Add new processing method (e.g., `processCustomMessage()`)
+3. Add new route handler in `outbound-routes.yaml`
+4. Update routing logic in `outbound-message-router`
+
+### Extending Routing Logic
+
+Add new routes in `outbound-routes.yaml` following the existing pattern:
+
+```yaml
+- route:
+    id: "outbound-custom-handler"
+    from:
+      uri: "direct:outbound-custom-handler"
+      steps:
+        - log:
+            message: "[CUSTOM-HANDLER] Processing custom message"
+        # Add custom processing steps
+```
+
+## Testing
+
+### Unit Tests
+
+Run unit tests with:
+
+```bash
+mvn test
+```
+
+### Integration Tests
+
+Integration tests use embedded Kafka and H2 database for testing complete message flows.
+
+### Manual Testing
+
+Use the REST endpoints to submit test messages and verify processing through logs and database entries.
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Kafka Connection**: Check bootstrap servers configuration
+2. **Database Connection**: Verify Oracle database connectivity
+3. **Route Failures**: Check Camel route definitions and dependencies
+4. **Message Processing**: Review OutboundMessageProcessor logic and logs
+
+### Debug Logging
+
+Enable debug logging for troubleshooting:
+
+```properties
+logging.level.com.pixel.v2.outbound=DEBUG
+logging.level.org.apache.camel=DEBUG
+```

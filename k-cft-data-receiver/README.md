@@ -1,4 +1,4 @@
-# k-cft-message-receiver Kamelet
+# k-cft-data-receiver Kamelet
 
 Monitors NAS folder for new files, reads XML payment messages line by line and persists them to database using JPA.
 

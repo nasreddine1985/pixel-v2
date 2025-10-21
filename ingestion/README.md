@@ -4,7 +4,7 @@ Spring Boot Apache Camel application that orchestrates the payment message inges
 
 ## Overview
 
-The Payment Ingestion Service provides a unified entry point for payment messages from multiple channels and orchestrates their processing through validation, idempotence checking, and publishing to Kafka topics.
+The Payment Ingestion Service provides a unified entry point for payment messages from multiple channels and orchestrates their processing through validation, idempotence checking, and publishing to Kafka topics. The service now includes **comprehensive centralized logging** through the `k-log-tx` kamelet, providing complete observability and audit trail for all payment processing operations.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ The ingestion service now supports **intelligent message routing** based on the 
 
 📥 RECEPTION LAYER - Message Receipt Kamelets
 ┌─────────────────────┐    ┌─────────────────────┐    ┌─────────────────────┐
-│   k-mq-message-     │    │  k-http-message-    │    │  k-cft-message-     │
+│   k-mq-message-     │    │  k-http-message-    │    │   k-cft-data-       │
 │      receiver       │    │      receiver       │    │      receiver       │
 │                     │    │                     │    │                     │
 │ 📬 IBM MQ Queues    │    │ 🌐 HTTP/REST API    │    │ 📁 File System      │
@@ -48,13 +48,13 @@ The ingestion service now supports **intelligent message routing** based on the 
                         │        📊 STEP 1           │
                         │    Database Persistence     │
                         │                             │
-                        │     k-database-             │
-                        │       transaction           │
+                        │        k-db-tx              │
                         │                             │
                         │    • Initial Message Save   │
                         │    • Transaction Mgmt       │
                         │    • Error Handling         │
                         │    • Status Headers         │
+                        │    • k-log-tx Integration   │
                         └─────────────┬───────────────┘
                                       │
                                       ▼
@@ -69,6 +69,7 @@ The ingestion service now supports **intelligent message routing** based on the 
                         │    • Config Data Load       │
                         │    • Header Enrichment      │
                         │    • Mapping Data           │
+                        │    • k-log-tx Integration   │
                         └─────────────┬───────────────┘
                                       │
                                       ▼
@@ -76,13 +77,13 @@ The ingestion service now supports **intelligent message routing** based on the 
                         │        📊 STEP 3           │
                         │  Enriched Data Persistence  │
                         │                             │
-                        │     k-database-             │
-                        │       transaction           │
+                        │        k-db-tx              │
                         │                             │
                         │    • Enriched Data Save     │
                         │    • Audit Trail            │
                         │    • Status Tracking        │
                         │    • Reference Integration  │
+                        │    • k-log-tx Integration   │
                         └─────────────┬───────────────┘
                                       │
                                       ▼
@@ -97,6 +98,7 @@ The ingestion service now supports **intelligent message routing** based on the 
                         │    • Format Checking        │
                         │    • Compliance Rules       │
                         │    • Schema Verification    │
+                        │    • k-log-tx Integration   │
                         └─────────────┬───────────────┘
                                       │
                                       ▼
@@ -111,6 +113,7 @@ The ingestion service now supports **intelligent message routing** based on the 
                         │    • InstrId Tracking       │
                         │    • Error/Warn Actions     │
                         │    • Uniqueness Validation  │
+                        │    • k-log-tx Integration   │
                         └─────────────┬───────────────┘
                                       │
                                       ▼
@@ -125,6 +128,7 @@ The ingestion service now supports **intelligent message routing** based on the 
                         │    • Route Selection        │
                         │    • Performance Opt        │
                         │    • Decision Logic         │
+                        │    • k-log-tx Integration   │
                         └─────────────┬───────────────┘
                                       │
                         ════════════▼════════════
@@ -206,17 +210,67 @@ The ingestion service now supports **intelligent message routing** based on the 
 
 🔧 SUPPORTING KAMELETS & COMPONENTS:
 ════════════════════════════════════
-• k-db-tx: Unified persistence (initial + enriched)
+• k-db-tx: Unified persistence (initial + enriched + CDM)
 • k-referentiel-data-loader: REST API data enrichment
 • k-ingestion-technical-validation: Message structure validation
 • k-payment-idempotence-helper: Duplicate prevention & tracking
 • k-kafka-message-receiver: Kafka topic consumer & routing
-• MessageMetadataEnrichmentProcessor: Processing module integration📊 PERFORMANCE METRICS:
-═══════════════════════
+• k-log-tx: Centralized logging with database persistence & audit trail
+• MessageMetadataEnrichmentProcessor: Processing module integration
+
+🗂️ CENTRALIZED LOGGING ARCHITECTURE:
+═══════════════════════════════════════
+                    ┌─────────────────────────────┐
+                    │       📋 k-log-tx          │
+                    │    Centralized Logging      │
+                    │                             │
+                    │    • Structured Metadata    │
+                    │    • Correlation Tracking   │
+                    │    • Database Persistence   │
+                    │    • Business/Route/Error   │
+                    │      Category Classification│
+                    │    • Async/Sync Processing  │
+                    │    • Complete Audit Trail   │
+                    │                             │
+                    │  ┌─────────────────────────┐ │
+                    │  │    LogEntry Entity      │ │
+                    │  │                         │ │
+                    │  │  • log_level (INFO/WARN/│ │
+                    │  │    ERROR)               │ │
+                    │  │  • log_source (component│ │
+                    │  │  • log_category         │ │
+                    │  │  • correlation_id       │ │
+                    │  │  • message_body         │ │
+                    │  │  • metadata (JSON)      │ │
+                    │  │  • created_at           │ │
+                    │  └─────────────────────────┘ │
+                    └─────────────────────────────┘
+                           ▲     ▲     ▲     ▲
+         ┌─────────────────┘     │     │     └─────────────────┐
+         │                       │     │                       │
+    ┌────▼────┐            ┌────▼────┐│                  ┌────▼────┐
+    │Receipt  │            │Database ││                  │Routing  │
+    │Kamelets │            │k-db-tx  ││                  │Decision │
+    │Logging  │            │Logging  ││                  │Logging  │
+    └─────────┘            └─────────┘│                  └─────────┘
+                                      │
+                               ┌─────▼─────┐
+                               │Validation │
+                               │& Business │
+                               │Process    │
+                               │Logging    │
+                               └───────────┘
+
+📊 PERFORMANCE METRICS & OBSERVABILITY:
+═══════════════════════════════════════
 • HTTP/MQ Route: 50-70% latency reduction (bypasses Kafka)
 • CFT Route: High throughput batch processing (via Kafka)
 • Dual Processing: Optimized for channel characteristics
 • Error Handling: Comprehensive monitoring & dead letter queues
+• Centralized Logging: Complete audit trail with correlation tracking
+• Log Performance: Async processing for minimal impact on message flow
+• Observability: 36+ enhanced log points for complete visibility
+• Audit Compliance: Database-persisted logs for regulatory requirements
 ```
 
 ## Processing Flow
@@ -237,12 +291,12 @@ The ingestion service supports three different message receipt channels, each ha
   - Provides immediate HTTP response confirmation
   - Supports CORS and content negotiation
 
-- **File Processing**: `k-cft-message-receiver` monitors file system directories for XML payment files
+- **File Processing**: `k-cft-data-receiver` monitors file system directories for XML payment files
   - Watches NAS folders for new files matching patterns
   - Processes large files line-by-line for memory efficiency
   - Handles file lifecycle (incoming → processed/error directories)
 
-All receiver kamelets focus solely on message receipt, logging, and routing - they do not perform persistence operations. They set comprehensive metadata headers that are used throughout the processing pipeline.
+All receiver kamelets focus solely on message receipt, logging, and routing - they do not perform persistence operations. They set comprehensive metadata headers that are used throughout the processing pipeline. **NEW**: All log statements are now enhanced with centralized logging via `k-log-tx` kamelet for complete audit trail.
 
 ### 2. Database Persistence (First Step)
 
@@ -251,6 +305,7 @@ All receiver kamelets focus solely on message receipt, logging, and routing - th
 - **NEW**: Supports both standard MESSAGE persistence and CDM (Common Data Model) objects
 - Handles transaction management and error scenarios
 - Sets persistence status headers for downstream processing
+- **NEW**: All persistence operations are logged via `k-log-tx` with success/failure tracking
 
 #### CDM Support Features
 
@@ -263,6 +318,7 @@ All receiver kamelets focus solely on message receipt, logging, and routing - th
 
 - Uses `k-referentiel-data-loader` kamelet to call reference APIs
 - Enriches message headers with configuration and mapping data
+- **NEW**: Enrichment start and completion are logged via `k-log-tx` for traceability
 
 ### 4. Enriched Data Persistence (Second Database Save)
 
@@ -272,6 +328,7 @@ All receiver kamelets focus solely on message receipt, logging, and routing - th
 - Updates the database record with additional reference data and metadata
 - Provides audit trail for enrichment process
 - Sets enriched data persistence status headers for downstream processing
+- **NEW**: Enriched persistence operations are logged via `k-log-tx` with comprehensive context
 
 #### CDM Enrichment Features
 
@@ -284,12 +341,14 @@ All receiver kamelets focus solely on message receipt, logging, and routing - th
 - Uses `k-ingestion-technical-validation` kamelet for comprehensive validation
 - Checks message structure, format, and compliance
 - Supports both strict and lenient validation modes
+- **NEW**: Validation success and failure are logged via `k-log-tx` with detailed error information
 
 ### 6. Idempotence Checking
 
 - Uses `k-payment-idempotence-helper` kamelet to prevent duplicate processing
 - Tracks unique identifiers (InstrId, EndToEndId, MsgId)
 - Configurable duplicate handling (ERROR, IGNORE, WARN)
+- **NEW**: All idempotence operations logged via `k-log-tx` including duplicate detection and warnings
 
 ### 7. Intelligent Message Routing
 
@@ -331,6 +390,7 @@ The ingestion service implements **smart routing** based on the source channel i
 - Routes rejected messages to dead letter topics
 - Handles system errors with comprehensive error logging
 - Maintains same error handling for both routing paths
+- **NEW**: All error conditions are logged via `k-log-tx` with ERROR level categorization and detailed context
 
 ````
 
@@ -399,10 +459,16 @@ persistence.cdm.enabled=true
 persistence.cdm.auto-extract-fields=true
 persistence.cdm.json-validation.enabled=true
 
-# CDM Output Endpoint Configuration
-processing.cdm.output.endpoint=direct:cdm-persistence
-processing.cdm.output.enabled=true
-processing.cdm.persistence.kamelet=k-db-tx
+# Centralized Logging Configuration (for k-log-tx kamelet)
+logging.centralized.enabled=true
+logging.centralized.async.enabled=true
+logging.centralized.correlation.header=MessageId
+logging.level.k-log-tx=INFO
+
+# Database connection for centralized logging
+logging.datasource.url=jdbc:oracle:thin:@//localhost:1521/xe
+logging.datasource.username=pixel_log_user
+logging.datasource.password=pixel_log_pass
 
 # Persistence Configuration (for k-db-tx)
 persistence.transaction.timeout=30000
@@ -448,16 +514,16 @@ GET /ingestion/metrics
 ### Successful MQ Processing (Updated Flow)
 
 ```yaml
-# MQ Message Reception & Processing - NEW: Direct to Processing Module
-- Receipt: k-mq-message-receiver → Log message, set MQ metadata headers (ReceiptChannel: "MQ")
-- Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-db-tx → Initial database storage with transaction management
-- Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-db-tx → Save enriched data to database
-- Validate: k-ingestion-technical-validation → Check message structure
-- Dedupe: k-payment-idempotence-helper → Verify uniqueness
-- Smart Route: Intelligent Routing → ReceiptChannel = "MQ" → direct:processing-publisher
-- Publish: Processing Module → direct:kafka-message-processing (Real-time processing)
+# MQ Message Reception & Processing - NEW: Direct to Processing Module + Centralized Logging
+- Receipt: k-mq-message-receiver → Log message, set MQ metadata headers (ReceiptChannel: "MQ") + k-log-tx logging
+- Route: Ingestion Orchestrator → Direct to persistence pipeline + k-log-tx start logging
+- Persist: k-db-tx → Initial database storage with transaction management + k-log-tx success/failure logging
+- Enrich: k-referentiel-data-loader → Add reference data headers + k-log-tx start/completion logging
+- Persist Enriched: k-db-tx → Save enriched data to database + k-log-tx enrichment persistence logging
+- Validate: k-ingestion-technical-validation → Check message structure + k-log-tx validation logging
+- Dedupe: k-payment-idempotence-helper → Verify uniqueness + k-log-tx idempotence logging
+- Smart Route: Intelligent Routing → ReceiptChannel = "MQ" → direct:processing-publisher + k-log-tx routing decision logging
+- Publish: Processing Module → direct:kafka-message-processing (Real-time processing) + k-log-tx publishing logging
 - Transform: Processing Module → Message to CDM transformation (if applicable)
 - CDM Persist: Processing Module handles CDM persistence internally
 ```
@@ -465,16 +531,16 @@ GET /ingestion/metrics
 ### Successful HTTP API Processing (Updated Flow)
 
 ```yaml
-# REST API Message Reception & Processing - NEW: Direct to Processing Module
-- Receipt: k-http-message-receiver → Log request, set HTTP metadata headers (ReceiptChannel: "HTTP"), return receipt confirmation
-- Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-db-tx → Initial database storage with transaction management
-- Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-db-tx → Save enriched data to database
-- Validate: k-ingestion-technical-validation → Check message structure
-- Dedupe: k-payment-idempotence-helper → Verify uniqueness
-- Smart Route: Intelligent Routing → ReceiptChannel = "HTTP" → direct:processing-publisher
-- Publish: Processing Module → direct:kafka-message-processing (Real-time processing)
+# REST API Message Reception & Processing - NEW: Direct to Processing Module + Centralized Logging
+- Receipt: k-http-message-receiver → Log request, set HTTP metadata headers (ReceiptChannel: "HTTP"), return receipt confirmation + k-log-tx logging
+- Route: Ingestion Orchestrator → Direct to persistence pipeline + k-log-tx start logging
+- Persist: k-db-tx → Initial database storage with transaction management + k-log-tx success/failure logging
+- Enrich: k-referentiel-data-loader → Add reference data headers + k-log-tx start/completion logging
+- Persist Enriched: k-db-tx → Save enriched data to database + k-log-tx enrichment persistence logging
+- Validate: k-ingestion-technical-validation → Check message structure + k-log-tx validation logging
+- Dedupe: k-payment-idempotence-helper → Verify uniqueness + k-log-tx idempotence logging
+- Smart Route: Intelligent Routing → ReceiptChannel = "HTTP" → direct:processing-publisher + k-log-tx routing decision logging
+- Publish: Processing Module → direct:kafka-message-processing (Real-time processing) + k-log-tx publishing logging
 - Transform: Processing Module → Message to CDM transformation (if applicable)
 - CDM Persist: Processing Module handles CDM persistence internally
 ```
@@ -482,52 +548,52 @@ GET /ingestion/metrics
 ### Successful File Processing (Unchanged - Kafka Flow)
 
 ```yaml
-# File CFT Message Reception & Processing - UNCHANGED: Continues to Kafka
-- Receipt: k-cft-message-receiver → Monitor directory, process file line-by-line, set file metadata headers (ReceiptChannel: "CFT")
-- Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-db-tx → Initial database storage with transaction management
-- Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-db-tx → Save enriched data to database
-- Validate: k-ingestion-technical-validation → Check message structure
-- Dedupe: k-payment-idempotence-helper → Verify uniqueness
-- Smart Route: Intelligent Routing → ReceiptChannel = "CFT" → direct:kafka-publisher
-- Publish: Kafka Topic → payments-pacs008 (Batch processing optimization)
+# File CFT Message Reception & Processing - UNCHANGED: Continues to Kafka + Enhanced Logging
+- Receipt: k-cft-data-receiver → Monitor directory, process file line-by-line, set file metadata headers (ReceiptChannel: "CFT") + k-log-tx logging
+- Route: Ingestion Orchestrator → Direct to persistence pipeline + k-log-tx start logging
+- Persist: k-db-tx → Initial database storage with transaction management + k-log-tx success/failure logging
+- Enrich: k-referentiel-data-loader → Add reference data headers + k-log-tx start/completion logging
+- Persist Enriched: k-db-tx → Save enriched data to database + k-log-tx enrichment persistence logging
+- Validate: k-ingestion-technical-validation → Check message structure + k-log-tx validation logging
+- Dedupe: k-payment-idempotence-helper → Verify uniqueness + k-log-tx idempotence logging
+- Smart Route: Intelligent Routing → ReceiptChannel = "CFT" → direct:kafka-publisher + k-log-tx routing decision logging
+- Publish: Kafka Topic → payments-pacs008 (Batch processing optimization) + k-log-tx publishing logging
 - Downstream: k-kafka-message-receiver → Processing Module
 ```
 
 ### Validation Failure
 
 ```yaml
-# Failed Validation Flow (Any Channel)
-- Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata
-- Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-db-tx → Initial database storage with transaction management
-- Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-db-tx → Save enriched data to database
-- Validate: k-ingestion-technical-validation → Validation fails
-- Reject: Kafka Topic → payments-rejected
+# Failed Validation Flow (Any Channel) + Enhanced Error Logging
+- Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata + k-log-tx logging
+- Route: Ingestion Orchestrator → Direct to persistence pipeline + k-log-tx start logging
+- Persist: k-db-tx → Initial database storage with transaction management + k-log-tx success/failure logging
+- Enrich: k-referentiel-data-loader → Add reference data headers + k-log-tx start/completion logging
+- Persist Enriched: k-db-tx → Save enriched data to database + k-log-tx enrichment persistence logging
+- Validate: k-ingestion-technical-validation → Validation fails + k-log-tx ERROR level logging with validation details
+- Reject: Kafka Topic → payments-rejected + k-log-tx rejection logging
 ```
 
 ### Database Persistence Failure
 
 ```yaml
-# Initial Database Failure Flow (Any Channel)
-- Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata
-- Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-db-tx → Initial database failure
-- Error: Route to error handler → payments-errors topic
+# Initial Database Failure Flow (Any Channel) + Enhanced Error Logging
+- Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata + k-log-tx logging
+- Route: Ingestion Orchestrator → Direct to persistence pipeline + k-log-tx start logging
+- Persist: k-db-tx → Initial database failure + k-log-tx ERROR level logging with exception details
+- Error: Route to error handler → payments-errors topic + k-log-tx error handling logging
 ```
 
 ### Enriched Data Persistence Failure
 
 ```yaml
-# Enriched Data Persistence Failure Flow (Any Channel)
-- Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata
-- Route: Ingestion Orchestrator → Direct to persistence pipeline
-- Persist: k-db-tx → Initial database storage with transaction management
-- Enrich: k-referentiel-data-loader → Add reference data headers
-- Persist Enriched: k-db-tx → Enriched data persistence failure
-- Error: Route to error handler → payments-errors topic
+# Enriched Data Persistence Failure Flow (Any Channel) + Enhanced Error Logging
+- Receipt: [k-mq/http/cft]-message-receiver → Log and set channel-specific metadata + k-log-tx logging
+- Route: Ingestion Orchestrator → Direct to persistence pipeline + k-log-tx start logging
+- Persist: k-db-tx → Initial database storage with transaction management + k-log-tx success logging
+- Enrich: k-referentiel-data-loader → Add reference data headers + k-log-tx start/completion logging
+- Persist Enriched: k-db-tx → Enriched data persistence failure + k-log-tx ERROR level logging with exception details
+- Error: Route to error handler → payments-errors topic + k-log-tx error handling logging
 ```
 
 ## Message Format
@@ -674,6 +740,59 @@ The ingestion service now implements **intelligent message routing** that optimi
 - **Backward Compatibility**: All existing CFT processes preserved without changes
 - **Reduced Latency**: Interactive channels bypass Kafka queuing for faster response
 
+## 🆕 Centralized Logging with k-log-tx
+
+### Overview
+
+The ingestion service now includes **comprehensive centralized logging** through the `k-log-tx` kamelet, providing complete observability and audit trail for all payment processing operations.
+
+### Key Features
+
+#### Complete Audit Trail
+
+- **Every log statement** in the ingestion routes is enhanced with centralized logging
+- All log events are persisted to database via `k-log-tx` kamelet
+- Structured metadata for advanced querying and analysis
+- End-to-end correlation tracking using MessageId
+
+#### Categorized Logging
+
+- **Business Level**: Core business operations (INFO)
+- **Route Level**: Technical routing decisions (INFO)
+- **Error Level**: Validation failures, system errors (ERROR/WARN)
+
+#### Structured Metadata
+
+```yaml
+LogLevel: "INFO|WARN|ERROR"
+LogSource: "ORCHESTRATOR|MQ_RECEIPT|HTTP_RECEIPT|CFT_RECEIPT|DATABASE_PERSISTER|etc."
+LogCategory: "BUSINESS|ROUTE|ERROR"
+CorrelationId: "${header.MessageId}"
+```
+
+#### Enhanced Observability
+
+- **36+ log statements** enhanced with k-log-tx integration
+- Complete visibility into payment processing flow
+- Performance monitoring through structured log data
+- Error pattern analysis and troubleshooting support
+
+### Integration Benefits
+
+#### Operational Intelligence
+
+- **Performance Monitoring**: Track processing stages and latencies
+- **Error Analysis**: Categorized error tracking with correlation
+- **Business Metrics**: Extract business intelligence from structured logs
+- **Compliance**: Complete audit trail for regulatory requirements
+
+#### Real-time Monitoring
+
+- **Correlation Tracking**: Follow messages end-to-end using MessageId
+- **Component Visibility**: Track performance of individual kamelets
+- **Route Analysis**: Compare performance between Kafka and direct routes
+- **Error Alerting**: Set up alerts based on error categories and patterns
+
 #### Routing Decision Matrix
 
 | Source Channel | Receipt Header           | Routing Destination                               | Processing Type  | Latency  |
@@ -753,6 +872,9 @@ logging.level.com.pixel.v2.ingestion=DEBUG
 - **NEW**: Routing decision logging with channel identification
 - Error categorization and alerting
 - **NEW**: Performance tracking for route comparison
+- **NEW**: Centralized logging via `k-log-tx` kamelet with database persistence
+- **NEW**: Complete audit trail with business/technical/error categorization
+- **NEW**: Correlation tracking using MessageId for end-to-end traceability
 
 ## Running the Application
 
@@ -916,7 +1038,7 @@ maxRequestSize: "10MB"
 }
 ```
 
-### k-cft-message-receiver
+### k-cft-data-receiver
 
 **Purpose**: Monitors file system directories for XML payment files
 
@@ -960,12 +1082,13 @@ delay: 5000
 
 - `k-mq-message-receiver`: MQ message receipt and logging
 - `k-http-message-receiver`: HTTP API message receipt and logging
-- `k-cft-message-receiver`: File system message receipt and logging
+- `k-cft-data-receiver`: File system message receipt and logging
 - `k-db-tx`: Unified database persistence
 - `k-referentiel-data-loader`: Reference data enrichment
 - `k-ingestion-technical-validation`: Message validation
 - `k-payment-idempotence-helper`: Duplicate prevention
 - `k-kafka-message-receiver`: **Kafka consumer for CFT message processing**
+- `k-log-tx`: **NEW**: Centralized logging with database persistence and audit trail
 
 ### External Services
 
@@ -1005,9 +1128,10 @@ delay: 5000
 - [ ] **Processing Module**: Deployed with `direct:kafka-message-processing` endpoint
 
 - [ ] **Kafka Cluster**: Available for CFT message batch processing
-- [ ] **Database**: Oracle DB for persistence operations
+- [ ] **Database**: Oracle DB for persistence operations and centralized logging
 - [ ] **Reference API**: Available for data enrichment
 - [ ] **IBM MQ**: Connected for MQ message reception
+- [ ] **k-log-tx Kamelet**: Deployed and configured for centralized logging
 
 #### Environment Configuration
 
@@ -1023,6 +1147,11 @@ export KAFKA_TOPICS_PREFIX=payments-
 # Database and Reference Services
 export DB_URL=jdbc:oracle:thin:@//db-server:1521/xe
 export REFERENCE_API_URL=http://reference-service:8080
+
+# Centralized Logging (k-log-tx)
+export LOGGING_CENTRALIZED_ENABLED=true
+export LOGGING_DATASOURCE_URL=jdbc:oracle:thin:@//db-server:1521/xe
+export LOGGING_CORRELATION_HEADER=MessageId
 
 ```
 
@@ -1069,12 +1198,21 @@ export REFERENCE_API_URL=http://reference-service:8080
    - **🆕 CDM Persistence Failures**: Check `k-db-tx` kamelet is available for CDM mode
 
 7. **Performance Issues**
+
    - Monitor memory usage and GC
    - Check Kafka producer/consumer configurations (CFT route)
    - **🆕 Monitor processing module performance** (HTTP/MQ route)
    - Review batch processing settings
    - **🆕 Compare latency between Kafka and direct processing routes**
    - **🆕 Monitor CDM vs MESSAGE processing performance**
+   - **🆕 Check k-log-tx performance impact and async processing configuration**
+
+8. **🆕 Centralized Logging Issues**
+   - Verify `k-log-tx` kamelet is deployed and accessible
+   - Check database connectivity for log persistence
+   - Monitor log table growth and retention policies
+   - Validate correlation ID consistency across log entries
+   - Check async logging performance under high load
 
 ### 🆕 Routing Troubleshooting
 
@@ -1117,4 +1255,43 @@ grep "ERROR" logs/ingestion.log
 
 # Monitor specific route
 grep "payment-ingestion-orchestrator" logs/ingestion.log
+
+# Monitor centralized logging activity
+grep "k-log-tx" logs/ingestion.log
+
+# Check correlation tracking
+grep "MessageId: MSG123" logs/ingestion.log
+```
+
+### 🆕 Centralized Log Database Queries
+
+```sql
+-- Query all logs for a specific message
+SELECT * FROM log_entry
+WHERE correlation_id = 'MSG123'
+ORDER BY created_at;
+
+-- Monitor error patterns
+SELECT log_source, COUNT(*) as error_count
+FROM log_entry
+WHERE log_level = 'ERROR'
+  AND created_at >= SYSDATE - 1
+GROUP BY log_source;
+
+-- Performance analysis by route
+SELECT log_source, log_category, AVG(processing_time) as avg_time
+FROM log_entry
+WHERE log_category = 'BUSINESS'
+  AND created_at >= SYSDATE - 1
+GROUP BY log_source, log_category;
+
+-- Business intelligence queries
+SELECT
+  DATE_TRUNC('hour', created_at) as hour,
+  COUNT(*) as message_count,
+  COUNT(CASE WHEN log_level = 'ERROR' THEN 1 END) as error_count
+FROM log_entry
+WHERE log_category = 'BUSINESS'
+GROUP BY DATE_TRUNC('hour', created_at)
+ORDER BY hour;
 ```

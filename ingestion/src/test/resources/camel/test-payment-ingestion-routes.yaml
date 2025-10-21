@@ -105,13 +105,13 @@
             name: persistenceStatus
             constant: SUCCESS
         - setHeader:
-            name: persistedMessageId
+            name: enrichedMessageId
             constant: TEST_ENRICHED_ID_67890
         - setHeader:
             name: EnrichedDataPersisted
             constant: true
         - log:
-            message: "Test: Enriched message data mock-persisted to database with ID: ${header.persistedMessageId}"
+            message: "Test: Enriched message data mock-persisted to database with ID: ${header.enrichedMessageId}"
 
 - route:
     id: validation-step
@@ -125,7 +125,7 @@
             constant: VALIDATION
         - setHeader:
             name: IsValid
-            constant: true
+            constant: "true"
         - log:
             message: "Test: Message validation passed"
 
@@ -141,10 +141,10 @@
             constant: IDEMPOTENCE
         - setHeader:
             name: IsDuplicate
-            constant: false
+            constant: "false"
         - setHeader:
             name: CanProcess
-            constant: true
+            constant: "true"
         - log:
             message: "Test: Message idempotence check passed"
 

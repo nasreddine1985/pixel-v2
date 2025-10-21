@@ -16,7 +16,7 @@ class FileReceiptModuleTest {
     void testKameletConfiguration() {
         // Test that the kamelet can be loaded without errors
         assertDoesNotThrow(() -> {
-            String kameletName = "k-cft-message-receiver";
+            String kameletName = "k-cft-data-receiver";
             assertNotNull(kameletName);
             assertTrue(kameletName.startsWith("k-"));
         });

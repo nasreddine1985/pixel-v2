@@ -104,7 +104,7 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 - **`ingestion/`** - Main Spring Boot orchestrator application
 - **`k-mq-message-receiver/`** - Kamelet for MQ message processing
 - **`k-http-message-receiver/`** - Kamelet for REST API message processing
-- **`k-cft-message-receiver/`** - Kamelet for CFT file-based message processing
+- **`k-cft-data-receiver/`** - Kamelet for CFT file-based message processing
 - **`k-referentiel-data-loader/`** - Kamelet for reference data enrichment
 - **`k-pacs008-to-cdm-transformer/`** - PACS.008 to CDM transformation kamelet
 - **`k-pan001-to-cdm-transformer/`** - PAN001 to CDM transformation kamelet

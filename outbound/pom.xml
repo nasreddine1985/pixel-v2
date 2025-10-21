@@ -10,12 +10,11 @@
         <version>1.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>ingestion</artifactId>
+    <artifactId>outbound</artifactId>
     <packaging>jar</packaging>
 
-    <name>Payment Ingestion Service</name>
-    <description>Spring Boot application for payment message ingestion orchestration</description>
-
+    <name>Outbound Message Service</name>
+    <description>Spring Boot application for outbound message processing and routing</description>
 
     <dependencies>
         <!-- Spring Boot Starter -->
@@ -62,15 +61,19 @@
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
-            <artifactId>camel-jms</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
             <artifactId>camel-kafka</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-file</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-jms</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.camel.springboot</groupId>
@@ -83,10 +86,6 @@
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-log</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-http</artifactId>
         </dependency>
 
         <!-- Camel Kamelet support -->
@@ -101,12 +100,6 @@
             <artifactId>camel-yaml-dsl</artifactId>
         </dependency>
 
-        <!-- MQ Series connector -->
-        <dependency>
-            <groupId>org.apache.camel</groupId>
-            <artifactId>camel-jt400</artifactId>
-        </dependency>
-
         <!-- JSON Processing -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -116,38 +109,7 @@
         <!-- Kamelet Dependencies -->
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-mq-message-receiver</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
-            <artifactId>k-http-message-receiver</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <!-- CFT File Message Receipt Kamelet -->
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
-            <artifactId>k-cft-data-receiver</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
-            <artifactId>k-db-tx</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
-            <artifactId>k-referentiel-data-loader</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
-            <artifactId>k-ingestion-technical-validation</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
-            <artifactId>k-payment-idempotence-helper</artifactId>
+            <artifactId>k-kafka-message-receiver</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>
@@ -189,8 +151,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
                 <configuration>
-                    <mainClass>com.pixel.v2.ingestion.IngestionApplication</mainClass>
+                    <mainClass>com.pixel.v2.outbound.OutboundApplication</mainClass>
                 </configuration>
                 <executions>
                     <execution>
