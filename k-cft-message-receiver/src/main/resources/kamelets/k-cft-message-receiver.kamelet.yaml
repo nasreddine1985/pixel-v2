@@ -7,7 +7,7 @@ metadata:
 spec:
   definition:
     title: "K-CFT Message Receiver"
-    description: "Monitors NAS folder for new files, reads XML payment messages line by line and persists them via JPA into Oracle DB"
+    description: "Monitors NAS folder for new files, reads XML payment messages line by line, logs receipt details, and routes messages for further processing"
     required: [directoryPath]
     properties:
       directoryPath:
@@ -41,7 +41,18 @@ spec:
         readLock: "changed"
         readLockTimeout: "10000"
       steps:
-        - log: "Processing file: ${header.CamelFileName}"
+        - log: 
+            message: "[CFT-RECEIVER] Starting to process file: ${header.CamelFileName} from {{directoryPath}}"
+            loggingLevel: "INFO"
+        
+        - set-header:
+            name: "originalFileName"
+            simple: "${header.CamelFileName}"
+        
+        - set-header:
+            name: "fileProcessingStartTime"
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+        
         - split:
             tokenize: "\n"
             streaming: true
@@ -49,6 +60,38 @@ spec:
               - filter:
                   simple: "${body} != null && ${body.trim()} != ''"
                   steps:
-                    - log: "Processing XML message line: ${body}"
-                    - to: "bean:fileMessagePersistenceProcessor?method=process"
-        - log: "Completed processing file: ${header.CamelFileName}"
+                    - log: 
+                        message: "[CFT-RECEIVER] Processing XML message line ${header.CamelSplitIndex} from file ${header.originalFileName}: ${body}"
+                        loggingLevel: "DEBUG"
+                    
+                    - set-header:
+                        name: "messageSource"
+                        constant: "CFT_FILE"
+                    
+                    - set-header:
+                        name: "receiptTimestamp"
+                        simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+                    
+                    - set-header:
+                        name: "receiptChannel"
+                        constant: "FILE_CFT"
+                    
+                    - set-header:
+                        name: "fileName"
+                        simple: "${header.originalFileName}"
+                    
+                    - set-header:
+                        name: "lineNumber"
+                        simple: "${header.CamelSplitIndex}"
+                    
+                    - set-header:
+                        name: "directoryPath"
+                        simple: "{{directoryPath}}"
+                    
+                    - log: 
+                        message: "[CFT-RECEIVER] Message metadata set - Source: ${header.messageSource}, File: ${header.fileName}, Line: ${header.lineNumber}, Timestamp: ${header.receiptTimestamp}"
+                        loggingLevel: "DEBUG"
+        
+        - log: 
+            message: "[CFT-RECEIVER] Completed processing file: ${header.originalFileName} - Processing started at ${header.fileProcessingStartTime}"
+            loggingLevel: "INFO"

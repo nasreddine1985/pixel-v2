@@ -1,3 +1,18 @@
+# ===================================================================
+# INTELLIGENT ROUTING CONFIGURATION
+# ===================================================================
+# This configuration implements smart routing based on message source:
+# - CFT messages (files) → Kafka topics (batch processing)
+# - HTTP/MQ messages → Processing module (real-time processing)
+# 
+# Processing Module Integration - Message Metadata Enrichment Processor
+- beans:
+    - name: enrichMessageWithMetadata
+      type: "#class:com.pixel.v2.ingestion.processor.MessageMetadataEnrichmentProcessor"
+
+# ===================================================================
+# MAIN ORCHESTRATOR - Supports Intelligent Routing After Idempotence
+# ===================================================================
 - route:
     id: payment-ingestion-orchestrator
     from:
@@ -12,7 +27,11 @@
             name: ProcessingStage
             constant: INGESTION_START
         - to:
+            uri: direct:database-persistence
+        - to:
             uri: direct:reference-enrichment
+        - to:
+            uri: direct:enriched-data-persistence
         - to:
             uri: direct:validation
         - to:
@@ -21,12 +40,120 @@
             when:
               - simple: "${header.CanProcess} == true"
                 steps:
-                  - to:
-                      uri: direct:kafka-publisher
+                  - log:
+                      message: "Routing message based on receipt channel: ${header.ReceiptChannel}"
+                  - choice:
+                      when:
+                        - simple: "${header.ReceiptChannel} == 'CFT'"
+                          steps:
+                            - log:
+                                message: "[SMART-ROUTING] CFT message - routing to Kafka for batch processing"
+                            - to:
+                                uri: direct:kafka-publisher
+                      otherwise:
+                        steps:
+                          - log:
+                              message: "[SMART-ROUTING] HTTP/MQ message - routing to processing module for real-time processing"
+                          - to:
+                              uri: direct:processing-publisher
             otherwise:
               steps:
                 - to:
                     uri: direct:rejection-handler
+
+# ===================================================================
+# MESSAGE RECEIPT ROUTES - Enhanced with Channel Identification
+# ===================================================================
+# Each route sets ReceiptChannel header for intelligent routing:
+# - MQ: Sets ReceiptChannel="MQ" → Routes to Processing Module
+# - HTTP: Sets ReceiptChannel="HTTP" → Routes to Processing Module  
+# - CFT: Sets ReceiptChannel="CFT" → Routes to Kafka Topics
+- route:
+    id: mq-receipt-route
+    from:
+      uri: kamelet:k-mq-message-receiver?queueName={{ingestion.mq.input.queue:PAYMENT_INPUT}}&host={{ingestion.mq.host:localhost}}&port={{ingestion.mq.port:1414}}&queueManager={{ingestion.mq.queue.manager:QM1}}&channel={{ingestion.mq.channel:DEV.ADMIN.SVRCONN}}&username={{ingestion.mq.username:admin}}&password={{ingestion.mq.password:admin}}
+      steps:
+        - log:
+            message: "[MQ-RECEIPT] Message received from k-mq-message-receiver kamelet"
+        - setHeader:
+            name: ReceiptChannel
+            constant: "MQ"
+        - setHeader:
+            name: MessageSource
+            constant: "MQ_SERIES"
+        - to:
+            uri: direct:payment-ingestion
+
+- route:
+    id: http-receipt-route
+    from:
+      uri: kamelet:k-http-message-receiver?port={{server.port:8080}}&contextPath={{server.servlet.context-path:/ingestion}}/api/v1/payments
+      steps:
+        - log:
+            message: "[HTTP-RECEIPT] Message received from k-http-message-receiver kamelet"
+        - setHeader:
+            name: ReceiptChannel
+            constant: "HTTP"
+        - setHeader:
+            name: MessageSource
+            constant: "HTTP_API"
+        - to:
+            uri: direct:payment-ingestion
+
+- route:
+    id: file-receipt-route
+    from:
+      uri: kamelet:k-cft-message-receiver?directoryPath={{ingestion.file.input.directory:/tmp/payments-in}}&filePattern={{ingestion.file.pattern:.*\\.xml}}&processedDirectory={{ingestion.file.processed.directory:/tmp/payments-processed}}&errorDirectory={{ingestion.file.error.directory:/tmp/payments-error}}&delay={{ingestion.file.delay:5000}}
+      steps:
+        - log:
+            message: "[CFT-RECEIPT] Message received from k-cft-message-receiver kamelet"
+        - setHeader:
+            name: ReceiptChannel
+            constant: "CFT"
+        - setHeader:
+            name: MessageSource
+            constant: "CFT_FILE"
+        - to:
+            uri: direct:payment-ingestion
+
+# Database Persistence Step (First step after message receipt)
+- route:
+    id: database-persistence
+    from:
+      uri: direct:database-persistence
+      steps:
+          log:
+            message: "Persisting message to database via k-database-transaction"
+            level: INFO
+            
+        - set-header:
+            name: "ProcessingStage"
+            constant: "DATABASE_PERSISTENCE"
+            
+        - to:
+            uri: kamelet:k-database-transaction
+        - choice:
+            when:
+              - simple: "${header.persistenceStatus} == 'SUCCESS'"
+                steps:
+                  - log:
+                      message: "Message successfully persisted to database with ID: ${header.persistedMessageId}"
+                  - setHeader:
+                      name: MessagePersisted
+                      constant: true
+            otherwise:
+              steps:
+                - log:
+                    message: "Database persistence failed: ${header.persistenceError}"
+                - setHeader:
+                    name: MessagePersisted
+                    constant: false
+                - setHeader:
+                    name: RejectionReason
+                    constant: DATABASE_PERSISTENCE_FAILED
+                - to:
+                    uri: direct:error-handler
+                - stop: {}
 
 - route:
     id: reference-enrichment
@@ -42,6 +169,45 @@
             uri: kamelet:k-referentiel-data-loader
         - log:
             message: "Reference data enrichment completed"
+
+# Enriched Data Persistence Step (After reference enrichment)
+- route:
+    id: enriched-data-persistence
+    from:
+      uri: direct:enriched-data-persistence
+      steps:
+        - log:
+            message: "Persisting enriched message data to database"
+        - setHeader:
+            name: ProcessingStage
+            constant: ENRICHED_DATA_PERSISTENCE
+        - setHeader:
+            name: PersistenceType
+            constant: ENRICHED
+        - to:
+            uri: kamelet:k-database-transaction
+        - choice:
+            when:
+              - simple: "${header.persistenceStatus} == 'SUCCESS'"
+                steps:
+                  - log:
+                      message: "Enriched message data successfully persisted to database with ID: ${header.persistedMessageId}"
+                  - setHeader:
+                      name: EnrichedDataPersisted
+                      constant: true
+            otherwise:
+              steps:
+                - log:
+                    message: "Enriched data persistence failed: ${header.persistenceError}"
+                - setHeader:
+                    name: EnrichedDataPersisted
+                    constant: false
+                - setHeader:
+                    name: RejectionReason
+                    constant: ENRICHED_DATA_PERSISTENCE_FAILED
+                - to:
+                    uri: direct:error-handler
+                - stop: {}
 
 - route:
     id: validation-step
@@ -119,13 +285,16 @@
       uri: direct:kafka-publisher
       steps:
         - log:
-            message: "Publishing message to Kafka"
+            message: "[KAFKA-ROUTE] Publishing message to Kafka for batch processing"
         - setHeader:
             name: ProcessingStage
             constant: KAFKA_PUBLISH
         - setHeader:
             name: PublishTimestamp
             simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        - setHeader:
+            name: RoutingDestination
+            constant: "kafka"
         - choice:
             when:
               - simple: "${header.ExpectedMessageType} == 'pacs.008'"
@@ -151,20 +320,79 @@
         - log:
             message: "Message successfully published to Kafka topic: ${header.KafkaTopic}"
 
+# ===================================================================
+# PROCESSING MODULE PUBLISHER - Real-time Route for HTTP/MQ Messages
+# ===================================================================
+# This route handles HTTP/MQ messages for real-time processing:
+# - Enriches messages with comprehensive metadata
+# - Routes directly to processing module (bypasses Kafka)
+# - Provides faster processing for interactive channels
 - route:
-    id: api-receipt-route
+    id: processing-publisher
     from:
-      uri: platform-http:/api/v1/payments?httpMethodRestrict=POST
+      uri: direct:processing-publisher
       steps:
         - log:
-            message: "Received message from API: ${body}"
+            message: "[PROCESSING-ROUTE] Publishing message to processing module"
         - setHeader:
-            name: ReceiptChannel
-            constant: REST_API
+            name: ProcessingStage
+            constant: PROCESSING_PUBLISH
         - setHeader:
-            name: ReceiptTimestamp
+            name: PublishTimestamp
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        - setHeader:
+            name: RoutingDestination
+            constant: "processing"
+        - process:
+            ref: enrichMessageWithMetadata
+        - choice:
+            when:
+              - simple: "{{ingestion.processing.enabled:true}} == true"
+                steps:
+                  - log:
+                      message: "[PROCESSING-ROUTE] Routing to processing module endpoint: {{ingestion.processing.endpoint:direct:kafka-message-processing}}"
+                  - toD:
+                      uri: "{{ingestion.processing.endpoint:direct:kafka-message-processing}}"
+                  - log:
+                      message: "[PROCESSING-ROUTE] Message successfully sent to processing module"
+            otherwise:
+              steps:
+                - log:
+                    message: "[PROCESSING-ROUTE] Processing module integration disabled, routing to default Kafka"
+                - to:
+                    uri: direct:kafka-publisher
+
+# Rejection Handler
+- route:
+    id: rejection-handler
+    from:
+      uri: direct:rejection-handler
+      steps:
+        - log:
+            message: "Processing rejected message: ${header.RejectionReason}"
+        - setHeader:
+            name: ProcessingStage
+            constant: REJECTION
+        - setHeader:
+            name: RejectionTimestamp
             simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
         - to:
-            uri: kamelet:k-http-message-receiver
+            uri: "kafka:{{ingestion.kafka.topic.rejected:payments-rejected}}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
+        - log:
+            message: "Rejected message sent to dead letter topic"
+
+# Error Handler
+- route:
+    id: error-handler
+    from:
+      uri: direct:error-handler
+      steps:
+        - log:
+            message: "Processing system error"
+        - setHeader:
+            name: ProcessingStage
+            constant: ERROR
         - to:
-            uri: direct:payment-ingestion
+            uri: "kafka:{{ingestion.kafka.topic.errors:payments-errors}}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
+        - log:
+            message: "Error message sent to error topic"

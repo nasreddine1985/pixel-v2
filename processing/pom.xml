@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.pixel.v2</groupId>
+        <artifactId>pixel-v2</artifactId>
+        <version>1.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>processing</artifactId>
+    <name>Payment Message Processing Service</name>
+    <description>Spring Boot Apache Camel service for processing payment messages from Kafka and routing to CDM transformers</description>
+
+    <dependencies>
+        <!-- Spring Boot Starter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Apache Camel -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Camel Kafka for consuming from k-kafka-message-receiver -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-kafka-starter</artifactId>
+        </dependency>
+
+        <!-- Camel Direct for internal routing -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-direct-starter</artifactId>
+        </dependency>
+
+        <!-- Camel Kamelet for calling transformer kamelets -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-kamelet-starter</artifactId>
+        </dependency>
+
+        <!-- JSON Processing -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- XML Processing -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-xml-jaxp-starter</artifactId>
+        </dependency>
+
+        <!-- Logging -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-logging</artifactId>
+        </dependency>
+
+        <!-- Dependencies for transformer kamelets will be loaded at runtime via Camel context -->        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-test-spring-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

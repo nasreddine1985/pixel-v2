@@ -7,7 +7,7 @@ metadata:
 spec:
   definition:
     title: "K-MQ Message Receiver"
-    description: "Consumes messages from IBM MQ and persists them via JPA into Oracle DB"
+    description: "Consumes messages from IBM MQ, logs receipt details, and routes messages for further processing"
     required: [destination]
     properties:
       destination:
@@ -24,7 +24,26 @@ spec:
       parameters:
         connectionFactory: "#{{jmsConnectionFactoryRef}}"
       steps:
-        - log: "MQ received message: ${body}"
-        - set-body:
-            simple: "${body}"
-        - to: "bean:messagePersistenceProcessor?method=process"
+        - log: 
+            message: "[MQ-RECEIVER] Message received from queue {{destination}}: ${body}"
+            loggingLevel: "INFO"
+        
+        - set-header:
+            name: "messageSource"
+            constant: "IBM_MQ"
+        
+        - set-header:
+            name: "receiptTimestamp"
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+        
+        - set-header:
+            name: "receiptChannel"
+            constant: "MQ_SERIES"
+        
+        - set-header:
+            name: "mqQueue"
+            simple: "{{destination}}"
+        
+        - log: 
+            message: "[MQ-RECEIVER] Message metadata set - Source: ${header.messageSource}, Timestamp: ${header.receiptTimestamp}, Queue: ${header.mqQueue}"
+            loggingLevel: "DEBUG"

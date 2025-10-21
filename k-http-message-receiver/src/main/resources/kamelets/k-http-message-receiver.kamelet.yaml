@@ -7,7 +7,7 @@ metadata:
 spec:
   definition:
     title: "K-HTTP Message Receiver"
-    description: "Consumes JSON messages from REST API and persists them via JPA into Oracle DB"
+    description: "Consumes JSON messages from REST API, logs receipt details, and routes messages for further processing"
     required: [path]
     properties:
       path:
@@ -32,12 +32,37 @@ spec:
       parameters:
         httpMethodRestrict: "POST"
       steps:
-        - log: "API received message: ${body}"
+        - log: 
+            message: "[HTTP-RECEIVER] Message received via REST API on {{path}}: ${body}"
+            loggingLevel: "INFO"
+        
         - set-header:
             name: "Content-Type"
             constant: "{{produces}}"
+        
+        - set-header:
+            name: "messageSource"
+            constant: "HTTP_API"
+        
+        - set-header:
+            name: "receiptTimestamp"
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+        
+        - set-header:
+            name: "receiptChannel"
+            constant: "REST_API"
+        
+        - set-header:
+            name: "apiPath"
+            simple: "{{path}}"
+        
+        - set-header:
+            name: "httpMethod"
+            simple: "${header.CamelHttpMethod}"
+        
+        - log: 
+            message: "[HTTP-RECEIVER] Message metadata set - Source: ${header.messageSource}, Timestamp: ${header.receiptTimestamp}, Path: ${header.apiPath}, Method: ${header.httpMethod}"
+            loggingLevel: "DEBUG"
+        
         - set-body:
-            simple: "${body}"
-        - to: "bean:messagePersistenceProcessor?method=process"
-        - set-body:
-            constant: '{"status": "success", "message": "Message received and persisted"}'
+            constant: '{"status": "received", "message": "Message received and routed for processing", "timestamp": "${header.receiptTimestamp}"}'
