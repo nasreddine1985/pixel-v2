@@ -20,20 +20,20 @@ The PIXEL-V2 project is a Maven multi-module project implementing an advanced pa
 ```
 PIXEL-V2/
 ├── pom.xml                              # Parent POM
-├── ingestion/                          # 🔄 Smart routing orchestrator application
-├── processing/                         # 🆕 Real-time message processing module with conditional routing
-├── outbound/                           # 🆕 Message distribution and outbound delivery service
-├── k-mq-message-receiver/              # Kamelet for MQ message receipt and persistence
+├── ingestion/                          # Smart routing orchestrator application
+├── processing/                         # Message processing module with conditional routing
+├── outbound/                           # Message distribution and outbound delivery service
+├── k-mq-message-receiver/              # Kamelet for MQ message receipt
 ├── k-http-message-receiver/            # Kamelet for HTTP API message receipt
 ├── k-cft-data-receiver/                # Kamelet for CFT file-based message receipt
-├── k-kafka-message-receiver/           # 🆕 Kamelet for Kafka message consumption
+├── k-kafka-message-receiver/           # Kamelet for Kafka message consumption
 ├── k-referentiel-data-loader/          # Kamelet for reference data loading via REST services
 ├── k-pacs008-to-cdm-transformer/       # Kamelet for PACS.008 to CDM transformation
 ├── k-pan001-to-cdm-transformer/        # Kamelet for PAN001 to CDM transformation
 ├── k-ingestion-technical-validation/   # Kamelet for technical message validation
 ├── k-payment-idempotence-helper/       # Kamelet for payment duplicate detection
 ├── k-db-tx/                           # Kamelet for unified database persistence
-└── k-log-tx/                          # 🆕 Kamelet for centralized log management
+└── k-log-tx/                          # Kamelet for centralized log management
 ```
 
 ### 🔄 Intelligent Routing Architecture
