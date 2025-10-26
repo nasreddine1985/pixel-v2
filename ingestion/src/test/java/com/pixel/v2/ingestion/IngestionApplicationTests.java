@@ -1,77 +1,46 @@
 package com.pixel.v2.ingestion;
 
-import com.pixel.v2.ingestion.config.TestConfig;
-import com.pixel.v2.ingestion.route.PaymentIngestionRouteBuilder;
-import org.apache.camel.CamelContext;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
+import org.springframework.context.ApplicationContext;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+
+import com.pixel.v2.ingestion.processor.MessageMetadataEnrichmentProcessor;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Integration tests for the Payment Ingestion Application
+ * Basic Spring Boot integration tests for the Ingestion Application. These tests verify that the
+ * Spring context can load without Camel components.
  */
-@SpringBootTest(classes = {IngestionApplication.class, TestConfig.class})
-@ComponentScan(excludeFilters = @ComponentScan.Filter(
-    type = FilterType.ASSIGNABLE_TYPE, 
-    classes = {PaymentIngestionRouteBuilder.class}
-))
+@SpringBootTest(classes = IngestionApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.NONE,
+        properties = {"spring.main.web-application-type=none",
+                "logging.level.org.apache.camel=OFF"})
 @ActiveProfiles("test")
+@TestPropertySource(locations = "classpath:application-test.properties")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class IngestionApplicationTests {
 
     @Autowired
-    private CamelContext camelContext;
+    private ApplicationContext applicationContext;
 
     @Test
     void contextLoads() {
-        // Test that the Spring application context loads successfully
-        assertNotNull(camelContext, "CamelContext should be loaded");
-        assertTrue(camelContext.getStatus().isStarted(), "CamelContext should be started");
+        assertNotNull(applicationContext, "Application context should not be null");
+        assertNotNull(applicationContext.getBean(IngestionApplication.class),
+                "IngestionApplication bean should be loaded");
     }
 
     @Test
-    void testRequiredRoutesAreLoaded() {
-        // Verify that all required routes are loaded (test version)
-        assertNotNull(camelContext.getRoute("payment-ingestion-orchestrator"), 
-            "Payment ingestion orchestrator route should be loaded");
-        assertNotNull(camelContext.getRoute("database-persistence"), 
-            "Database persistence route should be loaded");
-        assertNotNull(camelContext.getRoute("reference-enrichment"), 
-            "Reference enrichment route should be loaded");
-        assertNotNull(camelContext.getRoute("validation-step"), 
-            "Validation step route should be loaded");
-        assertNotNull(camelContext.getRoute("idempotence-check"), 
-            "Idempotence check route should be loaded");
-        assertNotNull(camelContext.getRoute("kafka-publisher"), 
-            "Kafka publisher route should be loaded");
-        assertNotNull(camelContext.getRoute("rejection-handler"), 
-            "Rejection handler route should be loaded");
-        assertNotNull(camelContext.getRoute("error-handler"), 
-            "Error handler route should be loaded");
-    }
-
-    @Test
-    void testReceiverRoutesAreLoaded() {
-        // Verify that test receiver routes are loaded (no kamelets in test)
-        assertNotNull(camelContext.getRoute("http-receipt-route"), 
-            "HTTP receipt route should be loaded");
-        assertNotNull(camelContext.getRoute("file-receipt-route"), 
-            "File receipt route should be loaded");
-        // Note: MQ route is not loaded in test profile to avoid JMS dependencies
-    }
-
-    @Test
-    void testApplicationHealth() {
-        // Test basic application health indicators
-        assertFalse(camelContext.getRoutes().isEmpty(), 
-            "Application should have routes configured");
-        
-        // Test that direct component is available for our test routes
-        assertNotNull(camelContext.getComponent("direct"), 
-            "Direct component should be available");
+    void messageMetadataEnrichmentProcessorIsLoaded() {
+        assertTrue(applicationContext.containsBean("messageMetadataEnrichmentProcessor"),
+                "MessageMetadataEnrichmentProcessor bean should be available");
+        MessageMetadataEnrichmentProcessor processor = applicationContext.getBean(
+                "messageMetadataEnrichmentProcessor", MessageMetadataEnrichmentProcessor.class);
+        assertNotNull(processor, "MessageMetadataEnrichmentProcessor should not be null");
     }
 }

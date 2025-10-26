@@ -1,0 +1,75 @@
+# Test YAML Routes Configuration
+# This file provides mock routes for testing YAML route functionality
+
+# Mock Kamelets as direct endpoints for testing
+- route:
+    id: test-mock-db-tx
+    from:
+      uri: kamelet:k-db-tx
+      steps:
+        - log:
+            message: "Mock k-db-tx kamelet called"
+        - setHeader:
+            name: persistenceStatus
+            constant: "SUCCESS"
+        - setHeader:
+            name: persistedMessageId
+            simple: "MOCK-DB-${exchangeId}"
+
+- route:
+    id: test-mock-reference-loader
+    from:
+      uri: kamelet:k-referentiel-data-loader
+      steps:
+        - log:
+            message: "Mock k-referentiel-data-loader kamelet called"
+        - setHeader:
+            name: referenceDataLoaded
+            constant: true
+
+- route:
+    id: test-mock-validation
+    from:
+      uri: kamelet:k-ingestion-technical-validation
+      steps:
+        - log:
+            message: "Mock k-ingestion-technical-validation kamelet called"
+        - setHeader:
+            name: IsValid
+            constant: true
+        - setHeader:
+            name: ValidationResult
+            constant: "VALID"
+
+- route:
+    id: test-mock-idempotence
+    from:
+      uri: kamelet:k-payment-idempotence-helper
+      steps:
+        - log:
+            message: "Mock k-payment-idempotence-helper kamelet called"
+        - setHeader:
+            name: IsDuplicate
+            constant: false
+        - setHeader:
+            name: CanProcess
+            constant: true
+
+- route:
+    id: test-mock-log-tx
+    from:
+      uri: kamelet:k-log-tx
+      steps:
+        - log:
+            message: "Mock k-log-tx kamelet called: ${body}"
+
+# Simple test route for basic functionality
+- route:
+    id: test-simple-route
+    from:
+      uri: direct:test-simple
+      steps:
+        - setBody:
+            constant: "Test successful"
+        - log:
+            message: "Simple test route executed: ${body}"

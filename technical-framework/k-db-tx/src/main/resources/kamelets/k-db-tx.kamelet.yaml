@@ -12,182 +12,172 @@ metadata:
     camel.apache.org/provider: "Pixel V2"
     pixel.v2/description: "Persists payment messages and CDM objects to database via JPA transactions"
 spec:
-  definition:
-    title: "Database Transaction"
-    description: |
-      Persists payment messages and CDM objects to database using JPA transactions.
-      Supports dual entity types (MESSAGE/CDM) with transaction management and error handling.
-      Provides configurable entity mapping, operation types, and audit trail creation.
-    required:
-      - entityManagerRef
-    properties:
-      entityManagerRef:
-        title: "Entity Manager Bean Reference"
-        description: "Reference to the JPA EntityManager bean"
-        type: string
-        default: "entityManager"
-      persistenceUnitName:
-        title: "Persistence Unit Name"
-        description: "JPA persistence unit name for database operations"
-        type: string
-        default: "pixelPersistenceUnit"
-      transactionManagerRef:
-        title: "Transaction Manager Bean Reference"
-        description: "Reference to the JPA Transaction Manager bean"
-        type: string
-        default: "transactionManager"
-      enableAuditTrail:
-        title: "Enable Audit Trail"
-        description: "Whether to create audit trail entries for persisted messages"
-        type: boolean
-        default: true
-      entityType:
-        title: "Entity Type"
-        description: "Type of entity to persist - MESSAGE for ReceivedMessage, CDM for CdmMessage"
-        type: string
-        default: "MESSAGE"
-        enum: ["MESSAGE", "CDM"]
-      persistenceOperation:
-        title: "Persistence Operation"
-        description: "Operation type - CREATE for new records, UPDATE for existing records"
-        type: string
-        default: "CREATE"
-        enum: ["CREATE", "UPDATE"]
-      batchSize:
-        title: "Batch Size"
-        description: "Number of messages to batch for persistence operations"
-        type: integer
-        default: 1
-      timeoutSeconds:
-        title: "Persistence Timeout"
-        description: "Timeout in seconds for database operations"
-        type: integer
-        default: 30
-  template:
-    from:
-      uri: "kamelet:source"
-      steps:
-        - log: 
-            message: "Starting message persistence: messageId=${header.messageId}, type=${header.messageType}"
-            level: "DEBUG"
-        
-        # Set persistence headers
-        - set-header:
-            name: "persistenceTimestamp"
-            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
-        
-        - set-header:
-            name: "persistenceAction"
-            constant: "SAVE_MESSAGE"
-        
-        - set-header:
-            name: "EntityType"
-            simple: "{{entityType}}"
-        
-        - set-header:
-            name: "PersistenceOperation"  
-            simple: "{{persistenceOperation}}"
-        
-        # Validate message before persistence
-        - choice:
-            when:
-              - simple: "${body} == null || ${body} == ''"
+    definition:
+      title: "Database Transaction"
+      description: |
+        Persists payment messages and CDM objects to database using JPA transactions.
+        Supports dual entity types (MESSAGE/CDM) with transaction management and error handling.
+        Provides configurable entity mapping, operation types, and audit trail creation.
+      required:
+        - entityManagerRef
+      properties:
+        entityManagerRef:
+          title: "Entity Manager Bean Reference"
+          description: "Reference to the JPA EntityManager bean"
+          type: string
+          default: "entityManager"
+        persistenceUnitName:
+          title: "Persistence Unit Name"
+          description: "JPA persistence unit name for database operations"
+          type: string
+          default: "pixelPersistenceUnit"
+        transactionManagerRef:
+          title: "Transaction Manager Bean Reference"
+          description: "Reference to the JPA Transaction Manager bean"
+          type: string
+          default: "transactionManager"
+        enableAuditTrail:
+          title: "Enable Audit Trail"
+          description: "Whether to create audit trail entries for persisted messages"
+          type: boolean
+          default: true
+        entityType:
+          title: "Entity Type"
+          description: "Type of entity to persist - MESSAGE for ReceivedMessage, CDM for CdmMessage"
+          type: string
+          default: "MESSAGE"
+          enum: ["MESSAGE", "CDM"]
+        persistenceOperation:
+          title: "Persistence Operation"
+          description: "Operation type - CREATE for new records, UPDATE for existing records"
+          type: string
+          default: "CREATE"
+          enum: ["CREATE", "UPDATE"]
+        batchSize:
+          title: "Batch Size"
+          description: "Number of messages to batch for persistence operations"
+          type: integer
+          default: 1
+        timeoutSeconds:
+          title: "Persistence Timeout"
+          description: "Timeout in seconds for database operations"
+          type: integer
+          default: 30
+    template:
+      from:
+        uri: "kamelet:source"
+        steps:
+          - log:
+              message: "Starting message persistence: messageId=${header.messageId}, type=${header.messageType}"
+              loggingLevel: "DEBUG"
+
+          - set-header:
+              name: "persistenceTimestamp"
+              simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+
+          - set-header:
+              name: "persistenceAction"
+              constant: "SAVE_MESSAGE"
+
+          - set-header:
+              name: "EntityType"
+              simple: "{{entityType}}"
+
+          - set-header:
+              name: "PersistenceOperation"
+              simple: "{{persistenceOperation}}"
+
+          - choice:
+              when:
+                - simple: "${body} == null || ${body} == ''"
+                  steps:
+                    - log:
+                        message: "Empty message body detected for messageId=${header.messageId}"
+                        loggingLevel: "WARN"
+                    - set-header:
+                        name: "CamelHttpResponseCode"
+                        constant: "400"
+                    - set-body:
+                        constant: "Invalid message: Empty body"
+                    - stop: {}
+
+          - choice:
+              when:
+                - simple: "${header.EntityType} == 'CDM'"
+                  steps:
+                    - log:
+                        message: "Routing to CDM persistence processor for messageId=${header.messageId}"
+                        loggingLevel: "DEBUG"
+                    - to: "bean:cdmPersistenceProcessor?method=process"
+              otherwise:
                 steps:
-                  - log: 
-                      message: "Empty message body detected for messageId=${header.messageId}"
-                      level: "WARN"
-                  - set-header:
-                      name: "CamelHttpResponseCode"
-                      constant: "400"
-                  - set-body:
-                      constant: "Invalid message: Empty body"
-                  - stop: {}
-        
-        # Route to appropriate processor based on entity type
-        - choice:
-            when:
-              - simple: "${header.EntityType} == 'CDM'"
-                steps:
-                  - log: 
-                      message: "Routing to CDM persistence processor for messageId=${header.messageId}"
-                      level: "DEBUG"
-                  - to: "bean:cdmPersistenceProcessor?method=process"
-            otherwise:
-              steps:
-                - log: 
-                    message: "Routing to standard message persistence processor for messageId=${header.messageId}"
-                    level: "DEBUG"
-                - to: "bean:messagePersistenceProcessor?method=process"
-        
-        # Handle persistence result
-        - choice:
-            when:
-              - simple: "${header.persistenceStatus} == 'SUCCESS'"
-                steps:
-                  - choice:
-                      when:
-                        - simple: "${header.EntityType} == 'CDM'"
+                  - log:
+                      message: "Routing to standard message persistence processor for messageId=${header.messageId}"
+                      loggingLevel: "DEBUG"
+                  - to: "bean:messagePersistenceProcessor?method=process"
+
+          - choice:
+              when:
+                - simple: "${header.persistenceStatus} == 'SUCCESS'"
+                  steps:
+                    - choice:
+                        when:
+                          - simple: "${header.EntityType} == 'CDM'"
+                            steps:
+                              - log:
+                                  message: "CDM message persisted successfully: id=${header.persistedCdmId}, messageId=${header.messageId}"
+                                  loggingLevel: "INFO"
+                              - set-body:
+                                  simple: |
+                                    {
+                                      "status": "SUCCESS",
+                                      "messageId": "${header.messageId}",
+                                      "persistedCdmId": "${header.persistedCdmId}",
+                                      "entityType": "CDM",
+                                      "timestamp": "${header.persistenceTimestamp}"
+                                    }
+                        otherwise:
                           steps:
-                            - log: 
-                                message: "CDM message persisted successfully: id=${header.persistedCdmId}, messageId=${header.messageId}"
-                                level: "INFO"
-                            
+                            - log:
+                                message: "Message persisted successfully: id=${header.persistedMessageId}, messageId=${header.messageId}"
+                                loggingLevel: "INFO"
                             - set-body:
                                 simple: |
                                   {
                                     "status": "SUCCESS",
                                     "messageId": "${header.messageId}",
-                                    "persistedCdmId": "${header.persistedCdmId}",
-                                    "entityType": "CDM",
+                                    "persistedId": "${header.persistedMessageId}",
+                                    "entityType": "MESSAGE",
                                     "timestamp": "${header.persistenceTimestamp}"
                                   }
-                      otherwise:
-                        steps:
-                          - log: 
-                              message: "Message persisted successfully: id=${header.persistedMessageId}, messageId=${header.messageId}"
-                              level: "INFO"
-                          
-                          - set-body:
-                              simple: |
-                                {
-                                  "status": "SUCCESS",
-                                  "messageId": "${header.messageId}",
-                                  "persistedId": "${header.persistedMessageId}",
-                                  "entityType": "MESSAGE",
-                                  "timestamp": "${header.persistenceTimestamp}"
-                                }
-                  
-                  # Create audit trail if enabled
-                  - choice:
-                      when:
-                        - simple: "{{enableAuditTrail}} == true"
-                          steps:
-                            - to: "bean:auditTrailProcessor?method=createAuditEntry"
-                  
+
+                    - choice:
+                        when:
+                          - simple: "{{enableAuditTrail}} == true"
+                            steps:
+                              - to: "bean:auditTrailProcessor?method=createAuditEntry"
+
+                    - set-header:
+                        name: "CamelHttpResponseCode"
+                        constant: "201"
+
+              otherwise:
+                steps:
+                  - log:
+                      message: "Message persistence failed: messageId=${header.messageId}, error=${header.persistenceError}"
+                      loggingLevel: "ERROR"
                   - set-header:
                       name: "CamelHttpResponseCode"
-                      constant: "201"
-            
-            otherwise:
-              steps:
-                - log: 
-                    message: "Message persistence failed: messageId=${header.messageId}, error=${header.persistenceError}"
-                    level: "ERROR"
-                
-                - set-header:
-                    name: "CamelHttpResponseCode"
-                    constant: "500"
-                
-                - set-body:
-                    simple: |
-                      {
-                        "status": "ERROR",
-                        "messageId": "${header.messageId}",
-                        "error": "${header.persistenceError}",
-                        "timestamp": "${header.persistenceTimestamp}"
-                      }
-        
-        # Final logging
-        - log: 
-            message: "Message persistence completed: messageId=${header.messageId}, status=${header.persistenceStatus}"
-            level: "INFO"
+                      constant: "500"
+                  - set-body:
+                      simple: |
+                        {
+                          "status": "ERROR",
+                          "messageId": "${header.messageId}",
+                          "error": "${header.persistenceError}",
+                          "timestamp": "${header.persistenceTimestamp}"
+                        }
+
+          - log:
+              message: "Message persistence completed: messageId=${header.messageId}, status=${header.persistenceStatus}"
+              loggingLevel: "INFO"
