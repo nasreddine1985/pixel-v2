@@ -30,25 +30,65 @@ class PaymentIngestionRouteBuilderTest {
 
     private static final String MOCK_DATABASE_ENDPOINT = "mock:kamelet:k-db-tx";
     private static final String MOCK_REFERENCE_ENDPOINT = "mock:kamelet:k-referentiel-data-loader";
-    private static final String MOCK_VALIDATION_ENDPOINT = "mock:kamelet:k-ingestion-technical-validation";
-    private static final String MOCK_IDEMPOTENCE_ENDPOINT = "mock:kamelet:k-payment-idempotence-helper";
-    
+    private static final String MOCK_VALIDATION_ENDPOINT =
+            "mock:kamelet:k-ingestion-technical-validation";
+    private static final String MOCK_IDEMPOTENCE_ENDPOINT =
+            "mock:kamelet:k-payment-idempotence-helper";
+
     private static final String SUCCESS_STATUS = "SUCCESS";
     private static final String FAILED_STATUS = "FAILED";
     private static final String PERSISTED_ID = "DB12345";
-    
-    private static final String SAMPLE_XML = """
-        <?xml version="1.0" encoding="UTF-8"?>
-        <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
-            <FIToFICstmrCdtTrf>
-                <GrpHdr>
-                    <MsgId>MSG123456789</MsgId>
-                    <CreDtTm>2025-10-21T14:30:00</CreDtTm>
-                    <NbOfTxs>1</NbOfTxs>
-                </GrpHdr>
-            </FIToFICstmrCdtTrf>
-        </Document>
-        """;
+
+    private static final String SAMPLE_PACS008_XML = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+                <FIToFICstmrCdtTrf>
+                    <GrpHdr>
+                        <MsgId>MSG123456789</MsgId>
+                        <CreDtTm>2025-10-21T14:30:00</CreDtTm>
+                        <NbOfTxs>1</NbOfTxs>
+                    </GrpHdr>
+                </FIToFICstmrCdtTrf>
+            </Document>
+            """;
+
+    private static final String SAMPLE_PACS009_XML = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08">
+                <FIToFICstmrCdtTrfRtr>
+                    <GrpHdr>
+                        <MsgId>RTN123456789</MsgId>
+                        <CreDtTm>2025-10-21T14:30:00</CreDtTm>
+                        <NbOfTxs>1</NbOfTxs>
+                    </GrpHdr>
+                </FIToFICstmrCdtTrfRtr>
+            </Document>
+            """;
+
+    private static final String SAMPLE_PAIN001_XML = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.09">
+                <CstmrCdtTrfInitn>
+                    <GrpHdr>
+                        <MsgId>INIT123456789</MsgId>
+                        <CreDtTm>2025-10-21T14:30:00</CreDtTm>
+                        <NbOfTxs>1</NbOfTxs>
+                    </GrpHdr>
+                </CstmrCdtTrfInitn>
+            </Document>
+            """;
+
+    private static final String SAMPLE_CAMT053_XML = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08">
+                <BkToCstmrStmt>
+                    <GrpHdr>
+                        <MsgId>STMT123456789</MsgId>
+                        <CreDtTm>2025-10-21T14:30:00</CreDtTm>
+                    </GrpHdr>
+                </BkToCstmrStmt>
+            </Document>
+            """;
 
     @Autowired
     private CamelContext camelContext;
@@ -59,26 +99,26 @@ class PaymentIngestionRouteBuilderTest {
     @BeforeEach
     void setupMocks() throws Exception {
         // Mock all kamelet endpoints
-        AdviceWith.adviceWith(camelContext, "database-persistence", 
-            route -> route.mockEndpoints("kamelet:k-db-tx"));
-        
-        AdviceWith.adviceWith(camelContext, "reference-enrichment", 
-            route -> route.mockEndpoints("kamelet:k-referentiel-data-loader"));
-        
-        AdviceWith.adviceWith(camelContext, "validation-step", 
-            route -> route.mockEndpoints("kamelet:k-ingestion-technical-validation"));
-        
-        AdviceWith.adviceWith(camelContext, "idempotence-check", 
-            route -> route.mockEndpoints("kamelet:k-payment-idempotence-helper"));
-        
-        AdviceWith.adviceWith(camelContext, "kafka-publisher", 
-            route -> route.mockEndpoints("kafka:*"));
-        
-        AdviceWith.adviceWith(camelContext, "rejection-handler", 
-            route -> route.mockEndpoints("kafka:*"));
-        
-        AdviceWith.adviceWith(camelContext, "error-handler", 
-            route -> route.mockEndpoints("kafka:*"));
+        AdviceWith.adviceWith(camelContext, "database-persistence",
+                route -> route.mockEndpoints("kamelet:k-db-tx"));
+
+        AdviceWith.adviceWith(camelContext, "reference-enrichment",
+                route -> route.mockEndpoints("kamelet:k-referentiel-data-loader"));
+
+        AdviceWith.adviceWith(camelContext, "validation-step",
+                route -> route.mockEndpoints("kamelet:k-ingestion-technical-validation"));
+
+        AdviceWith.adviceWith(camelContext, "idempotence-check",
+                route -> route.mockEndpoints("kamelet:k-payment-idempotence-helper"));
+
+        AdviceWith.adviceWith(camelContext, "kafka-publisher",
+                route -> route.mockEndpoints("kafka:*"));
+
+        AdviceWith.adviceWith(camelContext, "rejection-handler",
+                route -> route.mockEndpoints("kafka:*"));
+
+        AdviceWith.adviceWith(camelContext, "error-handler",
+                route -> route.mockEndpoints("kafka:*"));
 
         camelContext.start();
     }
@@ -90,7 +130,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Successful database persistence")
         void testSuccessfulDatabasePersistence() throws Exception {
-            MockEndpoint databaseMock = camelContext.getEndpoint(MOCK_DATABASE_ENDPOINT, MockEndpoint.class);
+            MockEndpoint databaseMock =
+                    camelContext.getEndpoint(MOCK_DATABASE_ENDPOINT, MockEndpoint.class);
             databaseMock.expectedMessageCount(1);
             databaseMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("persistenceStatus", SUCCESS_STATUS);
@@ -99,7 +140,7 @@ class PaymentIngestionRouteBuilderTest {
             });
 
             Exchange result = producerTemplate.send("direct:database-persistence", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("messageSource", "HTTP_API");
             });
 
@@ -113,7 +154,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Database persistence failure")
         void testDatabasePersistenceFailure() throws Exception {
-            MockEndpoint databaseMock = camelContext.getEndpoint(MOCK_DATABASE_ENDPOINT, MockEndpoint.class);
+            MockEndpoint databaseMock =
+                    camelContext.getEndpoint(MOCK_DATABASE_ENDPOINT, MockEndpoint.class);
             databaseMock.expectedMessageCount(1);
             databaseMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("persistenceStatus", FAILED_STATUS);
@@ -121,11 +163,12 @@ class PaymentIngestionRouteBuilderTest {
                 exchange.getIn().setHeader("MessagePersisted", false);
             });
 
-            MockEndpoint errorMock = camelContext.getEndpoint("mock:kafka:test-payments-errors", MockEndpoint.class);
+            MockEndpoint errorMock =
+                    camelContext.getEndpoint("mock:kafka:test-payments-errors", MockEndpoint.class);
             errorMock.expectedMessageCount(1);
 
             Exchange result = producerTemplate.send("direct:database-persistence", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("messageSource", "HTTP_API");
             });
 
@@ -133,7 +176,8 @@ class PaymentIngestionRouteBuilderTest {
             errorMock.assertIsSatisfied();
             assertEquals(FAILED_STATUS, result.getIn().getHeader("persistenceStatus"));
             assertEquals(false, result.getIn().getHeader("MessagePersisted"));
-            assertEquals("DATABASE_PERSISTENCE_FAILED", result.getIn().getHeader("RejectionReason"));
+            assertEquals("DATABASE_PERSISTENCE_FAILED",
+                    result.getIn().getHeader("RejectionReason"));
         }
     }
 
@@ -144,7 +188,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Successful reference data enrichment")
         void testSuccessfulReferenceEnrichment() throws Exception {
-            MockEndpoint referenceMock = camelContext.getEndpoint(MOCK_REFERENCE_ENDPOINT, MockEndpoint.class);
+            MockEndpoint referenceMock =
+                    camelContext.getEndpoint(MOCK_REFERENCE_ENDPOINT, MockEndpoint.class);
             referenceMock.expectedMessageCount(1);
             referenceMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("CmdMapping", "SEPA_CREDIT_TRANSFER");
@@ -154,7 +199,7 @@ class PaymentIngestionRouteBuilderTest {
             });
 
             Exchange result = producerTemplate.send("direct:reference-enrichment", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("MessageId", "MSG123456789");
             });
 
@@ -169,7 +214,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Reference enrichment with unknown mapping")
         void testReferenceEnrichmentUnknownMapping() throws Exception {
-            MockEndpoint referenceMock = camelContext.getEndpoint(MOCK_REFERENCE_ENDPOINT, MockEndpoint.class);
+            MockEndpoint referenceMock =
+                    camelContext.getEndpoint(MOCK_REFERENCE_ENDPOINT, MockEndpoint.class);
             referenceMock.expectedMessageCount(1);
             referenceMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("CmdMapping", "UNKNOWN");
@@ -195,7 +241,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Successful message validation")
         void testSuccessfulValidation() throws Exception {
-            MockEndpoint validationMock = camelContext.getEndpoint(MOCK_VALIDATION_ENDPOINT, MockEndpoint.class);
+            MockEndpoint validationMock =
+                    camelContext.getEndpoint(MOCK_VALIDATION_ENDPOINT, MockEndpoint.class);
             validationMock.expectedMessageCount(1);
             validationMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("IsValid", true);
@@ -204,7 +251,7 @@ class PaymentIngestionRouteBuilderTest {
             });
 
             Exchange result = producerTemplate.send("direct:validation", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("MessageId", "MSG123456789");
             });
 
@@ -218,7 +265,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Failed message validation")
         void testFailedValidation() throws Exception {
-            MockEndpoint validationMock = camelContext.getEndpoint(MOCK_VALIDATION_ENDPOINT, MockEndpoint.class);
+            MockEndpoint validationMock =
+                    camelContext.getEndpoint(MOCK_VALIDATION_ENDPOINT, MockEndpoint.class);
             validationMock.expectedMessageCount(1);
             validationMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("IsValid", false);
@@ -233,7 +281,8 @@ class PaymentIngestionRouteBuilderTest {
 
             validationMock.assertIsSatisfied();
             assertEquals(false, result.getIn().getHeader("IsValid"));
-            assertEquals("Missing required field: InstrId", result.getIn().getHeader("ValidationResult"));
+            assertEquals("Missing required field: InstrId",
+                    result.getIn().getHeader("ValidationResult"));
             assertEquals("VALIDATION_FAILED", result.getIn().getHeader("RejectionReason"));
         }
     }
@@ -245,7 +294,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Non-duplicate message processing")
         void testNonDuplicateMessage() throws Exception {
-            MockEndpoint idempotenceMock = camelContext.getEndpoint(MOCK_IDEMPOTENCE_ENDPOINT, MockEndpoint.class);
+            MockEndpoint idempotenceMock =
+                    camelContext.getEndpoint(MOCK_IDEMPOTENCE_ENDPOINT, MockEndpoint.class);
             idempotenceMock.expectedMessageCount(1);
             idempotenceMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("IsDuplicate", false);
@@ -253,7 +303,7 @@ class PaymentIngestionRouteBuilderTest {
             });
 
             Exchange result = producerTemplate.send("direct:idempotence-check", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("MessageId", "MSG123456789");
             });
 
@@ -266,7 +316,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Duplicate message rejection")
         void testDuplicateMessageRejection() throws Exception {
-            MockEndpoint idempotenceMock = camelContext.getEndpoint(MOCK_IDEMPOTENCE_ENDPOINT, MockEndpoint.class);
+            MockEndpoint idempotenceMock =
+                    camelContext.getEndpoint(MOCK_IDEMPOTENCE_ENDPOINT, MockEndpoint.class);
             idempotenceMock.expectedMessageCount(1);
             idempotenceMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("IsDuplicate", true);
@@ -276,7 +327,7 @@ class PaymentIngestionRouteBuilderTest {
             });
 
             Exchange result = producerTemplate.send("direct:idempotence-check", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("MessageId", "DUPLICATE123");
             });
 
@@ -290,7 +341,8 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Duplicate message with ignore action")
         void testDuplicateMessageIgnore() throws Exception {
-            MockEndpoint idempotenceMock = camelContext.getEndpoint(MOCK_IDEMPOTENCE_ENDPOINT, MockEndpoint.class);
+            MockEndpoint idempotenceMock =
+                    camelContext.getEndpoint(MOCK_IDEMPOTENCE_ENDPOINT, MockEndpoint.class);
             idempotenceMock.expectedMessageCount(1);
             idempotenceMock.whenExchangeReceived(1, exchange -> {
                 exchange.getIn().setHeader("IsDuplicate", true);
@@ -299,7 +351,7 @@ class PaymentIngestionRouteBuilderTest {
             });
 
             Exchange result = producerTemplate.send("direct:idempotence-check", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("MessageId", "DUPLICATE456");
             });
 
@@ -317,11 +369,12 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Publish PACS.008 message to correct topic")
         void testPacs008TopicRouting() throws Exception {
-            MockEndpoint kafkaMock = camelContext.getEndpoint("mock:kafka:test-payments-pacs008", MockEndpoint.class);
+            MockEndpoint kafkaMock = camelContext.getEndpoint("mock:kafka:test-payments-pacs008",
+                    MockEndpoint.class);
             kafkaMock.expectedMessageCount(1);
 
             Exchange result = producerTemplate.send("direct:kafka-publisher", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("ExpectedMessageType", "pacs.008");
                 exchange.getIn().setHeader("ReceiptChannel", "REST_API");
                 exchange.getIn().setHeader("PrimaryIdentifier", "MSG123456789");
@@ -337,31 +390,71 @@ class PaymentIngestionRouteBuilderTest {
         }
 
         @Test
-        @DisplayName("Publish PAN.001 message to correct topic")
-        void testPan001TopicRouting() throws Exception {
-            MockEndpoint kafkaMock = camelContext.getEndpoint("mock:kafka:test-payments-pan001", MockEndpoint.class);
+        @DisplayName("Publish PACS.009 message to correct topic")
+        void testPacs009TopicRouting() throws Exception {
+            MockEndpoint kafkaMock = camelContext.getEndpoint("mock:kafka:test-payments-pacs009",
+                    MockEndpoint.class);
             kafkaMock.expectedMessageCount(1);
 
             Exchange result = producerTemplate.send("direct:kafka-publisher", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
-                exchange.getIn().setHeader("ExpectedMessageType", "pan.001");
-                exchange.getIn().setHeader("ReceiptChannel", "MQ_SERIES");
-                exchange.getIn().setHeader("PrimaryIdentifier", "PAN123456789");
+                exchange.getIn().setBody(SAMPLE_PACS009_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "pacs.009");
+                exchange.getIn().setHeader("ReceiptChannel", "CFT");
+                exchange.getIn().setHeader("PrimaryIdentifier", "RTN123456789");
             });
 
             kafkaMock.assertIsSatisfied();
-            assertEquals("test-payments-pan001", result.getIn().getHeader("KafkaTopic"));
-            assertEquals("PAN123456789", result.getIn().getHeader("kafka.KEY"));
+            assertEquals("test-payments-pacs009", result.getIn().getHeader("KafkaTopic"));
+            assertEquals("RTN123456789", result.getIn().getHeader("kafka.KEY"));
+        }
+
+        @Test
+        @DisplayName("Publish PAIN.001 message to correct topic")
+        void testPain001TopicRouting() throws Exception {
+            MockEndpoint kafkaMock = camelContext.getEndpoint("mock:kafka:test-payments-pain001",
+                    MockEndpoint.class);
+            kafkaMock.expectedMessageCount(1);
+
+            Exchange result = producerTemplate.send("direct:kafka-publisher", exchange -> {
+                exchange.getIn().setBody(SAMPLE_PAIN001_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "pain.001");
+                exchange.getIn().setHeader("ReceiptChannel", "CFT");
+                exchange.getIn().setHeader("PrimaryIdentifier", "INIT123456789");
+            });
+
+            kafkaMock.assertIsSatisfied();
+            assertEquals("test-payments-pain001", result.getIn().getHeader("KafkaTopic"));
+            assertEquals("INIT123456789", result.getIn().getHeader("kafka.KEY"));
+        }
+
+        @Test
+        @DisplayName("Publish CAMT.053 message to correct topic")
+        void testCamt053TopicRouting() throws Exception {
+            MockEndpoint kafkaMock = camelContext.getEndpoint("mock:kafka:test-payments-camt053",
+                    MockEndpoint.class);
+            kafkaMock.expectedMessageCount(1);
+
+            Exchange result = producerTemplate.send("direct:kafka-publisher", exchange -> {
+                exchange.getIn().setBody(SAMPLE_CAMT053_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "camt.053");
+                exchange.getIn().setHeader("ReceiptChannel", "CFT");
+                exchange.getIn().setHeader("PrimaryIdentifier", "STMT123456789");
+            });
+
+            kafkaMock.assertIsSatisfied();
+            assertEquals("test-payments-camt053", result.getIn().getHeader("KafkaTopic"));
+            assertEquals("STMT123456789", result.getIn().getHeader("kafka.KEY"));
         }
 
         @Test
         @DisplayName("Publish unknown message type to default topic")
         void testDefaultTopicRouting() throws Exception {
-            MockEndpoint kafkaMock = camelContext.getEndpoint("mock:kafka:test-payments-processed", MockEndpoint.class);
+            MockEndpoint kafkaMock = camelContext.getEndpoint("mock:kafka:test-payments-processed",
+                    MockEndpoint.class);
             kafkaMock.expectedMessageCount(1);
 
             Exchange result = producerTemplate.send("direct:kafka-publisher", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("ExpectedMessageType", "unknown.type");
                 exchange.getIn().setHeader("ReceiptChannel", "FILE_CFT");
             });
@@ -372,17 +465,117 @@ class PaymentIngestionRouteBuilderTest {
     }
 
     @Nested
+    @DisplayName("Message Type Support Tests")
+    class MessageTypeSupportTests {
+
+        @Test
+        @DisplayName("PACS.008 message type is properly handled")
+        void testPacs008MessageTypeSupport() {
+            // Test that PACS.008 messages are correctly identified and processed
+            Exchange result = producerTemplate.send("direct:processing-publisher", exchange -> {
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "pacs.008");
+                exchange.getIn().setHeader("ReceiptChannel", "HTTP");
+                exchange.getIn().setHeader("PrimaryIdentifier", "MSG123456789");
+                exchange.getIn().setHeader("IsValid", true);
+            });
+
+            // Verify message processing
+            assertNotNull(result);
+            assertEquals("pacs.008", result.getIn().getHeader("ExpectedMessageType"));
+            assertEquals("HTTP", result.getIn().getHeader("ReceiptChannel"));
+        }
+
+        @Test
+        @DisplayName("PACS.009 message type is properly handled")
+        void testPacs009MessageTypeSupport() {
+            // Test that PACS.009 messages are correctly identified and processed
+            Exchange result = producerTemplate.send("direct:processing-publisher", exchange -> {
+                exchange.getIn().setBody(SAMPLE_PACS009_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "pacs.009");
+                exchange.getIn().setHeader("ReceiptChannel", "MQ");
+                exchange.getIn().setHeader("PrimaryIdentifier", "RTN123456789");
+            });
+
+            assertNotNull(result);
+            assertEquals("pacs.009", result.getIn().getHeader("ExpectedMessageType"));
+            assertEquals("MQ", result.getIn().getHeader("ReceiptChannel"));
+        }
+
+
+
+        @Test
+        @DisplayName("PAIN.001 message type is properly handled")
+        void testPain001MessageTypeSupport() {
+            // Test that PAIN.001 messages are correctly identified and processed
+            Exchange result = producerTemplate.send("direct:processing-publisher", exchange -> {
+                exchange.getIn().setBody(SAMPLE_PAIN001_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "pain.001");
+                exchange.getIn().setHeader("ReceiptChannel", "HTTP");
+                exchange.getIn().setHeader("PrimaryIdentifier", "INIT123456789");
+            });
+
+            assertNotNull(result);
+            assertEquals("pain.001", result.getIn().getHeader("ExpectedMessageType"));
+            assertEquals("HTTP", result.getIn().getHeader("ReceiptChannel"));
+        }
+
+        @Test
+        @DisplayName("CAMT.053 message type is properly handled")
+        void testCamt053MessageTypeSupport() {
+            // Test that CAMT.053 messages are correctly identified and processed
+            Exchange result = producerTemplate.send("direct:processing-publisher", exchange -> {
+                exchange.getIn().setBody(SAMPLE_CAMT053_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "camt.053");
+                exchange.getIn().setHeader("ReceiptChannel", "CFT");
+                exchange.getIn().setHeader("PrimaryIdentifier", "STMT123456789");
+            });
+
+            assertNotNull(result);
+            assertEquals("camt.053", result.getIn().getHeader("ExpectedMessageType"));
+            assertEquals("CFT", result.getIn().getHeader("ReceiptChannel"));
+        }
+
+        @Test
+        @DisplayName("Channel-based routing works correctly")
+        void testChannelBasedRouting() {
+            // Test HTTP/MQ channels for real-time processing
+            Exchange httpResult = producerTemplate.send("direct:processing-publisher", exchange -> {
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "pacs.008");
+                exchange.getIn().setHeader("ReceiptChannel", "HTTP");
+                exchange.getIn().setHeader("PrimaryIdentifier", "MSG123456789");
+            });
+
+            // Test CFT channel for batch processing
+            Exchange cftResult = producerTemplate.send("direct:processing-publisher", exchange -> {
+                exchange.getIn().setBody(SAMPLE_CAMT053_XML);
+                exchange.getIn().setHeader("ExpectedMessageType", "camt.053");
+                exchange.getIn().setHeader("ReceiptChannel", "CFT");
+                exchange.getIn().setHeader("PrimaryIdentifier", "STMT123456789");
+            });
+
+            // Verify both processing paths work
+            assertNotNull(httpResult);
+            assertNotNull(cftResult);
+            assertEquals("HTTP", httpResult.getIn().getHeader("ReceiptChannel"));
+            assertEquals("CFT", cftResult.getIn().getHeader("ReceiptChannel"));
+        }
+    }
+
+    @Nested
     @DisplayName("Error and Rejection Handler Tests")
     class ErrorHandlerTests {
 
         @Test
         @DisplayName("Rejection handler processing")
         void testRejectionHandler() throws Exception {
-            MockEndpoint rejectionMock = camelContext.getEndpoint("mock:kafka:test-payments-rejected", MockEndpoint.class);
+            MockEndpoint rejectionMock = camelContext
+                    .getEndpoint("mock:kafka:test-payments-rejected", MockEndpoint.class);
             rejectionMock.expectedMessageCount(1);
 
             Exchange result = producerTemplate.send("direct:rejection-handler", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("RejectionReason", "VALIDATION_FAILED");
                 exchange.getIn().setHeader("ReceiptChannel", "REST_API");
                 exchange.getIn().setHeader("PrimaryIdentifier", "MSG123456789");
@@ -397,11 +590,12 @@ class PaymentIngestionRouteBuilderTest {
         @Test
         @DisplayName("Error handler processing")
         void testErrorHandler() throws Exception {
-            MockEndpoint errorMock = camelContext.getEndpoint("mock:kafka:test-payments-errors", MockEndpoint.class);
+            MockEndpoint errorMock =
+                    camelContext.getEndpoint("mock:kafka:test-payments-errors", MockEndpoint.class);
             errorMock.expectedMessageCount(1);
 
             Exchange result = producerTemplate.send("direct:error-handler", exchange -> {
-                exchange.getIn().setBody(SAMPLE_XML);
+                exchange.getIn().setBody(SAMPLE_PACS008_XML);
                 exchange.getIn().setHeader("ErrorMessage", "Database connection failed");
                 exchange.getIn().setHeader("ReceiptChannel", "MQ_SERIES");
                 exchange.getIn().setHeader("ProcessingStage", "DATABASE_PERSISTENCE");

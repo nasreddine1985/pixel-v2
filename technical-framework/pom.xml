@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.pixel.v2</groupId>
+        <artifactId>PIXEL-V2</artifactId>
+        <version>1.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>technical-framework</artifactId>
+    <packaging>pom</packaging>
+    <name>Technical Framework - Kamelets Collection</name>
+    <description>Collection of Apache Camel Kamelets for PIXEL-V2 technical framework</description>
+
+    <modules>
+        <module>k-mq-message-receiver</module>
+        <module>k-http-message-receiver</module>
+        <module>k-cft-data-receiver</module>
+        <module>k-db-tx</module>
+        <module>k-referentiel-data-loader</module>
+        <module>k-ingestion-technical-validation</module>
+        <module>k-payment-idempotence-helper</module>
+        <module>k-log-tx</module>
+        <module>k-kafka-message-receiver</module>
+        <module>k-pacs008-to-cdm-transformer</module>
+        <module>k-pacs009-to-cdm-transformer</module>
+        <module>k-pain001-to-cdm-transformer</module>
+        <module>k-camt053-to-cdm-transformer</module>
+    </modules>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>21</source>
+                    <target>21</target>
+                    <release>21</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

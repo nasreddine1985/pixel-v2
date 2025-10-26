@@ -12,20 +12,10 @@
     <description>PIXEL-V2 Payment Message Processing System</description>
 
     <modules>
-        <module>k-mq-message-receiver</module>
-        <module>k-http-message-receiver</module>
-        <module>k-cft-data-receiver</module>
-        <module>k-db-tx</module>
-        <module>k-referentiel-data-loader</module>
-        <module>k-ingestion-technical-validation</module>
-        <module>k-payment-idempotence-helper</module>
-        <module>k-log-tx</module>
+        <module>technical-framework</module>
         <module>ingestion</module>
-        <module>k-kafka-message-receiver</module>
-        <module>k-pacs008-to-cdm-transformer</module>
-        <module>k-pan001-to-cdm-transformer</module>
-        <module>processing</module>
-        <module>outbound</module>
+        <module>business</module>
+        <module>distribution</module>
     </modules>
 
     <properties>

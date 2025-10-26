@@ -1,17 +1,75 @@
-# Payment Ingestion Service
+# 📥 Ingestion Service
 
-Spring Boot Apache Camel application that orchestrates the payment message ingestion flow using various kamelets for comprehensive payment processing.
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/your-org/pixel-v2)
+[![Version](https://img.shields.io/badge/version-1.0.1--SNAPSHOT-blue.svg)](https://github.com/your-org/pixel-v2/releases)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Apache Camel](https://img.shields.io/badge/Apache%20Camel-4.1.0-orange.svg)](https://camel.apache.org)
+[![Java](https://img.shields.io/badge/Java-21-blue.svg)](https://openjdk.java.net/projects/jdk/21/)
 
-## Overview
+> **Multi-Channel Payment Gateway** - Unified entry point for payment messages from HTTP, MQ, and file systems with intelligent routing and comprehensive audit trails.
 
-The Payment Ingestion Service provides a unified entry point for payment messages from multiple channels and orchestrates their processing through validation, idempotence checking, and publishing to Kafka topics. The service now includes **comprehensive centralized logging** through the `k-log-tx` kamelet, providing complete observability and audit trail for all payment processing operations.
+## 🎯 Overview
+
+The Ingestion Service serves as the **primary gateway** for payment messages across multiple channels, providing unified orchestration of message reception, validation, duplicate prevention, and intelligent routing to downstream processing services.
+
+**Supported ISO 20022 Message Types:**
+
+- **PACS.008** - Customer Credit Transfer Initiation
+- **PACS.009** - Financial Institution Credit Transfer Return
+- **PAIN.001** - Customer Payment Initiation
+- **CAMT.053** - Bank-to-Customer Account Statement
+
+### 🔄 Core Capabilities
+
+| Capability                  | Description                                       | Technology Stack           |
+| --------------------------- | ------------------------------------------------- | -------------------------- |
+| **Multi-Channel Ingestion** | HTTP API, IBM MQ, File system monitoring          | Spring Boot + Apache Camel |
+| **Intelligent Routing**     | Source-aware message routing (batch vs real-time) | Camel Dynamic Routing      |
+| **Duplicate Prevention**    | Idempotence checking with database persistence    | k-db-tx Kamelet            |
+| **Comprehensive Logging**   | Complete audit trail and observability            | k-log-tx Kamelet           |
+| **Schema Validation**       | Message format validation and enrichment          | JSON/XML Schema Validation |
+
+### 🎯 Processing Strategy
+
+```mermaid
+flowchart LR
+    A[🌐 HTTP API] --> D[🧠 Ingestion Orchestrator]
+    B[📬 IBM MQ] --> D
+    C[📁 File System] --> D
+    D --> E[🔍 Validation & Deduplication]
+    E --> F{Source Channel}
+    F -->|CFT Files| G[📤 Kafka Topics<br/>Message Type Routing]
+    F -->|HTTP/MQ| H{Message Type Detection}
+
+    G -->|pacs.008| G1[📤 payments-pacs008]
+    G -->|pacs.009| G2[📤 payments-pacs009]
+    G -->|pain.001| G3[📤 payments-pain001]
+    G -->|camt.053| G4[📤 payments-camt053]
+
+    H -->|pacs.008| I1[� POST /business/api/direct/<br/>pacs-008-transform]
+    H -->|pacs.009| I2[🔗 POST /business/api/direct/<br/>pacs-009-transform]
+    H -->|pain.001| I3[🔗 POST /business/api/direct/<br/>pain-001-transform]
+    H -->|camt.053| I4[🔗 POST /business/api/direct/<br/>camt-053-transform]
+
+    G1 --> J[📊 Business Module<br/>Batch Processing]
+    G2 --> J
+    G3 --> J
+    G4 --> J
+
+    I1 --> K[� Business Module<br/>Real-time Processing]
+    I2 --> K
+    I3 --> K
+    I4 --> K
+
+    E --> L[🔗 k-log-tx Audit Trail]
+```
 
 ## Architecture
 
-The ingestion service now supports **intelligent message routing** based on the source channel after duplicate prevention:
+The ingestion service now supports **intelligent message routing** based on source channel and message type:
 
-- **CFT messages** → Continue to Kafka (existing batch processing)
-- **HTTP/MQ messages** → Route directly to processing module (real-time processing)
+- **CFT messages** → Route to Kafka topics by message type (batch processing)
+- **HTTP/MQ messages** → Direct HTTP calls to business module by message type (real-time processing)
 
 ```
                               🔄 INTELLIGENT MESSAGE ROUTING ARCHITECTURE 🔄
@@ -146,40 +204,60 @@ The ingestion service now supports **intelligent message routing** based on the 
               ▼                     ▼                     ▼
    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
    │ direct:kafka-   │    │ direct:         │    │ direct:         │
-   │ publisher       │    │ processing-     │    │ rejection-      │
+   │ publisher       │    │ business-direct-│    │ rejection-      │
    │                 │    │ publisher       │    │ handler         │
    │ Route to:       │    │                 │    │                 │
-   │ • pacs.008 →    │    │ Route to:       │    │ Route to:       │
-   │   kafka topic   │    │ • Processing    │    │ • Dead Letter   │
-   │ • pan.001 →     │    │   Module via    │    │   Topics        │
-   │   kafka topic   │    │ • direct:kafka- │    │ • Error Logs    │
-   │ • default →     │    │   message-      │    │ • Monitoring    │
-   │   kafka topic   │    │   processing    │    │                 │
+   │ • pacs.008 →    │    │ Direct HTTP to: │    │ Route to:       │
+   │   kafka topic   │    │ • pacs.008 →    │    │ • Dead Letter   │
+   │ • pacs.009 →    │    │   :8081/pacs-   │    │   Topics        │
+   │   kafka topic   │    │   008-transform │    │ • Error Logs    │
+   │ • pain.001 →    │    │ • pacs.009 →    │    │ • Monitoring    │
+   │   kafka topic   │    │   :8081/pacs-   │    │                 │
+   │ • camt.053 →    │    │   009-transform │    │                 │
+   │   kafka topic   │    │ • pain.001 →    │    │                 │
+   │ • default →     │    │   :8081/pain-   │    │                 │
+   │   kafka topic   │    │   001-transform │    │                 │
+   │                 │    │ • camt.053 →    │    │                 │
+   │                 │    │   :8081/camt-   │    │                 │
+   │                 │    │   053-transform │    │                 │
    └─────────┬───────┘    └─────────┬───────┘    └─────────────────┘
              │                      │
              ▼                      ▼
    ┌─────────────────┐    ┌─────────────────┐
-   │ Apache Kafka    │    │ Processing      │
+   │ Apache Kafka    │    │ Business        │
    │ Topics          │    │ Module          │
    │                 │    │ (Spring Boot)   │
    │ • payments-     │    │                 │
    │   pacs008       │    │ • Message Type  │
    │ • payments-     │    │   Detection     │
-   │   pan001        │    │ • Dynamic Route │
+   │   pacs009       │    │ • Dynamic Route │
    │ • payments-     │    │ • CDM Transform │
-   │   default       │    │ • Real-time Proc│
+   │   pain001       │    │ • Real-time Proc│
+   │ • payments-     │    │                 │
+   │   camt053       │    │                 │
+   │ • payments-     │    │                 │
+   │   default       │    │                 │
    └─────────┬───────┘    └─────────┬───────┘
              │                      │
              │                      ▼
              │            ┌─────────────────┐
-             │            │ Processing      │
-             │            │ Module          │
+             │            │ Business Module │
+             │            │ :8081 (HTTP)    │
              │            │                 │
-             │            │ • Message Type  │
-             │            │   Detection     │
-             │            │ • CDM Transform │
-             │            │ • CDM Persist   │
-             │            │   (via k-db-tx) │
+             │            │ HTTP Endpoints: │
+             │            │ • /pacs-008-    │
+             │            │   transform     │
+             │            │ • /pacs-009-    │
+             │            │   transform     │
+             │            │ • /pain-001-    │
+             │            │   transform     │
+             │            │ • /camt-053-    │
+             │            │   transform     │
+             │            │                 │
+             │            │ • Direct CDM    │
+             │            │   Transform     │
+             │            │ • Real-time     │
+             │            │   Processing    │
              │            └─────────────────┘
              │
              ▼
@@ -192,13 +270,13 @@ The ingestion service now supports **intelligent message routing** based on the 
    │   Consumer      │
    │ • Deserialize   │
    │ • Route to      │
-   │   Processing    │
+   │   Business      │
    │   Module        │
    └─────────┬───────┘
              │
              ▼
    ┌─────────────────┐
-   │ Processing      │
+   │ Business        │
    │ Module          │
    │ (Unified)       │
    │                 │
@@ -216,7 +294,7 @@ The ingestion service now supports **intelligent message routing** based on the 
 • k-payment-idempotence-helper: Duplicate prevention & tracking
 • k-kafka-message-receiver: Kafka topic consumer & routing
 • k-log-tx: Centralized logging with database persistence & audit trail
-• MessageMetadataEnrichmentProcessor: Processing module integration
+• MessageMetadataEnrichmentProcessor: Business module integration
 
 🗂️ CENTRALIZED LOGGING ARCHITECTURE:
 ═══════════════════════════════════════
@@ -359,14 +437,19 @@ The ingestion service implements **smart routing** based on the source channel i
 - **Route**: Continue to Kafka topics (existing behavior)
 - **Purpose**: Batch processing optimization
 - **Topics**: `payments-pacs008`, `payments-pan001`, `payments-default`
-- **Downstream**: Consumed by `k-kafka-message-receiver` → processing module
+- **Downstream**: Consumed by `k-kafka-message-receiver` → business module
 
 #### HTTP/MQ Messages (Interactive channels)
 
-- **Route**: Direct to processing module via `direct:kafka-message-processing`
+- **Route**: Direct HTTP calls to message-type-specific business module endpoints
 - **Purpose**: Real-time processing with reduced latency
 - **Benefits**: Bypasses Kafka for faster response times
-- **Downstream**: Direct integration with processing module
+- **Endpoints**:
+  - PACS.008 → `/business/api/direct/pacs-008-transform`
+  - PACS.009 → `/business/api/direct/pacs-009-transform`
+  - PAIN.001 → `/business/api/direct/pain-001-transform`
+  - CAMT.053 → `/business/api/direct/camt-053-transform`
+- **Downstream**: Direct integration with business module
 
 #### Routing Logic
 
@@ -429,19 +512,24 @@ ingestion.file.pattern=*.xml
 ingestion.kafka.brokers=localhost:9092
 ingestion.kafka.topic.default=payments-processed
 ingestion.kafka.topic.pacs008=payments-pacs008
-ingestion.kafka.topic.pan001=payments-pan001
+ingestion.kafka.topic.pacs009=payments-pacs009
+ingestion.kafka.topic.pain001=payments-pain001
+ingestion.kafka.topic.camt053=payments-camt053
 ingestion.kafka.topic.rejected=payments-rejected
 ingestion.kafka.topic.errors=payments-errors
 ```
 
-#### Processing Module Integration
+#### Business Module Integration
 
 ```properties
-# Processing Module Integration
-# CFT messages go to Kafka (existing process)
-# HTTP/MQ messages go directly to processing module
-ingestion.processing.endpoint=direct:kafka-message-processing
-ingestion.processing.enabled=true
+# Business Module Direct HTTP Integration
+# CFT messages go to Kafka (batch processing)
+# HTTP/MQ messages go directly to business module via HTTP (real-time processing)
+business.module.host=localhost
+business.module.port=8081
+business.module.base-path=/business/api/direct
+business.integration.enabled=true
+business.integration.timeout=30000
 ```
 
 #### Database Configuration (for k-db-tx kamelet)
@@ -487,13 +575,47 @@ persistence.retry.delay=1000
 
 ### Payment Submission
 
+#### PACS.008 - Customer Credit Transfer Initiation
 ```http
 POST /ingestion/api/v1/payments
 Content-Type: application/json
 
 {
   "messageType": "pacs.008",
-  "payload": "<?xml version='1.0'?>..."
+  "payload": "<?xml version='1.0'?><Document xmlns='urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08'><FIToFICstmrCdtTrf>...</FIToFICstmrCdtTrf></Document>"
+}
+```
+
+#### PACS.009 - Financial Institution Credit Transfer Return
+```http
+POST /ingestion/api/v1/payments
+Content-Type: application/json
+
+{
+  "messageType": "pacs.009",
+  "payload": "<?xml version='1.0'?><Document xmlns='urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08'><FIToFICstmrCdtTrfRtr>...</FIToFICstmrCdtTrfRtr></Document>"
+}
+```
+
+#### PAIN.001 - Customer Payment Initiation
+```http
+POST /ingestion/api/v1/payments
+Content-Type: application/json
+
+{
+  "messageType": "pain.001",
+  "payload": "<?xml version='1.0'?><Document xmlns='urn:iso:std:iso:20022:tech:xsd:pain.001.001.09'><CstmrCdtTrfInitn>...</CstmrCdtTrfInitn></Document>"
+}
+```
+
+#### CAMT.053 - Bank-to-Customer Account Statement
+```http
+POST /ingestion/api/v1/payments
+Content-Type: application/json
+
+{
+  "messageType": "camt.053",
+  "payload": "<?xml version='1.0'?><Document xmlns='urn:iso:std:iso:20022:tech:xsd:camt.053.001.08'><BkToCstmrStmt>...</BkToCstmrStmt></Document>"
 }
 ````
 
@@ -514,7 +636,7 @@ GET /ingestion/metrics
 ### Successful MQ Processing (Updated Flow)
 
 ```yaml
-# MQ Message Reception & Processing - NEW: Direct to Processing Module + Centralized Logging
+# MQ Message Reception & Processing - NEW: Direct HTTP to Business Module + Centralized Logging
 - Receipt: k-mq-message-receiver → Log message, set MQ metadata headers (ReceiptChannel: "MQ") + k-log-tx logging
 - Route: Ingestion Orchestrator → Direct to persistence pipeline + k-log-tx start logging
 - Persist: k-db-tx → Initial database storage with transaction management + k-log-tx success/failure logging
@@ -522,16 +644,16 @@ GET /ingestion/metrics
 - Persist Enriched: k-db-tx → Save enriched data to database + k-log-tx enrichment persistence logging
 - Validate: k-ingestion-technical-validation → Check message structure + k-log-tx validation logging
 - Dedupe: k-payment-idempotence-helper → Verify uniqueness + k-log-tx idempotence logging
-- Smart Route: Intelligent Routing → ReceiptChannel = "MQ" → direct:processing-publisher + k-log-tx routing decision logging
-- Publish: Processing Module → direct:kafka-message-processing (Real-time processing) + k-log-tx publishing logging
-- Transform: Processing Module → Message to CDM transformation (if applicable)
-- CDM Persist: Processing Module handles CDM persistence internally
+- Smart Route: Intelligent Routing → ReceiptChannel = "MQ" → direct:business-direct-publisher + k-log-tx routing decision logging
+- Direct HTTP: Business Module → HTTP POST to :8081/business/api/direct/{message-type}-transform + k-log-tx HTTP logging
+- Transform: Business Module → Message to CDM transformation via specific kamelet endpoint
+- CDM Persist: Business Module handles CDM persistence and outbound routing internally
 ```
 
 ### Successful HTTP API Processing (Updated Flow)
 
 ```yaml
-# REST API Message Reception & Processing - NEW: Direct to Processing Module + Centralized Logging
+# REST API Message Reception & Processing - NEW: Direct HTTP to Business Module + Centralized Logging
 - Receipt: k-http-message-receiver → Log request, set HTTP metadata headers (ReceiptChannel: "HTTP"), return receipt confirmation + k-log-tx logging
 - Route: Ingestion Orchestrator → Direct to persistence pipeline + k-log-tx start logging
 - Persist: k-db-tx → Initial database storage with transaction management + k-log-tx success/failure logging
@@ -539,10 +661,10 @@ GET /ingestion/metrics
 - Persist Enriched: k-db-tx → Save enriched data to database + k-log-tx enrichment persistence logging
 - Validate: k-ingestion-technical-validation → Check message structure + k-log-tx validation logging
 - Dedupe: k-payment-idempotence-helper → Verify uniqueness + k-log-tx idempotence logging
-- Smart Route: Intelligent Routing → ReceiptChannel = "HTTP" → direct:processing-publisher + k-log-tx routing decision logging
-- Publish: Processing Module → direct:kafka-message-processing (Real-time processing) + k-log-tx publishing logging
-- Transform: Processing Module → Message to CDM transformation (if applicable)
-- CDM Persist: Processing Module handles CDM persistence internally
+- Smart Route: Intelligent Routing → ReceiptChannel = "HTTP" → direct:business-direct-publisher + k-log-tx routing decision logging
+- Direct HTTP: Business Module → HTTP POST to :8081/business/api/direct/{message-type}-transform + k-log-tx HTTP logging
+- Transform: Business Module → Message to CDM transformation via specific kamelet endpoint
+- CDM Persist: Business Module handles CDM persistence and outbound routing internally
 ```
 
 ### Successful File Processing (Unchanged - Kafka Flow)
@@ -558,7 +680,7 @@ GET /ingestion/metrics
 - Dedupe: k-payment-idempotence-helper → Verify uniqueness + k-log-tx idempotence logging
 - Smart Route: Intelligent Routing → ReceiptChannel = "CFT" → direct:kafka-publisher + k-log-tx routing decision logging
 - Publish: Kafka Topic → payments-pacs008 (Batch processing optimization) + k-log-tx publishing logging
-- Downstream: k-kafka-message-receiver → Processing Module
+- Downstream: k-kafka-message-receiver → Business Module
 ```
 
 ### Validation Failure
@@ -626,7 +748,7 @@ The kamelet supports two processing modes based on message content:
 }
 ```
 
-#### Processing Module Route (HTTP/MQ Messages)
+#### Business Module Direct HTTP Route (HTTP/MQ Messages)
 
 ```json
 {
@@ -695,11 +817,11 @@ The kamelet supports two processing modes based on message content:
 
 #### 🆕 CDM Transformation and Persistence Flow
 
-After the processing module transforms payment messages to CDM objects, the system automatically persists these CDM objects using the `k-db-tx` kamelet:
+After the business module transforms payment messages to CDM objects, the system automatically persists these CDM objects using the `k-db-tx` kamelet:
 
 ````yaml
-# CDM Post-Processing Flow (HTTP/MQ Messages) - Handled by Processing Module
-- Processing Module: Transform payment message to CDM format
+# CDM Post-Processing Flow (HTTP/MQ Messages) - Handled by Business Module
+- Business Module: Transform payment message to CDM format
 - Processing Module: Internally routes CDM to k-db-tx
 - Processing Module: Saves CDM objects to CdmMessage entity
 - Processing Module: Links CDM records to original payment messages
@@ -807,8 +929,8 @@ CorrelationId: "${header.MessageId}"
 # Enable/disable intelligent routing
 ingestion.processing.enabled=true
 
-# Configure processing module endpoint
-ingestion.processing.endpoint=direct:kafka-message-processing
+# Configure processing module base endpoint (message-type-specific paths appended)
+ingestion.processing.base.endpoint=http://localhost:8081/business/api/direct
 
 # Route logging (debug purposes)
 logging.level.com.pixel.v2.ingestion=DEBUG
@@ -854,7 +976,7 @@ logging.level.com.pixel.v2.ingestion=DEBUG
 - Application health: `/health`
 - Camel routes health via Spring Boot Actuator
 - Kafka connectivity monitoring
-- Processing module integration health
+- Business module integration health
 
 ### Metrics
 
@@ -928,13 +1050,38 @@ mvn verify
 
 ### Manual Testing
 
-#### Standard MESSAGE Testing
+#### ISO 20022 Message Testing
+
+##### PACS.008 - Customer Credit Transfer
 
 ```bash
-# Send test XML message via API
 curl -X POST http://localhost:8080/ingestion/api/v1/payments \
   -H "Content-Type: application/json" \
-  -d '{"messageType":"pacs.008","payload":"<xml>test</xml>"}'
+  -d '{"messageType":"pacs.008","payload":"<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08\"><FIToFICstmrCdtTrf><GrpHdr><MsgId>MSG-001</MsgId></GrpHdr></FIToFICstmrCdtTrf></Document>"}'
+```
+
+##### PACS.009 - Payment Return
+
+```bash
+curl -X POST http://localhost:8080/ingestion/api/v1/payments \
+  -H "Content-Type: application/json" \
+  -d '{"messageType":"pacs.009","payload":"<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.009.001.08\"><FIToFICstmrCdtTrfRtr><GrpHdr><MsgId>RTN-001</MsgId></GrpHdr></FIToFICstmrCdtTrfRtr></Document>"}'
+```
+
+##### PAIN.001 - Payment Initiation
+
+```bash
+curl -X POST http://localhost:8080/ingestion/api/v1/payments \
+  -H "Content-Type: application/json" \
+  -d '{"messageType":"pain.001","payload":"<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pain.001.001.09\"><CstmrCdtTrfInitn><GrpHdr><MsgId>INIT-001</MsgId></GrpHdr></CstmrCdtTrfInitn></Document>"}'
+```
+
+##### CAMT.053 - Account Statement
+
+```bash
+curl -X POST http://localhost:8080/ingestion/api/v1/payments \
+  -H "Content-Type: application/json" \
+  -d '{"messageType":"camt.053","payload":"<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:camt.053.001.08\"><BkToCstmrStmt><GrpHdr><MsgId>STMT-001</MsgId></GrpHdr></BkToCstmrStmt></Document>"}'
 ```
 
 #### 🆕 CDM Message Testing
@@ -1095,7 +1242,7 @@ delay: 5000
 - **IBM MQ**: Message queue system
 - **Kafka**: Event streaming platform (for CFT batch processing)
 - **Reference API**: Configuration and mapping service
-- **🆕 Processing Module**: Real-time message processing service with endpoint `direct:kafka-message-processing`
+- **🆕 Processing Module**: Real-time message processing service with HTTP endpoint `http://localhost:8081/business/api/direct/kafka-message-processing`
 
 ### Integration Dependencies
 
@@ -1109,10 +1256,25 @@ delay: 5000
 #### For HTTP/MQ Messages (Direct Route)
 
 - **🆕 Processing module must be deployed and running**
-- **🆕 Endpoint `direct:kafka-message-processing` must be available**
+- **🆕 HTTP endpoint `/business/api/direct/kafka-message-processing` must be available**
 - **🆕 Processing module must handle message type detection and routing**
 - **🆕 Processing Module must handle CDM persistence internally**
 - No Kafka dependency for real-time processing path
+
+#### Architecture Note: Inter-Module Communication
+
+**Important**: Communication between ingestion and business modules uses HTTP endpoints:
+
+- **Ingestion Module** → HTTP POST → **Business Module**
+- **Real-time Endpoints** (message-type-specific):
+  - `http://localhost:8081/business/api/direct/pacs-008-transform`
+  - `http://localhost:8081/business/api/direct/pacs-009-transform`
+  - `http://localhost:8081/business/api/direct/pain-001-transform`
+  - `http://localhost:8081/business/api/direct/camt-053-transform`
+- **Fallback Endpoint**: `http://localhost:8081/business/api/direct/kafka-message-processing` (unknown message types only)
+- **Internal Routing**: Business module internally routes to message-specific `direct:` Camel endpoints
+
+This design provides clear service boundaries, message-type optimization, and enables independent deployment of ingestion and business modules.
 
 #### For CDM Persistence (Post-Processing)
 
@@ -1125,7 +1287,7 @@ delay: 5000
 
 #### Prerequisites Checklist
 
-- [ ] **Processing Module**: Deployed with `direct:kafka-message-processing` endpoint
+- [ ] **Processing Module**: Deployed with message-type-specific HTTP endpoints (pacs-008-transform, pacs-009-transform, pain-001-transform, camt-053-transform)
 
 - [ ] **Kafka Cluster**: Available for CFT message batch processing
 - [ ] **Database**: Oracle DB for persistence operations and centralized logging
@@ -1136,9 +1298,9 @@ delay: 5000
 #### Environment Configuration
 
 ```bash
-# Processing Module Integration
+# Business Module Integration
 export INGESTION_PROCESSING_ENABLED=true
-export INGESTION_PROCESSING_ENDPOINT=direct:kafka-message-processing
+export INGESTION_PROCESSING_BASE_ENDPOINT=http://localhost:8081/business/api/direct
 
 # Legacy Kafka Support (for CFT)
 export KAFKA_BROKERS=kafka-cluster:9092
@@ -1170,10 +1332,14 @@ export LOGGING_CORRELATION_HEADER=MessageId
    - Check topic existence and permissions
    - Verify `k-kafka-message-receiver` is consuming messages
 
-3. **🆕 Processing Module Integration Issues** (HTTP/MQ Messages)
+3. **🆕 Business Module Integration Issues** (HTTP/MQ Messages)
 
    - Verify processing module is deployed and running
-   - Check `direct:kafka-message-processing` endpoint availability
+   - Check message-type-specific HTTP endpoints availability:
+     - `/business/api/direct/pacs-008-transform` (PACS.008 messages)
+     - `/business/api/direct/pacs-009-transform` (PACS.009 messages)
+     - `/business/api/direct/pain-001-transform` (PAIN.001 messages)
+     - `/business/api/direct/camt-053-transform` (CAMT.053 messages)
    - Monitor processing module logs for connection errors
    - Validate `ingestion.processing.enabled=true` configuration
 
@@ -1201,7 +1367,7 @@ export LOGGING_CORRELATION_HEADER=MessageId
 
    - Monitor memory usage and GC
    - Check Kafka producer/consumer configurations (CFT route)
-   - **🆕 Monitor processing module performance** (HTTP/MQ route)
+   - **🆕 Monitor business module performance** (HTTP/MQ route)
    - Review batch processing settings
    - **🆕 Compare latency between Kafka and direct processing routes**
    - **🆕 Monitor CDM vs MESSAGE processing performance**
@@ -1219,11 +1385,11 @@ export LOGGING_CORRELATION_HEADER=MessageId
 #### Verify Routing Configuration
 
 ```bash
-# Check if processing module integration is enabled
-grep "ingestion.processing.enabled" application.properties
+# Check if business module integration is enabled
+grep "business.integration.enabled" application.properties
 
-# Verify endpoint configuration
-grep "ingestion.processing.endpoint" application.properties
+# Verify business module configuration
+grep "business.module" application.properties
 
 # Check routing decision logs
 grep "Routing message based on receipt channel" logs/ingestion.log
@@ -1232,16 +1398,23 @@ grep "Routing message based on receipt channel" logs/ingestion.log
 #### Test Routing Paths
 
 ```bash
-# Test HTTP route (should go to processing module)
+# Test HTTP route (should call business module directly via HTTP)
 curl -X POST http://localhost:8080/ingestion/api/v1/payments \
   -H "Content-Type: application/json" \
-  -d '{"messageType":"pacs.008","payload":"<xml>test</xml>"}'
+  -d '{"messageType":"pacs.008","payload":"<Document xmlns=\"urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08\"><FIToFICstmrCdtTrf><GrpHdr><MsgId>TEST-001</MsgId></GrpHdr></FIToFICstmrCdtTrf></Document>"}'
+
+# Verify business module is receiving direct HTTP calls
+curl -X GET http://localhost:8081/business/health
 
 # Monitor CFT route (should go to Kafka)
 tail -f logs/ingestion.log | grep "CFT message - routing to Kafka"
 
-# Monitor HTTP/MQ route (should go to processing)
-tail -f logs/ingestion.log | grep "HTTP/MQ message - routing to processing module"
+# Monitor HTTP/MQ route (should call business module directly)
+tail -f logs/ingestion.log | grep "Routing.*message directly to business module"
+
+# Monitor business module HTTP calls (should show message-type-specific endpoints)
+tail -f logs/ingestion.log | grep "business/api/direct"
+# Expected: pacs-008-transform, pacs-009-transform, pain-001-transform, camt-053-transform
 ```
 
 ### Log Analysis

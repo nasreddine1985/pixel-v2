@@ -617,11 +617,21 @@
                   - setHeader:
                       name: KafkaTopic
                       simple: "{{ingestion.kafka.topic.pacs008:payments-pacs008}}"
-              - simple: "${header.ExpectedMessageType} == 'pan.001'"
+              - simple: "${header.ExpectedMessageType} == 'pacs.009'"
                 steps:
                   - setHeader:
                       name: KafkaTopic
-                      simple: "{{ingestion.kafka.topic.pan001:payments-pan001}}"
+                      simple: "{{ingestion.kafka.topic.pacs009:payments-pacs009}}"
+              - simple: "${header.ExpectedMessageType} == 'pain.001'"
+                steps:
+                  - setHeader:
+                      name: KafkaTopic
+                      simple: "{{ingestion.kafka.topic.pain001:payments-pain001}}"
+              - simple: "${header.ExpectedMessageType} == 'camt.053'"
+                steps:
+                  - setHeader:
+                      name: KafkaTopic
+                      simple: "{{ingestion.kafka.topic.camt053:payments-camt053}}"
             otherwise:
               steps:
                 - setHeader:
@@ -630,6 +640,27 @@
         - setHeader:
             name: kafka.KEY
             simple: "${header.PrimaryIdentifier:${exchangeId}}"
+        # Add processing metadata to the message
+        - script:
+            groovy: |
+              def originalBody = exchange.getIn().getBody(String.class)
+              def enrichedMessage = """
+              {
+                  "metadata": {
+                      "receiptChannel": "${exchange.getIn().getHeader('ReceiptChannel', 'UNKNOWN')}",
+                      "receiptTimestamp": "${exchange.getIn().getHeader('ReceiptTimestamp', '')}",
+                      "ingestionStartTime": "${exchange.getIn().getHeader('IngestionStartTime', '')}",
+                      "publishTimestamp": "${exchange.getIn().getHeader('PublishTimestamp', '')}",
+                      "primaryIdentifier": "${exchange.getIn().getHeader('PrimaryIdentifier', '')}",
+                      "messageType": "${exchange.getIn().getHeader('ExpectedMessageType', 'UNKNOWN')}",
+                      "validationPassed": ${exchange.getIn().getHeader('IsValid', false)},
+                      "duplicateCheck": ${exchange.getIn().getHeader('IdempotenceChecked', false)},
+                      "routingDestination": "kafka"
+                  },
+                  "payload": ${originalBody ?: 'null'}
+              }
+              """
+              exchange.getIn().setBody(enrichedMessage)
         - toD:
             uri: "kafka:${header.KafkaTopic}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
         - log:
@@ -654,16 +685,16 @@
 # PROCESSING MODULE PUBLISHER - Real-time Route for HTTP/MQ Messages
 # ===================================================================
 # This route handles HTTP/MQ messages for real-time processing:
-# - Enriches messages with comprehensive metadata
-# - Routes directly to processing module (bypasses Kafka)
+# - Routes directly to business module HTTP endpoints (bypasses Kafka)
+# - Message-type-specific routing for optimal performance
 # - Provides faster processing for interactive channels
 - route:
-    id: processing-publisher
+    id: business-direct-publisher
     from:
       uri: direct:processing-publisher
       steps:
         - log:
-            message: "[PROCESSING-ROUTE] Publishing message to processing module"
+            message: "[PROCESSING-ROUTE] Publishing message directly to business module"
         - setHeader:
             name: "LogLevel"
             constant: "INFO"
@@ -677,80 +708,67 @@
             name: "CorrelationId"
             simple: "${header.MessageId}"
         - setBody:
-            simple: "[PROCESSING-ROUTE] Publishing message to processing module for message ID: ${header.MessageId}"
+            simple: "[PROCESSING-ROUTE] Publishing message directly to business module for message ID: ${header.MessageId}"
         - to: "kamelet:k-log-tx"
         - setHeader:
             name: ProcessingStage
-            constant: PROCESSING_PUBLISH
+            constant: BUSINESS_MODULE_DIRECT
         - setHeader:
             name: PublishTimestamp
             simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
         - setHeader:
-            name: RoutingDestination
-            constant: "processing"
-        - process:
-            ref: enrichMessageWithMetadata
+            name: Content-Type
+            constant: "application/json"
+        # Route directly to business module based on message type
         - choice:
             when:
-              - simple: "{{ingestion.processing.enabled:true}} == true"
+              - simple: "${header.ExpectedMessageType} == 'pacs.008'"
                 steps:
                   - log:
-                      message: "[PROCESSING-ROUTE] Routing to processing module endpoint: {{ingestion.processing.endpoint:direct:kafka-message-processing}}"
-                  - setHeader:
-                      name: LogLevel
-                      constant: "INFO"
-                  - setHeader:
-                      name: LogSource
-                      constant: "PROCESSING_MODULE"
-                  - setHeader:
-                      name: LogCategory
-                      constant: "ROUTE"
-                  - setHeader:
-                      name: CorrelationId
-                      simple: "${header.MessageId}"
-                  - setBody:
-                      simple: "Routing to processing module endpoint: {{ingestion.processing.endpoint:direct:kafka-message-processing}} for message ID: ${header.MessageId}"
-                  - to: kamelet:k-log-tx
-                  - toD:
-                      uri: "{{ingestion.processing.endpoint:direct:kafka-message-processing}}"
+                      message: "Routing PACS.008 message directly to business module"
+                  - to:
+                      uri: "http://localhost:8081/business/api/direct/pacs-008-transform?bridgeEndpoint=true&httpMethod=POST"
+              - simple: "${header.ExpectedMessageType} == 'pacs.009'"
+                steps:
                   - log:
-                      message: "[PROCESSING-ROUTE] Message successfully sent to processing module"
-                  - setHeader:
-                      name: LogLevel
-                      constant: "INFO"
-                  - setHeader:
-                      name: LogSource
-                      constant: "PROCESSING_MODULE"
-                  - setHeader:
-                      name: LogCategory
-                      constant: "BUSINESS"
-                  - setHeader:
-                      name: CorrelationId
-                      simple: "${header.MessageId}"
-                  - setBody:
-                      simple: "Message successfully sent to processing module for message ID: ${header.MessageId}"
-                  - to: kamelet:k-log-tx
+                      message: "Routing PACS.009 message directly to business module"
+                  - to:
+                      uri: "http://localhost:8081/business/api/direct/pacs-009-transform?bridgeEndpoint=true&httpMethod=POST"
+              - simple: "${header.ExpectedMessageType} == 'pain.001'"
+                steps:
+                  - log:
+                      message: "Routing PAIN.001 message directly to business module"
+                  - to:
+                      uri: "http://localhost:8081/business/api/direct/pain-001-transform?bridgeEndpoint=true&httpMethod=POST"
+              - simple: "${header.ExpectedMessageType} == 'camt.053'"
+                steps:
+                  - log:
+                      message: "Routing CAMT.053 message directly to business module"
+                  - to:
+                      uri: "http://localhost:8081/business/api/direct/camt-053-transform?bridgeEndpoint=true&httpMethod=POST"
             otherwise:
               steps:
                 - log:
-                    message: "[PROCESSING-ROUTE] Processing module integration disabled, routing to default Kafka"
-                - setHeader:
-                    name: LogLevel
-                    constant: "WARN"
-                - setHeader:
-                    name: LogSource
-                    constant: "PROCESSING_MODULE"
-                - setHeader:
-                    name: LogCategory
-                    constant: "BUSINESS"
-                - setHeader:
-                    name: CorrelationId
-                    simple: "${header.MessageId}"
-                - setBody:
-                    simple: "Processing module integration disabled, routing to default Kafka for message ID: ${header.MessageId}"
-                - to: kamelet:k-log-tx
+                    message: "Unknown message type: ${header.ExpectedMessageType}, routing to business module general processor"
                 - to:
-                    uri: direct:kafka-publisher
+                    uri: "http://localhost:8081/business/api/direct/kafka-message-processing?bridgeEndpoint=true&httpMethod=POST"
+        - log:
+            message: "Message successfully sent directly to business module"
+        - setHeader:
+            name: LogLevel
+            constant: "INFO"
+        - setHeader:
+            name: LogSource
+            constant: "BUSINESS_MODULE_DIRECT"
+        - setHeader:
+            name: LogCategory
+            constant: "BUSINESS"
+        - setHeader:
+            name: CorrelationId
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Message successfully sent directly to business module for message ID: ${header.MessageId}"
+        - to: kamelet:k-log-tx
 
 # Rejection Handler
 - route:
@@ -781,6 +799,22 @@
         - setHeader:
             name: RejectionTimestamp
             simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        # Create rejection message
+        - script:
+            groovy: |
+              def rejectionMessage = """
+              {
+                  "rejectionInfo": {
+                      "reason": "${exchange.getIn().getHeader('RejectionReason', 'UNKNOWN')}",
+                      "timestamp": "${exchange.getIn().getHeader('RejectionTimestamp', '')}",
+                      "receiptChannel": "${exchange.getIn().getHeader('ReceiptChannel', 'UNKNOWN')}",
+                      "originalMessageId": "${exchange.getIn().getHeader('PrimaryIdentifier', '')}",
+                      "errorDetails": "${exchange.getIn().getHeader('ValidationResult', '')}"
+                  },
+                  "originalMessage": ${exchange.getIn().getBody(String.class) ?: 'null'}
+              }
+              """
+              exchange.getIn().setBody(rejectionMessage)
         - to:
             uri: "kafka:{{ingestion.kafka.topic.rejected:payments-rejected}}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
         - log:
@@ -827,6 +861,21 @@
         - setHeader:
             name: ProcessingStage
             constant: ERROR
+        # Create error message
+        - script:
+            groovy: |
+              def errorMessage = """
+              {
+                  "errorInfo": {
+                      "message": "${exchange.getIn().getHeader('ErrorMessage', 'Unknown error')}",
+                      "timestamp": "${exchange.getIn().getHeader('ErrorTimestamp', '')}",
+                      "receiptChannel": "${exchange.getIn().getHeader('ReceiptChannel', 'UNKNOWN')}",
+                      "processingStage": "${exchange.getIn().getHeader('ProcessingStage', 'UNKNOWN')}"
+                  },
+                  "originalMessage": ${exchange.getIn().getBody(String.class) ?: 'null'}
+              }
+              """
+              exchange.getIn().setBody(errorMessage)
         - to:
             uri: "kafka:{{ingestion.kafka.topic.errors:payments-errors}}?brokers={{ingestion.kafka.brokers:localhost:9092}}"
         - log:
@@ -846,3 +895,46 @@
         - setBody:
             simple: "Error message sent to error topic for message ID: ${header.MessageId}"
         - to: kamelet:k-log-tx
+
+# Health check endpoint
+- route:
+    id: health-check
+    from:
+      uri: platform-http:/health
+    steps:
+      - setBody:
+          constant: '{"status":"UP","service":"payment-ingestion"}'
+      - setHeader:
+          name: Content-Type
+          constant: "application/json"
+
+# Metrics endpoint
+- route:
+    id: metrics-endpoint
+    from:
+      uri: platform-http:/metrics
+    steps:
+      - setBody:
+          constant: '{"ingestionRoutes":{"active":true,"channels":["MQ_SERIES","REST_API","FILE_CFT"]}}'
+      - setHeader:
+          name: Content-Type
+          constant: "application/json"
+
+# Global error handler
+- onException:
+    exception:
+      - java.lang.Exception
+    handled: true
+    steps:
+      - log:
+          message: "Error in payment ingestion: ${exception.message}"
+      - setHeader:
+          name: ErrorOccurred
+          constant: true
+      - setHeader:
+          name: ErrorMessage
+          simple: "${exception.message}"
+      - setHeader:
+          name: ErrorTimestamp
+          simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+      - to: direct:error-handler
