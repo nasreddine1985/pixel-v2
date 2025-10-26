@@ -35,9 +35,10 @@ Before contributing, ensure you have:
 - **Java Development Kit (JDK) 21** or higher
 - **Apache Maven 3.9** or higher
 - **Git** for version control
-- **PostgreSQL** for database operations
+- **Oracle Database 19c+** or **PostgreSQL 13+** for database operations
 - **IBM MQ** for message queue integration (for full testing)
 - **Apache Kafka** for event streaming (for full testing)
+- **Docker & Docker Compose** for local infrastructure setup
 
 ### Fork and Clone
 
@@ -49,7 +50,7 @@ Before contributing, ensure you have:
    ```
 3. Add the original repository as upstream:
    ```bash
-   git remote add upstream https://bnp-cib-git/pixel-v2.git
+   git remote add upstream https://github.com/nasreddine1985/pixel-v2.git
    ```
 
 ## Development Setup
@@ -66,34 +67,95 @@ mvn clean install -DskipTests
 
 ### Environment Configuration
 
-1. Copy the example configuration:
+#### Database Setup
 
-   ```bash
-   cp ingestion/src/main/resources/application-dev.properties.example \
-      ingestion/src/main/resources/application-dev.properties
-   ```
+Choose Oracle Database or PostgreSQL for local development:
 
-2. Configure your local environment in `application-dev.properties`:
+**For Oracle Database:**
 
-   ```properties
-   # Database
-   spring.datasource.url=jdbc:postgresql://localhost:5432/pixel_v2_dev
-   spring.datasource.username=your_username
-   spring.datasource.password=your_password
+```properties
+# Oracle Database Configuration
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+```
 
-   # MQ (optional for development)
-   ingestion.mq.host=localhost
-   ingestion.mq.port=1414
+**For PostgreSQL:**
 
-   # Kafka (optional for development)
-   ingestion.kafka.brokers=localhost:9092
-   ```
+```properties
+# PostgreSQL Configuration
+spring.datasource.url=jdbc:postgresql://localhost:5432/pixel_v2_dev
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+```
+
+#### Complete Application Configuration
+
+Create or update `application-dev.properties`:
+
+```properties
+# Server Configuration
+server.port=8080
+server.servlet.context-path=/api/v1
+
+# Database Configuration (choose Oracle or PostgreSQL)
+spring.datasource.url=jdbc:oracle:thin:@localhost:1521:XE
+spring.datasource.username=your_username
+spring.datasource.password=your_password
+
+# JPA Configuration
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
+
+# Camel Configuration
+camel.springboot.name=pixel-v2-ingestion
+camel.routes.yaml.enabled=true
+
+# MQ Configuration (optional for development)
+ingestion.mq.host=localhost
+ingestion.mq.port=1414
+ingestion.mq.queue.manager=QM1
+ingestion.mq.channel=DEV.ADMIN.SVRCONN
+
+# Kafka Configuration (optional for development)
+spring.kafka.bootstrap-servers=localhost:9092
+spring.kafka.consumer.group-id=pixel-v2-ingestion
+spring.kafka.consumer.auto-offset-reset=earliest
+
+# Logging Configuration
+logging.level.com.pixel.v2=DEBUG
+logging.level.org.apache.camel=INFO
+logging.level.org.springframework=INFO
+```
+
+### Docker Infrastructure Setup
+
+Start required infrastructure services using Docker Compose:
+
+```bash
+# Start all infrastructure services
+docker-compose up -d
+
+# Or start specific services
+docker-compose up -d oracle-db kafka zookeeper
+```
 
 ### Running in Development Mode
 
 ```bash
-# Start the ingestion service
+# Terminal 1: Start the ingestion service
 cd ingestion
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Terminal 2: Start the business service
+cd business
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Terminal 3: Start the distribution service
+cd distribution
 mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
 
@@ -101,32 +163,52 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 ### Modules Overview
 
-- **`ingestion/`** - Main Spring Boot orchestrator application
-- **`k-mq-message-receiver/`** - Kamelet for MQ message processing
-- **`k-http-message-receiver/`** - Kamelet for REST API message processing
-- **`k-cft-data-receiver/`** - Kamelet for CFT file-based message processing
-- **`k-referentiel-data-loader/`** - Kamelet for reference data enrichment
-- **`k-pacs008-to-cdm-transformer/`** - PACS.008 to CDM transformation kamelet
-- **`k-pan001-to-cdm-transformer/`** - PAN001 to CDM transformation kamelet
-- **`k-ingestion-technical-validation/`** - Message validation kamelet
-- **`k-payment-idempotence-helper/`** - Payment duplicate detection kamelet
-- **`k-db-tx/`** - Unified database persistence kamelet
+#### Main Application Modules
+
+- **`ingestion/`** - Message ingestion and intelligent routing service
+- **`business/`** - Core payment processing and business logic
+- **`distribution/`** - Message distribution and delivery service
+- **`technical-framework/`** - Reusable Kamelet components library
+
+#### Technical Framework Kamelets
+
+Located in `technical-framework/` directory:
+
+- **`k-mq-message-receiver/`** - IBM MQ message integration
+- **`k-http-message-receiver/`** - REST API message reception
+- **`k-kafka-message-receiver/`** - Kafka message consumption
+- **`k-cft-data-receiver/`** - CFT file-based message processing
+- **`k-db-tx/`** - Unified database transaction operations
+- **`k-log-tx/`** - Centralized transaction logging
+- **`k-referentiel-data-loader/`** - Reference data enrichment
+- **`k-payment-idempotence-helper/`** - Duplicate payment detection
+- **`k-ingestion-technical-validation/`** - Message validation engine
+
+#### Message Transformation Kamelets
+
+- **`k-pacs008-to-cdm-transformer/`** - ISO 20022 PACS.008 to CDM
+- **`k-pacs009-to-cdm-transformer/`** - ISO 20022 PACS.009 to CDM
+- **`k-pain001-to-cdm-transformer/`** - ISO 20022 PAIN.001 to CDM
+- **`k-camt053-to-cdm-transformer/`** - ISO 20022 CAMT.053 to CDM
 
 ### Key Technologies
 
-- **Apache Camel 4.1.0** - Integration framework
-- **Spring Boot 3.5.0** - Application framework
-- **Spring Framework 6.2.0** - Core framework
-- **Jakarta Persistence API** - Data persistence
-- **Saxon XSLT Processor** - XML transformations
-- **PostgreSQL** - Primary database
-- **Kafka** - Event streaming
+- **Apache Camel 4.1.0** - Integration framework and message routing
+- **Spring Boot 3.4.1** - Application framework and microservices
+- **Spring Framework 6.2.1** - Core dependency injection and configuration
+- **Jakarta Persistence API** - Data persistence and ORM
+- **Hibernate 6.2.7.Final** - JPA implementation
+- **Saxon XSLT Processor 12.3** - XML transformations
+- **Oracle Database 19c+** or **PostgreSQL 13+** - Primary database
+- **Apache Kafka** - Event streaming and batch processing
+- **IBM MQ** - Enterprise message queuing
+- **Java 21** - Programming language and runtime
 
 ## Contribution Workflow
 
 ### 1. Choose an Issue
 
-- Check the [Issues](https://bnp-cib-git/pixel-v2/issues) page
+- Check the [Issues](https://github.com/nasreddine1985/pixel-v2/issues) page
 - Look for issues labeled `good first issue` or `help wanted`
 - Comment on the issue to express your interest
 
@@ -710,30 +792,82 @@ class PaymentProcessorTest {
 
 ```java
 @CamelSpringBootTest
+@SpringBootTest
 @UseAdviceWith
-@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
-class PaymentIngestionRouteIT {
+@ActiveProfiles("integration-test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+class MainIngestionRoutesIntegrationTest {
 
     @Autowired
     private CamelContext camelContext;
 
-    @Test
-    void shouldProcessPaymentEndToEnd() throws Exception {
-        // Advice routes to use mock endpoints
-        AdviceWith.adviceWith(camelContext, "payment-mq-ingestion", a -> {
-            a.mockEndpointsAndSkip("kafka:*");
+    @Autowired
+    private ProducerTemplate producerTemplate;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        // Configure route interceptions for testing
+        AdviceWith.adviceWith(camelContext, "payment-ingestion-orchestrator", a -> {
+            a.interceptSendToEndpoint("direct:processing-module")
+                .skipSendToOriginalEndpoint()
+                .to("mock:processing-module-result");
+            a.interceptSendToEndpoint("direct:kafka-publisher")
+                .skipSendToOriginalEndpoint()
+                .to("mock:kafka-publisher-result");
         });
 
-        // Test implementation
+        // CRITICAL: Start routes explicitly when using @UseAdviceWith
+        camelContext.getRouteController().startAllRoutes();
+    }
+
+    @Test
+    @DisplayName("Test CFT message routing to Kafka for batch processing")
+    void testCftMessageRouting() throws Exception {
+        // Test implementation with proper route startup
     }
 }
+```
+
+### Test Configuration
+
+#### Test Profiles
+
+Use appropriate test profiles for different testing scenarios:
+
+- **`integration-test`** - Full integration testing with mocked external dependencies
+- **`test`** - Unit testing with minimal Spring context
+- **`dev`** - Development testing with local infrastructure
+
+#### Test Properties
+
+Create `application-integration-test.properties`:
+
+```properties
+# Camel Configuration for Testing
+camel.springboot.name=payment-ingestion-test
+camel.routes.yaml.enabled=true
+
+# Disable problematic auto-configurations
+camel.kamelet.configuration.enabled=false
+camel.yaml.dsl.enabled=false
+
+# Test Logging
+logging.level.com.pixel.v2=DEBUG
+logging.level.org.apache.camel=INFO
+logging.level.ROOT=WARN
+
+# Database Configuration for Testing
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.hibernate.ddl-auto=create-drop
 ```
 
 ### Test Data Management
 
 - Use **test fixtures** for consistent test data
-- **Mock external dependencies** (databases, web services, queues)
-- Create **realistic test scenarios** based on actual payment message types
+- **Mock external dependencies** (databases, web services, queues) using @MockBean
+- Create **realistic test scenarios** based on actual payment message types (PACS.008, PAIN.001, etc.)
+- Use **@UseAdviceWith** for Camel route testing with explicit route startup
 
 ### Running Tests
 
@@ -745,7 +879,7 @@ mvn test
 mvn test -pl ingestion
 
 # Run integration tests only
-mvn verify -Dtest=*IT
+mvn test -Dtest=*IntegrationTest
 
 # Run with coverage report
 mvn test jacoco:report
@@ -885,9 +1019,36 @@ Use the bug report template and include:
 
 **Do not create public issues for security vulnerabilities.** Instead:
 
-1. Email security concerns to: [security@pixel-v2.com]
+1. Email security concerns to the project maintainers
 2. Include detailed description and reproduction steps
 3. Allow time for assessment before public disclosure
+
+## Recent Architecture Improvements
+
+### Intelligent Message Routing
+
+The platform now features sophisticated routing logic based on message source and content:
+
+- **CFT Messages**: Automatically routed to Kafka for batch processing
+- **HTTP/MQ Messages**: Routed to real-time processing module
+- **Smart Decision Engine**: Conditional routing based on `ReceiptChannel` header
+
+### Enhanced Testing Framework
+
+Recent improvements include:
+
+- **Integration Test Infrastructure**: Complete test setup with `@UseAdviceWith` and proper route startup
+- **Mock Endpoint Strategy**: Comprehensive mocking of external dependencies
+- **Test Profiles**: Dedicated `integration-test` profile for consistent testing
+- **Route Interception**: Advanced route interception for isolated testing
+
+### Modular Kamelet Architecture
+
+The technical framework has been restructured into focused, reusable components:
+
+- **Source Kamelets**: Message reception from various channels
+- **Action Kamelets**: Message transformation and processing
+- **Sink Kamelets**: Message delivery and persistence
 
 ## Development Best Practices
 
@@ -912,6 +1073,74 @@ Use the bug report template and include:
 - **Audit Logging**: Log security-relevant events
 - **Data Privacy**: Handle PII appropriately
 
+## Common Development Issues & Solutions
+
+### Camel Route Testing Issues
+
+**Problem**: `IllegalArgumentException: Cannot advice route as there are no routes`
+
+**Solution**:
+
+```java
+@BeforeEach
+void setUp() throws Exception {
+    // Configure AdviceWith first
+    AdviceWith.adviceWith(camelContext, "route-id", a -> {
+        // Your advice configuration
+    });
+
+    // CRITICAL: Explicitly start routes
+    camelContext.getRouteController().startAllRoutes();
+}
+```
+
+### Integration Test Configuration
+
+**Problem**: Kamelet auto-configuration conflicts in tests
+
+**Solution**: Use dedicated test properties:
+
+```properties
+# application-integration-test.properties
+camel.kamelet.configuration.enabled=false
+camel.yaml.dsl.enabled=false
+```
+
+### Database Connection Issues
+
+**Problem**: Oracle driver not found or connection failures
+
+**Solutions**:
+
+1. Ensure Oracle JDBC driver is properly configured:
+
+   ```xml
+   <dependency>
+       <groupId>com.oracle.database.jdbc</groupId>
+       <artifactId>ojdbc11</artifactId>
+       <version>23.2.0.0</version>
+   </dependency>
+   ```
+
+2. For local development, use Docker:
+   ```bash
+   docker run -d -p 1521:1521 -e ORACLE_PASSWORD=mypassword gvenzl/oracle-xe
+   ```
+
+### Maven Build Issues
+
+**Problem**: Module dependency resolution failures
+
+**Solution**: Build in correct order:
+
+```bash
+# Build technical framework first
+mvn clean install -pl technical-framework
+
+# Then build application modules
+mvn clean install -pl ingestion,business,distribution
+```
+
 ## Getting Help
 
 ### Communication Channels
@@ -924,7 +1153,7 @@ Use the bug report template and include:
 
 Current project maintainers:
 
-- **BNP CIB** ([@nasreddine1985](https://bnp-cib-git)) - Project Lead
+- **Nasreddine Abassi** ([@nasreddine1985](https://github.com/nasreddine1985)) - Project Lead
 
 ### Resources
 
@@ -932,6 +1161,42 @@ Current project maintainers:
 - [Spring Boot Documentation](https://spring.io/projects/spring-boot)
 - [Maven Documentation](https://maven.apache.org/guides/)
 
+## Recent Changes (v1.0.1-SNAPSHOT)
+
+### Architecture Enhancements
+
+- ✅ **Modular Structure**: Separated concerns into `ingestion`, `business`, `distribution`, and `technical-framework` modules
+- ✅ **Intelligent Routing**: Implemented smart message routing based on source channel
+- ✅ **Kamelet Framework**: Comprehensive library of reusable integration components
+
+### Testing Improvements
+
+- ✅ **Integration Testing**: Complete test infrastructure with proper route startup management
+- ✅ **Mock Strategies**: Advanced endpoint mocking for isolated testing
+- ✅ **Test Profiles**: Dedicated configuration for consistent test environments
+
+### Technology Updates
+
+- ✅ **Spring Boot 3.4.1**: Latest framework version with enhanced features
+- ✅ **Apache Camel 4.1.0**: Modern integration patterns and improved performance
+- ✅ **Java 21**: Latest LTS version with performance improvements
+- ✅ **Oracle Database Support**: Enterprise-grade database integration
+
+### Developer Experience
+
+- ✅ **Enhanced Documentation**: Comprehensive setup and troubleshooting guides
+- ✅ **Docker Integration**: Streamlined local development environment
+- ✅ **Code Quality**: Improved coding standards and best practices
+
 ---
 
 **Thank you for contributing to PIXEL-V2!** Your contributions help make payment message processing more reliable and efficient for everyone.
+
+### Quick Reference
+
+| Component               | Purpose                     | Technology Stack                          |
+| ----------------------- | --------------------------- | ----------------------------------------- |
+| **Ingestion**           | Message reception & routing | Spring Boot + Camel + Oracle/PostgreSQL   |
+| **Business**            | Payment processing logic    | Spring Boot + JPA + Message Validation    |
+| **Distribution**        | Message delivery            | Camel + Kafka + External API Integration  |
+| **Technical Framework** | Reusable Kamelets           | Apache Camel + XSLT + Database Operations |
