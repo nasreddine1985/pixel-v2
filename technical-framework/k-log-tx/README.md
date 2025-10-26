@@ -251,7 +251,7 @@ CREATE INDEX idx_correlation_id ON LOG_ENTRIES(correlationId);
 
 ### Batch Configuration
 
-- **Small Batches (1-10)**: Better for real-time logging and error tracking
+- **Small Batches (1-10)**: Better for synchronous logging and error tracking
 - **Large Batches (50-100)**: Better for high-volume scenarios and performance
 
 ### Database Optimization

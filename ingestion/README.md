@@ -16,8 +16,8 @@ The Ingestion Service serves as the **primary gateway** for payment messages acr
 
 #### Intelligent Message Routing
 
-- **CFT Messages**: Batch processing via Kafka topics (maintained for efficiency)
-- **HTTP/MQ Messages**: Direct routing to business module for real-time processing
+- **CFT Messages**: Asynchronous processing via Kafka topics (maintained for efficiency)
+- **HTTP/MQ Messages**: Direct routing to business module for synchronous processing
 - **Performance Optimization**: 50-70% latency reduction for interactive channels
 
 #### Enhanced Testing Framework
@@ -43,13 +43,13 @@ The Ingestion Service serves as the **primary gateway** for payment messages acr
 
 ### 🔄 Core Capabilities
 
-| Capability                  | Description                                       | Technology Stack           |
-| --------------------------- | ------------------------------------------------- | -------------------------- |
-| **Multi-Channel Ingestion** | HTTP API, IBM MQ, File system monitoring          | Spring Boot + Apache Camel |
-| **Intelligent Routing**     | Source-aware message routing (batch vs real-time) | Camel Dynamic Routing      |
-| **Duplicate Prevention**    | Idempotence checking with database persistence    | k-db-tx Kamelet            |
-| **Comprehensive Logging**   | Complete audit trail and observability            | k-log-tx Kamelet           |
-| **Schema Validation**       | Message format validation and enrichment          | JSON/XML Schema Validation |
+| Capability                  | Description                                                | Technology Stack           |
+| --------------------------- | ---------------------------------------------------------- | -------------------------- |
+| **Multi-Channel Ingestion** | HTTP API, IBM MQ, File system monitoring                   | Spring Boot + Apache Camel |
+| **Intelligent Routing**     | Source-aware message routing (asynchronous vs synchronous) | Camel Dynamic Routing      |
+| **Duplicate Prevention**    | Idempotence checking with database persistence             | k-db-tx Kamelet            |
+| **Comprehensive Logging**   | Complete audit trail and observability                     | k-log-tx Kamelet           |
+| **Schema Validation**       | Message format validation and enrichment                   | JSON/XML Schema Validation |
 
 ### 🎯 Processing Strategy
 
@@ -67,8 +67,8 @@ flowchart TB
 
     E --> F{🔀 Source Channel Detection}
 
-    F -->|CFT Files<br/>Batch Processing| G[📤 Kafka Topics<br/>Message Type Routing]
-    F -->|HTTP/MQ<br/>Real-time Processing| H{🎯 Message Type Detection}
+    F -->|CFT Files<br/>Asynchronous Processing| G[📤 Kafka Topics<br/>Message Type Routing]
+    F -->|HTTP/MQ<br/>Synchronous Processing| H{🎯 Message Type Detection}
 
     G --> G1[� payments-pacs008<br/>PACS.008 Messages]
     G --> G2[� payments-pacs009<br/>PACS.009 Messages]
@@ -80,12 +80,12 @@ flowchart TB
     H -->|pain.001| I3[🔗 POST /business/api/direct/<br/>pain-001-transform]
     H -->|camt.053| I4[🔗 POST /business/api/direct/<br/>camt-053-transform]
 
-    G1 --> J[📊 Business Module<br/>Batch Processing via Kafka]
+    G1 --> J[📊 Business Module<br/>Asynchronous Processing via Kafka]
     G2 --> J
     G3 --> J
     G4 --> J
 
-    I1 --> K[⚡ Business Module<br/>Real-time Processing via HTTP]
+    I1 --> K[⚡ Business Module<br/>Synchronous Processing via HTTP]
     I2 --> K
     I3 --> K
     I4 --> K
@@ -111,8 +111,8 @@ flowchart TB
 
 The ingestion service now supports **intelligent message routing** based on source channel and message type:
 
-- **CFT messages** → Route to Kafka topics by message type (batch processing)
-- **HTTP/MQ messages** → Direct HTTP calls to business module by message type (real-time processing)
+- **CFT messages** → Route to Kafka topics by message type (asynchronous processing)
+- **HTTP/MQ messages** → Direct HTTP calls to business module by message type (synchronous processing)
 
 ```
                               🔄 INTELLIGENT MESSAGE ROUTING ARCHITECTURE 🔄
@@ -240,9 +240,9 @@ The ingestion service now supports **intelligent message routing** based on sour
               ┌─────────────────────┼─────────────────────┐
               │                     │                     │
               ▼                     ▼                     ▼
-    🏭 BATCH PROCESSING     ⚡ REAL-TIME PROCESSING     ❌ REJECTION PATH
-    ═════════════════       ════════════════════       ═══════════════
-    CFT Messages            HTTP/MQ Messages           Invalid Messages
+    🏭 ASYNCHRONOUS PROCESSING     ⚡ SYNCHRONOUS PROCESSING     ❌ REJECTION PATH
+    ══════════════════════       ═══════════════════════       ═══════════════
+    CFT Messages                 HTTP/MQ Messages              Invalid Messages
               │                     │                     │
               ▼                     ▼                     ▼
    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -275,7 +275,7 @@ The ingestion service now supports **intelligent message routing** based on sour
    │ • payments-     │    │   Detection     │
    │   pacs009       │    │ • Dynamic Route │
    │ • payments-     │    │ • CDM Transform │
-   │   pain001       │    │ • Real-time Proc│
+   │   pain001       │    │ • Synchronous Proc│
    │ • payments-     │    │                 │
    │   camt053       │    │                 │
    │ • payments-     │    │                 │
@@ -299,7 +299,7 @@ The ingestion service now supports **intelligent message routing** based on sour
              │            │                 │
              │            │ • Direct CDM    │
              │            │   Transform     │
-             │            │ • Real-time     │
+             │            │ • Synchronous     │
              │            │   Processing    │
              │            └─────────────────┘
              │
@@ -324,8 +324,8 @@ The ingestion service now supports **intelligent message routing** based on sour
    │ (Unified)       │
    │                 │
    │ Handles both:   │
-   │ • Batch (Kafka) │
-   │ • Real-time     │
+   │ • Asynchronous (Kafka) │
+   │ • Synchronous     │
    │   (Direct)      │
    └─────────────────┘
 
@@ -385,7 +385,7 @@ The ingestion service now supports **intelligent message routing** based on sour
 📊 PERFORMANCE METRICS & OBSERVABILITY:
 ═══════════════════════════════════════
 • HTTP/MQ Route: 50-70% latency reduction (bypasses Kafka)
-• CFT Route: High throughput batch processing (via Kafka)
+• CFT Route: High throughput asynchronous processing (via Kafka)
 • Dual Processing: Optimized for channel characteristics
 • Error Handling: Comprehensive monitoring & dead letter queues
 • Centralized Logging: Complete audit trail with correlation tracking
@@ -478,14 +478,14 @@ The ingestion service implements **smart routing** based on the source channel i
 #### CFT Messages (File-based)
 
 - **Route**: Continue to Kafka topics (existing behavior)
-- **Purpose**: Batch processing optimization
+- **Purpose**: Asynchronous processing optimization
 - **Topics**: `payments-pacs008`, `payments-pan001`, `payments-default`
 - **Downstream**: Consumed by `k-kafka-message-receiver` → business module
 
 #### HTTP/MQ Messages (Interactive channels)
 
 - **Route**: Direct HTTP calls to message-type-specific business module endpoints
-- **Purpose**: Real-time processing with reduced latency
+- **Purpose**: Synchronous processing with reduced latency
 - **Benefits**: Bypasses Kafka for faster response times
 - **Endpoints**:
   - PACS.008 → `/business/api/direct/pacs-008-transform`
@@ -566,8 +566,8 @@ ingestion.kafka.topic.errors=payments-errors
 
 ```properties
 # Business Module Direct HTTP Integration
-# CFT messages go to Kafka (batch processing)
-# HTTP/MQ messages go directly to business module via HTTP (real-time processing)
+# CFT messages go to Kafka (asynchronous processing)
+# HTTP/MQ messages go directly to business module via HTTP (synchronous processing)
 business.module.host=localhost
 business.module.port=8081
 business.module.base-path=/business/api/direct
@@ -756,7 +756,7 @@ GET /ingestion/metrics
 - Validate: k-ingestion-technical-validation → Check message structure + k-log-tx validation logging
 - Dedupe: k-payment-idempotence-helper → Verify uniqueness + k-log-tx idempotence logging
 - Smart Route: Intelligent Routing → ReceiptChannel = "CFT" → direct:kafka-publisher + k-log-tx routing decision logging
-- Publish: Kafka Topic → payments-pacs008 (Batch processing optimization) + k-log-tx publishing logging
+- Publish: Kafka Topic → payments-pacs008 (Asynchronous processing optimization) + k-log-tx publishing logging
 - Downstream: k-kafka-message-receiver → Business Module
 ```
 
@@ -934,8 +934,8 @@ The ingestion service now implements **intelligent message routing** that optimi
 
 #### Architecture Benefits
 
-- **Real-time Processing**: HTTP/MQ messages get immediate processing through direct routing
-- **Batch Optimization**: CFT messages maintain Kafka-based flow for efficient batch processing
+- **Synchronous Processing**: HTTP/MQ messages get immediate processing through direct routing
+- **Asynchronous Optimization**: CFT messages maintain Kafka-based flow for efficient asynchronous processing
 - **Backward Compatibility**: All existing CFT processes preserved without changes
 - **Reduced Latency**: Interactive channels bypass Kafka queuing for faster response
 
@@ -985,7 +985,7 @@ CorrelationId: "${header.MessageId}"
 - **Business Metrics**: Extract business intelligence from structured logs
 - **Compliance**: Complete audit trail for regulatory requirements
 
-#### Real-time Monitoring
+#### Synchronous Monitoring
 
 - **Correlation Tracking**: Follow messages end-to-end using MessageId
 - **Component Visibility**: Track performance of individual kamelets
@@ -994,11 +994,11 @@ CorrelationId: "${header.MessageId}"
 
 #### Routing Decision Matrix
 
-| Source Channel | Receipt Header           | Routing Destination                               | Processing Type  | Latency  |
-| -------------- | ------------------------ | ------------------------------------------------- | ---------------- | -------- |
-| **CFT Files**  | `ReceiptChannel: "CFT"`  | `direct:kafka-publisher` → Kafka Topics           | Batch Processing | Standard |
-| **HTTP API**   | `ReceiptChannel: "HTTP"` | `direct:processing-publisher` → Processing Module | Real-time        | Reduced  |
-| **MQ Series**  | `ReceiptChannel: "MQ"`   | `direct:processing-publisher` → Processing Module | Real-time        | Reduced  |
+| Source Channel | Receipt Header           | Routing Destination                               | Processing Type         | Latency  |
+| -------------- | ------------------------ | ------------------------------------------------- | ----------------------- | -------- |
+| **CFT Files**  | `ReceiptChannel: "CFT"`  | `direct:kafka-publisher` → Kafka Topics           | Asynchronous Processing | Standard |
+| **HTTP API**   | `ReceiptChannel: "HTTP"` | `direct:processing-publisher` → Processing Module | Synchronous             | Reduced  |
+| **MQ Series**  | `ReceiptChannel: "MQ"`   | `direct:processing-publisher` → Processing Module | Synchronous             | Reduced  |
 
 #### Configuration Options
 
@@ -1027,7 +1027,7 @@ logging.level.com.pixel.v2.ingestion=DEBUG
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
 │ Processing  │    │ Kafka       │    │ Dead Letter │
 │ Module      │    │ Topics      │    │ Topics      │
-│ (Real-time) │    │ (Batch)     │    │ (Errors)    │
+│ (Synchronous) │    │ (Asynchronous)     │    │ (Errors)    │
 └─────────────┘    └──────┬──────┘    └─────────────┘
        │                  │
        │                  ▼
@@ -1062,7 +1062,7 @@ logging.level.com.pixel.v2.ingestion=DEBUG
 - Validation success/failure rates
 - Duplicate detection statistics
 - Processing latency metrics by route
-- **NEW**: Real-time processing performance metrics
+- **NEW**: Synchronous processing performance metrics
 
 ### Logging
 
@@ -1144,7 +1144,7 @@ mvn test -Dtest=MainIngestionRoutesIntegrationTest#testCftMessageRouting
 
 #### Key Test Cases
 
-- `testCftMessageRouting()` - CFT messages routed to Kafka for batch processing
+- `testCftMessageRouting()` - CFT messages routed to Kafka for asynchronous processing
 - `testHttpMessageRouting()` - HTTP/MQ messages routed to processing module
 - `testErrorHandling()` - Validation failures and error routing
 - `testIdempotenceRejection()` - Duplicate message prevention
@@ -1342,9 +1342,9 @@ delay: 5000
 ### External Services
 
 - **IBM MQ**: Message queue system
-- **Kafka**: Event streaming platform (for CFT batch processing)
+- **Kafka**: Event streaming platform (for CFT asynchronous processing)
 - **Reference API**: Configuration and mapping service
-- **🆕 Processing Module**: Real-time message processing service with HTTP endpoint `http://localhost:8081/business/api/direct/kafka-message-processing`
+- **🆕 Processing Module**: Synchronous message processing service with HTTP endpoint `http://localhost:8081/business/api/direct/kafka-message-processing`
 
 ### Integration Dependencies
 
@@ -1361,14 +1361,14 @@ delay: 5000
 - **🆕 HTTP endpoint `/business/api/direct/kafka-message-processing` must be available**
 - **🆕 Processing module must handle message type detection and routing**
 - **🆕 Processing Module must handle CDM persistence internally**
-- No Kafka dependency for real-time processing path
+- No Kafka dependency for synchronous processing path
 
 #### Architecture Note: Inter-Module Communication
 
 **Important**: Communication between ingestion and business modules uses HTTP endpoints:
 
 - **Ingestion Module** → HTTP POST → **Business Module**
-- **Real-time Endpoints** (message-type-specific):
+- **Synchronous Endpoints** (message-type-specific):
   - `http://localhost:8081/business/api/direct/pacs-008-transform`
   - `http://localhost:8081/business/api/direct/pacs-009-transform`
   - `http://localhost:8081/business/api/direct/pain-001-transform`
@@ -1391,7 +1391,7 @@ This design provides clear service boundaries, message-type optimization, and en
 
 - [ ] **Processing Module**: Deployed with message-type-specific HTTP endpoints (pacs-008-transform, pacs-009-transform, pain-001-transform, camt-053-transform)
 
-- [ ] **Kafka Cluster**: Available for CFT message batch processing
+- [ ] **Kafka Cluster**: Available for CFT message asynchronous processing
 - [ ] **Database**: Oracle DB for persistence operations and centralized logging
 - [ ] **Reference API**: Available for data enrichment
 - [ ] **IBM MQ**: Connected for MQ message reception
@@ -1494,7 +1494,7 @@ export LOGGING_CORRELATION_HEADER=MessageId
    - Monitor memory usage and GC
    - Check Kafka producer/consumer configurations (CFT route)
    - **🆕 Monitor business module performance** (HTTP/MQ route)
-   - Review batch processing settings
+   - Review asynchronous processing settings
    - **🆕 Compare latency between Kafka and direct processing routes**
    - **🆕 Monitor CDM vs MESSAGE processing performance**
    - **🆕 Check k-log-tx performance impact and async processing configuration**
@@ -1618,11 +1618,11 @@ ORDER BY hour;
 
 ### Processing Channels
 
-| Channel       | Receipt Method   | Processing Type    | Latency  |
-| ------------- | ---------------- | ------------------ | -------- |
-| **CFT Files** | File monitoring  | Batch (Kafka)      | Standard |
-| **HTTP API**  | REST endpoints   | Real-time (Direct) | Reduced  |
-| **IBM MQ**    | Queue monitoring | Real-time (Direct) | Reduced  |
+| Channel       | Receipt Method   | Processing Type      | Latency  |
+| ------------- | ---------------- | -------------------- | -------- |
+| **CFT Files** | File monitoring  | Asynchronous (Kafka) | Standard |
+| **HTTP API**  | REST endpoints   | Synchronous (Direct) | Reduced  |
+| **IBM MQ**    | Queue monitoring | Synchronous (Direct) | Reduced  |
 
 ### Technology Stack
 

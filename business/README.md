@@ -14,7 +14,7 @@ The Business Module processes payment messages from the ingestion service, autom
 
 - 🔍 **Smart Message Detection**: Automatic identification of PACS.008, PACS.009, PAIN.001, CAMT.053
 - 🔄 **CDM Transformation**: ISO 20022 to Common Data Model conversion
-- 🚀 **Dual Processing**: Real-time (HTTP) and batch (Kafka) support
+- 🚀 **Dual Processing**: Synchronous (HTTP) and asynchronous (Kafka) support
 - 📊 **Conditional Routing**: Routes based on message origin (Kafka → Kafka, HTTP → Distribution)
 
 ## 🏗️ Processing Flow
@@ -25,8 +25,8 @@ flowchart TB
 
     A --> B{🔀 Input Channel}
 
-    B -->|Real-time| C[🌐 HTTP Direct Calls]
-    B -->|Batch| D[📊 Kafka Topics]
+    B -->|Synchronous| C[🌐 HTTP Direct Calls]
+    B -->|Asynchronous| D[📊 Kafka Topics]
 
     C --> E[🎯 Message-Type Routes]
     D --> F[🔍 MessageTypeProcessor]
@@ -91,7 +91,7 @@ flowchart TB
 ### 🚦 Conditional Router
 
 - **Logic**: Routes based on message origin (`messageSource` header)
-- **Kafka Origin** (`"KAFKA_TOPIC"`) → Returns to Kafka ecosystem for batch processing
+- **Kafka Origin** (`"KAFKA_TOPIC"`) → Returns to Kafka ecosystem for asynchronous processing
 - **HTTP/MQ Origin** → Forwards to Distribution Service
 
 ## 📋 Supported Message Types
@@ -176,7 +176,7 @@ mvn verify -P integration-tests
 
 - Java 21+
 - Apache Maven 3.8+
-- Apache Kafka 3.0+ (for batch processing)
+- Apache Kafka 3.0+ (for asynchronous processing)
 - Required kamelets: k-pacs-008-to-cdm, k-pain001-to-cdm-transformer, k-log-tx
 
 ### Build and Run
@@ -221,9 +221,9 @@ logging.level.org.apache.camel=INFO
 
 ### Required Modules
 
-- **Ingestion Module**: Real-time message input via direct calls
+- **Ingestion Module**: Synchronous message input via direct calls
 - **Distribution Module**: CDM message output for HTTP/MQ originated messages
-- **Kafka Cluster**: Batch processing for CFT file messages
+- **Kafka Cluster**: Asynchronous processing for CFT file messages
 
 ### Kamelet Ecosystem
 

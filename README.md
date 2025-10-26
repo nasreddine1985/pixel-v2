@@ -9,7 +9,7 @@
 
 ## 🌟 Overview
 
-PIXEL-V2 is a next-generation payment processing platform built with modern microservices architecture. It provides intelligent message routing, real-time processing capabilities, and comprehensive audit trails for payment messages across multiple channels and formats.
+PIXEL-V2 is a next-generation payment processing platform built with modern microservices architecture. It provides intelligent message routing, synchronous processing capabilities, and comprehensive audit trails for payment messages across multiple channels and formats.
 
 ### 🎯 Key Capabilities
 
@@ -17,15 +17,15 @@ PIXEL-V2 is a next-generation payment processing platform built with modern micr
 | --------------------------- | -------------------------------------------------------------- | --------------------- |
 | **Multi-Channel Ingestion** | Simultaneous processing from MQ, HTTP, Kafka, and file systems | Apache Camel Kamelets |
 | **Intelligent Routing**     | Smart message distribution based on source and content         | Conditional Routing   |
-| **Real-Time Processing**    | Sub-second processing for critical payment messages            | Spring Boot + Camel   |
-| **Batch Processing**        | High-throughput processing for file-based operations           | Kafka Streams         |
+| **Synchronous Processing**  | Sub-second processing for critical payment messages            | Spring Boot + Camel   |
+| **Asynchronous Processing** | High-throughput processing for file-based operations           | Kafka Streams         |
 | **Message Transformation**  | ISO 20022 to CDM format conversion                             | XSLT Transformers     |
 | **Audit & Compliance**      | Complete transaction trails with centralized logging           | Structured Logging    |
 
 ### 📊 Performance Metrics
 
-- **Throughput**: 10,000+ messages/second for batch processing
-- **Latency**: <100ms for real-time message processing
+- **Throughput**: 10,000+ messages/second for asynchronous processing
+- **Latency**: <100ms for synchronous message processing
 - **Availability**: 99.9% uptime with circuit breaker patterns
 - **Scalability**: Horizontal scaling with Kafka partitioning
 
@@ -39,8 +39,8 @@ graph TD
     B[HTTP API] --> D
     C[CFT Files] --> D
     D --> E{Message Type}
-    E -->|Real-time| F[Business Module]
-    E -->|Batch| G[Kafka Topics]
+    E -->|Synchronous| F[Business Module]
+    E -->|Asynchronous| G[Kafka Topics]
     F --> H[CDM Transformation]
     G --> I[Business Module]
     I --> H
@@ -117,11 +117,11 @@ PIXEL-V2/
 
 ### Ingestion Service (Port 8080)
 
-| Endpoint           | Method | Description            | Example               |
-| ------------------ | ------ | ---------------------- | --------------------- |
-| `/payments/submit` | POST   | Submit payment message | Real-time processing  |
-| `/payments/batch`  | POST   | Batch payment upload   | File-based processing |
-| `/actuator/health` | GET    | Service health check   | Monitoring            |
+| Endpoint           | Method | Description                 | Example                |
+| ------------------ | ------ | --------------------------- | ---------------------- |
+| `/payments/submit` | POST   | Submit payment message      | Synchronous processing |
+| `/payments/async`  | POST   | Asynchronous payment upload | File-based processing  |
+| `/actuator/health` | GET    | Service health check        | Monitoring             |
 
 ### Business Module (Port 8081)
 
@@ -319,7 +319,7 @@ Kamelet for unified database persistence operations supporting both initial and 
 - Java Development Kit (JDK) 21 or higher
 - Apache Maven 3.9 or higher
 - Oracle Database (for JPA persistence and message storage)
-- Apache Kafka 2.8+ (for batch processing pipeline)
+- Apache Kafka 2.8+ (for asynchronous processing pipeline)
 - IBM MQ (for message queue integration)
 - Reference API service (for data enrichment)
 
@@ -384,7 +384,7 @@ ingestion.file.input.directory=/tmp/payments-in
 ingestion.file.processed.directory=/tmp/payments-processed
 ingestion.file.pattern=*.xml
 
-# Kafka Configuration (for CFT batch processing)
+# Kafka Configuration (for CFT asynchronous processing)
 ingestion.kafka.brokers=localhost:9092
 ingestion.kafka.topic.pacs008=payments-pacs008
 ingestion.kafka.topic.pain001=payments-pain001
@@ -392,7 +392,7 @@ ingestion.kafka.topic.default=payments-processed
 ingestion.kafka.topic.rejected=payments-rejected
 ingestion.kafka.topic.errors=payments-errors
 
-# 🆕 Business Module Integration (for HTTP/MQ real-time processing)
+# 🆕 Business Module Integration (for HTTP/MQ synchronous processing)
 ingestion.processing.enabled=true
 ingestion.processing.endpoint=direct:kafka-message-processing
 ```
@@ -462,13 +462,13 @@ logging.level.org.apache.camel=INFO
 
 - **Smart Routing Engine**: Camel-based intelligent message routing
 - **Message Type Detection**: XML/JSON format detection and processing
-- **Dual Processing Architecture**: Real-time + batch processing optimization
+- **Dual Processing Architecture**: Synchronous + asynchronous processing optimization
 
 ## 🔄 Smart Routing Usage
 
 ### Message Flow Examples
 
-#### Real-time Processing (HTTP/MQ)
+#### Synchronous Processing (HTTP/MQ)
 
 ```bash
 # Submit payment via HTTP API (routes to business module)
@@ -480,7 +480,7 @@ curl -X POST http://localhost:8080/ingestion/api/v1/payments \
   }'
 ```
 
-#### Batch Processing (CFT Files)
+#### Asynchronous Processing (CFT Files)
 
 ```bash
 # Place XML file in watched directory (routes to Kafka)
@@ -494,9 +494,9 @@ tail -f logs/ingestion.log | grep "CFT message - routing to Kafka"
 
 | Source Channel | Processing Type | Route Destination       | Benefits                          |
 | -------------- | --------------- | ----------------------- | --------------------------------- |
-| **HTTP API**   | Real-time       | Business Module         | Low latency, immediate response   |
-| **MQ Series**  | Real-time       | Business Module         | Low latency, persistent delivery  |
-| **CFT Files**  | Batch           | Kafka → Business Module | High throughput, memory efficient |
+| **HTTP API**   | Synchronous     | Business Module         | Low latency, immediate response   |
+| **MQ Series**  | Synchronous     | Business Module         | Low latency, persistent delivery  |
+| **CFT Files**  | Asynchronous    | Kafka → Business Module | High throughput, memory efficient |
 
 ### Monitoring & Health Checks
 
@@ -519,8 +519,8 @@ curl http://localhost:8082/distribution/actuator/metrics
 ### Performance Benefits
 
 - **🚀 50-70% Latency Reduction**: HTTP/MQ messages bypass Kafka queuing
-- **📈 High Throughput**: CFT files maintain optimized batch processing
-- **🔄 Flexible Scaling**: Independent scaling of real-time vs batch processing
+- **📈 High Throughput**: CFT files maintain optimized asynchronous processing
+- **🔄 Flexible Scaling**: Independent scaling of synchronous vs asynchronous processing
 - **🛡️ Reliability**: Graceful fallback and comprehensive error handling
 
 ## Contributing

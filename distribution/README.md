@@ -32,9 +32,9 @@ flowchart TB
 
     A -->|HTTP POST<br/>CDM Messages<br/>localhost:8082/submit| D[📤 Distribution Service]
     B -->|Internal APIs<br/>direct:distribution-input| D
-    C -->|k-kafka-receiver<br/>Batch Processing| D
+    C -->|k-kafka-receiver<br/>Asynchronous Processing| D
 
-    D --> E[💳 Payment Networks<br/>SWIFT, ACH, Real-time]
+    D --> E[💳 Payment Networks<br/>SWIFT, ACH, Synchronous]
     D --> F[🏦 Transaction Systems<br/>Core Banking, Settlement]
     D --> G[📱 Notification Services<br/>Email, SMS, Push]
     D --> H[📋 k-log-tx<br/>Centralized Audit]
@@ -60,7 +60,7 @@ flowchart TB
 
     B -->|Primary| C[🌐 Business Module<br/>HTTP POST /submit]
     B -->|Direct| D[📞 Internal API Calls<br/>direct:distribution-input]
-    B -->|Batch| E[📊 Kafka Topics<br/>k-kafka-receiver]
+    B -->|Asynchronous| E[📊 Kafka Topics<br/>k-kafka-receiver]
 
     C --> F[📋 Distribution Controller<br/>Request Reception]
     D --> F
@@ -79,7 +79,7 @@ flowchart TB
     J -->|NOTIFICATION| M[📱 Notification Handler<br/>Alerts, Confirmations]
     J -->|UNKNOWN| N[❌ Error Handler<br/>DLQ Routing]
 
-    K --> O[🌐 Payment Networks<br/>SWIFT, ACH, Real-time]
+    K --> O[🌐 Payment Networks<br/>SWIFT, ACH, Synchronous]
     L --> P[🏛️ Core Banking Systems<br/>Account Updates, Settlement]
     M --> Q[📢 Notification Services<br/>Email, SMS, Mobile Push]
     N --> R[🔗 k-log-tx Error Logging<br/>Dead Letter Queue]
@@ -121,27 +121,27 @@ flowchart TB
 
 #### 🎯 Message Handlers
 
-| Handler                  | Message Types                   | Destinations                   | Features                              |
-| ------------------------ | ------------------------------- | ------------------------------ | ------------------------------------- |
-| **Payment Handler**      | Payment instructions, transfers | SWIFT, ACH, Real-time payments | Amount validation, party verification |
-| **Transaction Handler**  | Status updates, settlements     | Core banking, account systems  | Status tracking, approval flows       |
-| **Notification Handler** | Alerts, confirmations           | Email, SMS, mobile apps        | Multi-channel delivery                |
+| Handler                  | Message Types                   | Destinations                     | Features                              |
+| ------------------------ | ------------------------------- | -------------------------------- | ------------------------------------- |
+| **Payment Handler**      | Payment instructions, transfers | SWIFT, ACH, Synchronous payments | Amount validation, party verification |
+| **Transaction Handler**  | Status updates, settlements     | Core banking, account systems    | Status tracking, approval flows       |
+| **Notification Handler** | Alerts, confirmations           | Email, SMS, mobile apps          | Multi-channel delivery                |
 
 ### 📥 Input Sources
 
-| Source               | Description                | Entry Point                 | Message Format  |
-| -------------------- | -------------------------- | --------------------------- | --------------- |
-| **Business Service** | Primary CDM message source | `POST /submit`              | CDM JSON        |
-| **Direct APIs**      | Internal service calls     | `direct:distribution-input` | Various formats |
-| **Kafka Topics**     | Batch message processing   | k-kafka-receiver kamelet    | Kafka messages  |
+| Source               | Description                     | Entry Point                 | Message Format  |
+| -------------------- | ------------------------------- | --------------------------- | --------------- |
+| **Business Service** | Primary CDM message source      | `POST /submit`              | CDM JSON        |
+| **Direct APIs**      | Internal service calls          | `direct:distribution-input` | Various formats |
+| **Kafka Topics**     | Asynchronous message processing | k-kafka-receiver kamelet    | Kafka messages  |
 
 ### 📤 Output Destinations
 
 #### Payment Networks
 
 - **SWIFT Network**: Cross-border payments and messaging
-- **ACH Systems**: Domestic batch transfers
-- **Real-time Payments**: Instant payment networks
+- **ACH Systems**: Domestic asynchronous transfers
+- **Synchronous Payments**: Instant payment networks
 
 #### Core Banking
 
@@ -166,7 +166,7 @@ flowchart TB
 | -------- | ----------------- | ------------------------ | ------ | -------- |
 | **1**    | Processing Module | Primary CDM distribution | High   | Low      |
 | **2**    | Direct Endpoints  | Internal service calls   | Medium | Very Low |
-| **3**    | Kafka Topics      | Batch processing backup  | Low    | Medium   |
+| **3**    | Kafka Topics      | Asynchronous processing backup  | Low    | Medium   |
 
 ### 🔄 Integration Patterns
 

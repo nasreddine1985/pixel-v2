@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Integration tests for main-ingestion-routes.yaml Tests the complete ingestion orchestration flow
  * including: - Main orchestrator routing logic - CFT vs HTTP/MQ intelligent routing - Database
  * persistence workflows - Reference data enrichment - Validation and idempotence checking - Kafka
- * publishing for batch processing - Processing module integration for real-time processing
+ * publishing for asynchronous processing - Processing module integration for synchronous processing
  */
 @CamelSpringBootTest
 @SpringBootTest
@@ -111,10 +111,10 @@ class MainIngestionRoutesIntegrationTest {
     }
 
     @Test
-    @DisplayName("Test CFT Message Routing - Should route to Kafka for batch processing")
+    @DisplayName("Test CFT Message Routing - Should route to Kafka for asynchronous processing")
     void testCftMessageRouting() throws Exception {
         // Given
-        logger.info("Testing CFT message routing to Kafka for batch processing");
+        logger.info("Testing CFT message routing to Kafka for asynchronous processing");
 
         // Setup expectations
         kafkaPublisherResult.expectedMessageCount(1);
@@ -147,7 +147,7 @@ class MainIngestionRoutesIntegrationTest {
                 "CFT message should NOT be routed to processing module");
 
         logger.info(
-                "✅ CFT message routing test passed - message routed to Kafka for batch processing");
+                "✅ CFT message routing test passed - message routed to Kafka for asynchronous processing");
     }
 
     @Test

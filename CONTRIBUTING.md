@@ -200,7 +200,7 @@ Located in `technical-framework/` directory:
 - **Hibernate 6.2.7.Final** - JPA implementation
 - **Saxon XSLT Processor 12.3** - XML transformations
 - **Oracle Database 19c+** or **PostgreSQL 13+** - Primary database
-- **Apache Kafka** - Event streaming and batch processing
+- **Apache Kafka** - Event streaming and asynchronous processing
 - **IBM MQ** - Enterprise message queuing
 - **Java 21** - Programming language and runtime
 
@@ -821,7 +821,7 @@ class MainIngestionRoutesIntegrationTest {
     }
 
     @Test
-    @DisplayName("Test CFT message routing to Kafka for batch processing")
+    @DisplayName("Test CFT message routing to Kafka for asynchronous processing")
     void testCftMessageRouting() throws Exception {
         // Test implementation with proper route startup
     }
@@ -1029,8 +1029,8 @@ Use the bug report template and include:
 
 The platform now features sophisticated routing logic based on message source and content:
 
-- **CFT Messages**: Automatically routed to Kafka for batch processing
-- **HTTP/MQ Messages**: Routed to real-time processing module
+- **CFT Messages**: Automatically routed to Kafka for asynchronous processing
+- **HTTP/MQ Messages**: Routed to synchronous processing module
 - **Smart Decision Engine**: Conditional routing based on `ReceiptChannel` header
 
 ### Enhanced Testing Framework
@@ -1054,7 +1054,7 @@ The technical framework has been restructured into focused, reusable components:
 
 ### Performance Considerations
 
-- **Batch Processing**: Use Camel's batch processing features for high-volume scenarios
+- **Asynchronous Processing**: Use Camel's asynchronous processing features for high-volume scenarios
 - **Memory Management**: Be mindful of memory usage in message processing
 - **Connection Pooling**: Use connection pools for database and MQ connections
 - **Monitoring**: Add appropriate metrics and health checks

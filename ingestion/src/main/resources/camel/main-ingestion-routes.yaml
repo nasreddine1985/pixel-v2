@@ -3,7 +3,7 @@
 # ===================================================================
 # This configuration implements smart routing based on message source:
 # - CFT messages (files) → Kafka topics (batch processing)
-# - HTTP/MQ messages → Processing module (real-time processing)
+# - HTTP/MQ messages → Processing module (synchronous processing)
 # 
 # Processing Module Integration - Message Metadata Enrichment Processor
 - beans:
