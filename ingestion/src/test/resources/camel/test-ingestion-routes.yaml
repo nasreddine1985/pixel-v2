@@ -1,67 +1,148 @@
-# Test YAML Routes Configuration
-# This file provides mock routes for testing YAML route functionality
+# Test YAML Routes Configuration  
+# This file provides test routes and mocks for integration testing
 
-# Mock Kamelets as direct endpoints for testing
+# Test Beans Configuration
+- beans:
+    - name: enrichMessageWithMetadata
+      type: "#class:com.pixel.v2.ingestion.processor.MessageMetadataEnrichmentProcessor"
+
+# Main orchestrator route for testing
 - route:
-    id: test-mock-db-tx
+    id: payment-ingestion-orchestrator
     from:
-      uri: kamelet:k-db-tx
+      uri: direct:payment-ingestion
       steps:
         - log:
-            message: "Mock k-db-tx kamelet called"
+            message: "Starting payment ingestion orchestration for message: ${body}"
         - setHeader:
-            name: persistenceStatus
-            constant: "SUCCESS"
+            name: "LogLevel"
+            constant: "INFO"
         - setHeader:
-            name: persistedMessageId
-            simple: "MOCK-DB-${exchangeId}"
+            name: "LogSource"
+            constant: "ingestion"
+        - setHeader:
+            name: "LogCategory"
+            constant: "BUSINESS"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.MessageId}"
+        - setBody:
+            simple: "Starting payment ingestion orchestration for message ID: ${header.MessageId}, Receipt Channel: ${header.ReceiptChannel}"
+        - to: "mock:log-tx-result"
+        - setHeader:
+            name: IngestionStartTime
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss}"
+        - setHeader:
+            name: ProcessingStage
+            constant: INGESTION_START
+        - to: "direct:database-persistence"
+        - to: "direct:reference-enrichment"
+        - to: "direct:enriched-data-persistence"
+        - to: "direct:validation"
+        - to: "direct:idempotence-check"
+        - choice:
+            when:
+              - simple: "${header.CanProcess} == true"
+                steps:
+                  - log:
+                      message: "Routing message based on receipt channel: ${header.ReceiptChannel}"
+                  - setHeader:
+                      name: "LogLevel"
+                      constant: "INFO"
+                  - setHeader:
+                      name: "LogSource"
+                      constant: "ingestion"
+                  - setHeader:
+                      name: "LogCategory"
+                      constant: "ROUTE"
+                  - setHeader:
+                      name: "CorrelationId"
+                      simple: "${header.MessageId}"
+                  - setBody:
+                      simple: "Routing message based on receipt channel: ${header.ReceiptChannel} for message ID: ${header.MessageId}"
+                  - to: "mock:log-tx-result"
+                  - choice:
+                      when:
+                        - simple: "${header.ReceiptChannel} == 'CFT'"
+                          steps:
+                            - log:
+                                message: "[SMART-ROUTING] CFT message - routing to Kafka for batch processing"
+                            - to: "direct:kafka-publisher"
+                      otherwise:
+                        steps:
+                          - log:
+                              message: "[SMART-ROUTING] HTTP/MQ message - routing to processing module for real-time processing"
+                          - to: "direct:processing-module"
+            otherwise:
+              steps:
+                - log:
+                    message: "Message processing skipped due to idempotence check failure"
 
+# Test route endpoints
 - route:
-    id: test-mock-reference-loader
+    id: test-database-persistence
     from:
-      uri: kamelet:k-referentiel-data-loader
+      uri: direct:database-persistence
       steps:
         - log:
-            message: "Mock k-referentiel-data-loader kamelet called"
-        - setHeader:
-            name: referenceDataLoaded
-            constant: true
+            message: "Test: Database persistence called for message: ${header.MessageId}"
+        - to: "mock:database-persistence-result"
 
 - route:
-    id: test-mock-validation
+    id: test-reference-enrichment
     from:
-      uri: kamelet:k-ingestion-technical-validation
+      uri: direct:reference-enrichment
       steps:
         - log:
-            message: "Mock k-ingestion-technical-validation kamelet called"
-        - setHeader:
-            name: IsValid
-            constant: true
-        - setHeader:
-            name: ValidationResult
-            constant: "VALID"
+            message: "Test: Reference enrichment called for message: ${header.MessageId}"
+        - to: "mock:reference-enrichment-result"
 
 - route:
-    id: test-mock-idempotence
+    id: test-enriched-data-persistence
     from:
-      uri: kamelet:k-payment-idempotence-helper
+      uri: direct:enriched-data-persistence
       steps:
         - log:
-            message: "Mock k-payment-idempotence-helper kamelet called"
-        - setHeader:
-            name: IsDuplicate
-            constant: false
-        - setHeader:
-            name: CanProcess
-            constant: true
+            message: "Test: Enriched data persistence called for message: ${header.MessageId}"
 
 - route:
-    id: test-mock-log-tx
+    id: test-validation
     from:
-      uri: kamelet:k-log-tx
+      uri: direct:validation
       steps:
         - log:
-            message: "Mock k-log-tx kamelet called: ${body}"
+            message: "Test: Validation called for message: ${header.MessageId}"
+        - to: "mock:validation-result"
+
+- route:
+    id: test-idempotence-check
+    from:
+      uri: direct:idempotence-check
+      steps:
+        - log:
+            message: "Test: Idempotence check called for message: ${header.MessageId}"
+        - to: "mock:idempotence-result"
+
+- route:
+    id: test-kafka-publisher
+    from:
+      uri: direct:kafka-publisher
+      steps:
+        - log:
+            message: "Test: Kafka publisher called for CFT message: ${header.MessageId}"
+        - to: "mock:kafka-publisher-result"
+
+- route:
+    id: test-processing-module
+    from:
+      uri: direct:processing-module
+      steps:
+        - log:
+            message: "Test: Processing module called for HTTP/MQ message: ${header.MessageId}"
+        - to: "mock:processing-module-result"
+
+# Mock endpoints for legacy kamelet testing
+# These routes replace kamelet calls with mock endpoints
 
 # Simple test route for basic functionality
 - route:
