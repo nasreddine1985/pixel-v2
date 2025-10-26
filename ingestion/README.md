@@ -54,36 +54,57 @@ The Ingestion Service serves as the **primary gateway** for payment messages acr
 ### 🎯 Processing Strategy
 
 ```mermaid
-flowchart LR
-    A[🌐 HTTP API] --> D[🧠 Ingestion Orchestrator]
-    B[📬 IBM MQ] --> D
-    C[📁 File System] --> D
-    D --> E[🔍 Validation & Deduplication]
-    E --> F{Source Channel}
-    F -->|CFT Files| G[📤 Kafka Topics<br/>Message Type Routing]
-    F -->|HTTP/MQ| H{Message Type Detection}
+flowchart TB
+    A[🌐 HTTP API]
+    B[📬 IBM MQ]
+    C[📁 File System]
 
-    G -->|pacs.008| G1[📤 payments-pacs008]
-    G -->|pacs.009| G2[📤 payments-pacs009]
-    G -->|pain.001| G3[📤 payments-pain001]
-    G -->|camt.053| G4[📤 payments-camt053]
+    A --> D[🧠 Ingestion Orchestrator]
+    B --> D
+    C --> D
 
-    H -->|pacs.008| I1[� POST /business/api/direct/<br/>pacs-008-transform]
+    D --> E[🔍 Validation & Deduplication<br/>k-db-tx + k-referentiel-data-loader]
+
+    E --> F{🔀 Source Channel Detection}
+
+    F -->|CFT Files<br/>Batch Processing| G[📤 Kafka Topics<br/>Message Type Routing]
+    F -->|HTTP/MQ<br/>Real-time Processing| H{🎯 Message Type Detection}
+
+    G --> G1[� payments-pacs008<br/>PACS.008 Messages]
+    G --> G2[� payments-pacs009<br/>PACS.009 Messages]
+    G --> G3[� payments-pain001<br/>PAIN.001 Messages]
+    G --> G4[� payments-camt053<br/>CAMT.053 Messages]
+
+    H -->|pacs.008| I1[🔗 POST /business/api/direct/<br/>pacs-008-transform]
     H -->|pacs.009| I2[🔗 POST /business/api/direct/<br/>pacs-009-transform]
     H -->|pain.001| I3[🔗 POST /business/api/direct/<br/>pain-001-transform]
     H -->|camt.053| I4[🔗 POST /business/api/direct/<br/>camt-053-transform]
 
-    G1 --> J[📊 Business Module<br/>Batch Processing]
+    G1 --> J[📊 Business Module<br/>Batch Processing via Kafka]
     G2 --> J
     G3 --> J
     G4 --> J
 
-    I1 --> K[� Business Module<br/>Real-time Processing]
+    I1 --> K[⚡ Business Module<br/>Real-time Processing via HTTP]
     I2 --> K
     I3 --> K
     I4 --> K
 
-    E --> L[🔗 k-log-tx Audit Trail]
+    J --> L[� CDM Transformation<br/>& Distribution]
+    K --> L
+
+    E --> M[�🔗 k-log-tx<br/>Centralized Audit Trail]
+    D --> M
+    F --> M
+
+    %% Styling
+    style D fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style E fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    style F fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style J fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style K fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style L fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style M fill:#ffebee,stroke:#d32f2f,stroke-width:2px
 ```
 
 ## Architecture

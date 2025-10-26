@@ -25,14 +25,27 @@ The Distribution Service serves as the **primary message distribution hub** with
 ### 🎯 Service Integration
 
 ```mermaid
-flowchart LR
-    A[Business Service] -->|HTTP POST<br/>CDM Messages| B[Distribution Service]
-    C[Direct Calls] -->|Internal APIs| B
-    D[Kafka Topics] -->|k-kafka-receiver| B
-    B --> E[Payment Destinations]
-    B --> F[Transaction Systems]
-    B --> G[Notification Services]
-    B --> H[k-log-tx Audit]
+flowchart TB
+    A[📥 Business Module]
+    B[🔄 Direct API Calls]
+    C[📊 Kafka Topics]
+
+    A -->|HTTP POST<br/>CDM Messages<br/>localhost:8082/submit| D[📤 Distribution Service]
+    B -->|Internal APIs<br/>direct:distribution-input| D
+    C -->|k-kafka-receiver<br/>Batch Processing| D
+
+    D --> E[💳 Payment Networks<br/>SWIFT, ACH, Real-time]
+    D --> F[🏦 Transaction Systems<br/>Core Banking, Settlement]
+    D --> G[📱 Notification Services<br/>Email, SMS, Push]
+    D --> H[📋 k-log-tx<br/>Centralized Audit]
+
+    %% Styling
+    style A fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    style D fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style E fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style F fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style G fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style H fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
 ```
 
 ## 🏗️ System Architecture
@@ -40,29 +53,53 @@ flowchart LR
 ### 🔄 Distribution Flow
 
 ```mermaid
-flowchart TD
-    A[Business Service] -->|HTTP POST<br/>CDM Messages| B[Distribution Controller]
-    C[Direct APIs] --> B
-    D[Kafka Topics] -->|k-kafka-receiver| B
+flowchart TB
+    A[📥 Input Sources]
 
-    B --> E[Request Validation]
-    E --> F[k-log-tx Audit]
-    F --> G[Message Type Detection]
+    A --> B{🔀 Input Channel}
 
-    G --> H{Message Type}
-    H -->|PAYMENT| I[Payment Handler]
-    H -->|TRANSACTION| J[Transaction Handler]
-    H -->|NOTIFICATION| K[Notification Handler]
+    B -->|Primary| C[🌐 Business Module<br/>HTTP POST /submit]
+    B -->|Direct| D[📞 Internal API Calls<br/>direct:distribution-input]
+    B -->|Batch| E[📊 Kafka Topics<br/>k-kafka-receiver]
 
-    I --> L[Payment Networks]
-    J --> M[Core Banking Systems]
-    K --> N[Notification Services]
+    C --> F[📋 Distribution Controller<br/>Request Reception]
+    D --> F
+    E --> F
 
-    I --> O[k-log-tx Logging]
-    J --> O
-    K --> O
+    F --> G[✅ Request Validation<br/>CDM Schema Check]
 
-    O --> P[Audit Database]
+    G --> H[📝 k-log-tx Audit<br/>Transaction Logging]
+
+    H --> I[🔍 Message Type Detection<br/>CDM Content Analysis]
+
+    I --> J{🎯 Message Type}
+
+    J -->|PAYMENT_INSTRUCTION| K[💳 Payment Handler<br/>Credit Transfers, Returns]
+    J -->|TRANSACTION_STATUS| L[🏦 Transaction Handler<br/>Status Updates, Settlement]
+    J -->|NOTIFICATION| M[📱 Notification Handler<br/>Alerts, Confirmations]
+    J -->|UNKNOWN| N[❌ Error Handler<br/>DLQ Routing]
+
+    K --> O[🌐 Payment Networks<br/>SWIFT, ACH, Real-time]
+    L --> P[🏛️ Core Banking Systems<br/>Account Updates, Settlement]
+    M --> Q[📢 Notification Services<br/>Email, SMS, Mobile Push]
+    N --> R[🔗 k-log-tx Error Logging<br/>Dead Letter Queue]
+
+    K --> S[📊 k-log-tx Success Logging]
+    L --> S
+    M --> S
+
+    S --> T[💾 Audit Database<br/>Complete Transaction History]
+    R --> T
+
+    %% Styling
+    style F fill:#e3f2fd,stroke:#1976d2,stroke-width:2px
+    style I fill:#e8f5e8,stroke:#388e3c,stroke-width:2px
+    style J fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style O fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style P fill:#e0f2f1,stroke:#00796b,stroke-width:2px
+    style Q fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    style N fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    style T fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
 ```
 
 ### 📋 Core Components
