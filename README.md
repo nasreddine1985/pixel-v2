@@ -24,7 +24,7 @@ PIXEL-V2 is a next-generation payment processing platform built with modern micr
 
 ### 📊 Performance Metrics
 
-- **Throughput**: 10,000+ messages/second for asynchronous processing
+- **Throughput**: 100,000+ messages/second for asynchronous processing
 - **Latency**: <100ms for synchronous message processing
 - **Availability**: 99.9% uptime with circuit breaker patterns
 - **Scalability**: Horizontal scaling with Kafka partitioning
@@ -38,13 +38,12 @@ graph TD
     A[MQ Messages] --> D[Ingestion Service]
     B[HTTP API] --> D
     C[CFT Files] --> D
-    D --> E{Message Type}
+    D --> E{Flow Type}
     E -->|Synchronous| F[Business Module]
     E -->|Asynchronous| G[Kafka Topics]
-    F --> H[CDM Transformation]
+    F --> J[Distribution Service]
     G --> I[Business Module]
-    I --> H
-    H --> J[Distribution Service]
+    I --> J
     J --> K[External Systems]
 ```
 
