@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>TEST-001</MsgId>
+            <CreDtTm>2024-10-28T13:00:00.000Z</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <TtlIntrBkSttlmAmt Ccy="EUR">100.00</TtlIntrBkSttlmAmt>
+            <IntrBkSttlmDt>2024-10-28</IntrBkSttlmDt>
+            <SttlmInf>
+                <SttlmMtd>CLRG</SttlmMtd>
+            </SttlmInf>
+            <InstgAgt>
+                <FinInstnId>
+                    <BICFI>TESTBANK</BICFI>
+                </FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId>
+                    <BICFI>TESTBANK</BICFI>
+                </FinInstnId>
+            </InstdAgt>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>TEST-INST-001</InstrId>
+                <EndToEndId>TEST-E2E-001</EndToEndId>
+                <TxId>TEST-TXN-001</TxId>
+            </PmtId>
+            <IntrBkSttlmAmt Ccy="EUR">100.00</IntrBkSttlmAmt>
+            <ChrgBr>SLEV</ChrgBr>
+            <Dbtr>
+                <Nm>Test Debtor</Nm>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <IBAN>DE89370400440532013000</IBAN>
+                </Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>TESTBANK</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>TESTBANK</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+                <Nm>Test Creditor</Nm>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>FR1420041010050500013M02606</IBAN>
+                </Id>
+            </CdtrAcct>
+            <RmtInf>
+                <Ustrd>Test payment</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>

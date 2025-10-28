@@ -6,44 +6,125 @@ metadata:
     camel.apache.org/kamelet.type: "source"
 spec:
   definition:
-    title: "K-MQ Message Receiver"
-    description: "Consumes messages from IBM MQ, logs receipt details, and routes messages for further processing"
+    title: "K-MQ Message Receiver (ActiveMQ Artemis)"
+    description: "Consumes messages from ActiveMQ Artemis (JMS), logs receipt details, and routes messages for further processing"
     required: [destination]
     properties:
       destination:
         title: "MQ destination (queue)"
         type: string
         default: "${mq.destination}"
+      host:
+        title: "Broker host"
+        type: string
+        default: "localhost"
+      port:
+        title: "Broker port"
+        type: integer
+        default: 61616
+      username:
+        title: "Broker username"
+        type: string
+        default: "artemis"
+      password:
+        title: "Broker password"
+        type: string
+        default: "artemis"
       jmsConnectionFactoryRef:
         title: "JMS Connection Factory Bean name"
         type: string
-        default: "${mq.connectionFactoryRef}"
+        default: "artemisConnectionFactory"
   template:
     from:
       uri: "jms:queue:{{destination}}"
       parameters:
+        # Use ActiveMQ Artemis ConnectionFactory
         connectionFactory: "#{{jmsConnectionFactoryRef}}"
-      steps:
-        - log: 
-            message: "[MQ-RECEIVER] Message received from queue {{destination}}: ${body}"
-            loggingLevel: "INFO"
-        
-        - set-header:
-            name: "messageSource"
-            constant: "IBM_MQ"
-        
-        - set-header:
-            name: "receiptTimestamp"
-            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
-        
-        - set-header:
-            name: "receiptChannel"
-            constant: "MQ_SERIES"
-        
-        - set-header:
-            name: "mqQueue"
-            simple: "{{destination}}"
-        
-        - log: 
-            message: "[MQ-RECEIVER] Message metadata set - Source: ${header.messageSource}, Timestamp: ${header.receiptTimestamp}, Queue: ${header.mqQueue}"
-            loggingLevel: "DEBUG"
+        # Auto-acknowledge messages for best performance
+        acknowledgementModeName: "AUTO_ACKNOWLEDGE"
+        # Concurrent consumers for high throughput
+        concurrentConsumers: 5
+        # Maximum concurrent consumers
+        maxConcurrentConsumers: 10
+        # Auto-start the consumer
+        autoStartup: true
+        # Cache consumers for performance
+        cacheLevelName: "CACHE_CONSUMER"
+        # Receive timeout in milliseconds (30 seconds)
+        receiveTimeout: 30000
+        # Delivery delay - no delay for immediate processing
+        deliveryDelay: 0
+        # Message selector for potential filtering (commented out)
+        # messageSelector: ""
+    steps:
+    # Load the message content into exchange body (automatically done by JMS component)
+    - log:
+        message: "[ARTEMIS-RECEIVER] Message received from ActiveMQ Artemis queue {{destination}}: ${body}"
+        loggingLevel: "INFO"
+
+    # Extract JMS/MQ properties into headers
+    - set-header:
+        name: "JMSMessageID"
+        simple: "${header.JMSMessageID}"
+
+    - set-header:
+        name: "JMSCorrelationID"
+        simple: "${header.JMSCorrelationID}"
+
+    - set-header:
+        name: "JMSType"
+        simple: "${header.JMSType}"
+
+    - set-header:
+        name: "JMSPriority"
+        simple: "${header.JMSPriority}"
+
+    - set-header:
+        name: "JMSTimestamp"
+        simple: "${header.JMSTimestamp}"
+
+    - set-header:
+        name: "JMSExpiration"
+        simple: "${header.JMSExpiration}"
+
+    - set-header:
+        name: "JMSDeliveryMode"
+        simple: "${header.JMSDeliveryMode}"
+
+    - set-header:
+        name: "JMSRedelivered"
+        simple: "${header.JMSRedelivered}"
+
+    # Set custom processing headers
+    - set-header:
+        name: "messageSource"
+        constant: "ARTEMIS"
+
+    - set-header:
+        name: "receiptTimestamp"
+        simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+
+    - set-header:
+        name: "receiptChannel"
+        constant: "MQ_SERIES"
+
+    - set-header:
+        name: "mqQueue"
+        simple: "{{destination}}"
+
+    - set-header:
+        name: "brokerType"
+        constant: "ActiveMQ_Artemis"
+
+    - set-header:
+        name: "originalMessageSize"
+        simple: "${bodyAs(String).length()}"
+
+    # Log all captured properties
+    - log:
+        message: "[ARTEMIS-RECEIVER] Message loaded - Body size: ${header.originalMessageSize}, JMSMessageID: ${header.JMSMessageID}, JMSCorrelationID: ${header.JMSCorrelationID}, Queue: ${header.mqQueue}"
+        loggingLevel: "DEBUG"
+
+    # Automatically consume and forward all messages with body and headers
+    - to: 
+        uri: "direct:process-mq-message"

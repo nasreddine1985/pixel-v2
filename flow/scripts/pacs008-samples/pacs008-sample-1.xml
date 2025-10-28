@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>PACS008-001-20241028-001</MsgId>
+            <CreDtTm>2024-10-28T10:30:00.000Z</CreDtTm>
+            <NbOfTxs>1</NbOfTxs>
+            <TtlIntrBkSttlmAmt Ccy="EUR">1500.00</TtlIntrBkSttlmAmt>
+            <IntrBkSttlmDt>2024-10-28</IntrBkSttlmDt>
+            <SttlmInf>
+                <SttlmMtd>CLRG</SttlmMtd>
+            </SttlmInf>
+            <InstgAgt>
+                <FinInstnId>
+                    <BICFI>DEUTDEFF</BICFI>
+                </FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId>
+                    <BICFI>BNPAFRPP</BICFI>
+                </FinInstnId>
+            </InstdAgt>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>INST001-20241028</InstrId>
+                <EndToEndId>E2E001-20241028</EndToEndId>
+                <TxId>TXN001-20241028</TxId>
+            </PmtId>
+            <IntrBkSttlmAmt Ccy="EUR">1500.00</IntrBkSttlmAmt>
+            <ChrgBr>SLEV</ChrgBr>
+            <Dbtr>
+                <Nm>John Smith</Nm>
+                <PstlAdr>
+                    <Ctry>DE</Ctry>
+                </PstlAdr>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <IBAN>DE89370400440532013000</IBAN>
+                </Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>DEUTDEFF</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>BNPAFRPP</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+                <Nm>Marie Dupont</Nm>
+                <PstlAdr>
+                    <Ctry>FR</Ctry>
+                </PstlAdr>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>FR1420041010050500013M02606</IBAN>
+                </Id>
+            </CdtrAcct>
+            <RmtInf>
+                <Ustrd>Payment for invoice INV-2024-001</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>

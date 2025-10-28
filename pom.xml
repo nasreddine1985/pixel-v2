@@ -16,6 +16,7 @@
         <module>ingestion</module>
         <module>business</module>
         <module>distribution</module>
+        <module>flow</module>
     </modules>
 
     <properties>

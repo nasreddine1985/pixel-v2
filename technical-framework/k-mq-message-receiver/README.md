@@ -1,30 +1,53 @@
 # k-mq-message-receiver Kamelet
 
-Listens to IBM MQ and persists messages to database using JPA.
+Listens to **ActiveMQ Artemis** and automatically consumes messages for payment processing.
 
 ## Configuration
 
-- Provide a JMS ConnectionFactory bean (e.g. `jmsConnectionFactory`) in the application context, or configure your runtime to bind IBM MQ connection.
-- Configure Spring Data JPA datasource properties for PostgreSQL in application properties.
+- Connects to ActiveMQ Artemis container running on localhost:61616
+- Uses default Artemis credentials (username: artemis, password: artemis)
+- Automatically configures JMS connection factory for Artemis
 
-## Usage
+## ActiveMQ Artemis Setup
 
-Bind the kamelet source to an actual MQ endpoint in your runtime (the kamelet uses a placeholder internally). Ensure `messagePersistenceProcessor` is available as a bean in the runtime.
+Start your ActiveMQ Artemis container:
+
+```bash
+docker run -d --name artemis \
+  -p 61616:61616 \
+  -p 8161:8161 \
+  -e ARTEMIS_USERNAME=artemis \
+  -e ARTEMIS_PASSWORD=artemis \
+  apache/activemq-artemis:latest
+```
 
 ## Properties
 
-- `destination` (required): the MQ queue name to listen to
-- `jmsConnectionFactoryRef` (required): reference to the JMS connection factory bean
+- `destination`: the Artemis queue name to consume from (default: QUEUE.IN)
+- `host`: Artemis broker host (default: localhost)
+- `port`: Artemis broker port (default: 61616)
+- `username`: Artemis username (default: artemis)
+- `password`: Artemis password (default: artemis)
+- `jmsConnectionFactoryRef`: connection factory bean reference (default: artemisConnectionFactory)
 
 ## Example Usage
 
 ```yaml
 - from:
-    uri: "kamelet:k-mq-receipt?destination=INPUT.QUEUE&jmsConnectionFactoryRef=mqConnectionFactory"
+    uri: "kamelet:k-mq-message-receiver?destination=PAYMENT.QUEUE"
     steps:
-      - log: "Message received and persisted: ${body}"
+      - log: "Message received from Artemis: ${body}"
 ```
+
+## Automatic Message Processing
+
+The kamelet automatically:
+
+1. Connects to your ActiveMQ Artemis container
+2. Consumes messages from the specified queue
+3. Sets processing headers (source, timestamp, channel)
+4. Routes to `direct:process-mq-message` for further processing
 
 ## Integration
 
-This kamelet is part of the PIXEL-V2 project's PACS.008 processing pipeline, handling message receipt from IBM MQ and persistence to the database using JPA.
+This kamelet is part of the PIXEL-V2 project's payment ingestion pipeline, handling message receipt from ActiveMQ Artemis and routing for business processing.

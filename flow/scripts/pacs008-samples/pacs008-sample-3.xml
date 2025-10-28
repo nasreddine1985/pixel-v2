@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08">
+    <FIToFICstmrCdtTrf>
+        <GrpHdr>
+            <MsgId>PACS008-003-20241028-003</MsgId>
+            <CreDtTm>2024-10-28T12:00:00.000Z</CreDtTm>
+            <NbOfTxs>2</NbOfTxs>
+            <TtlIntrBkSttlmAmt Ccy="GBP">5750.00</TtlIntrBkSttlmAmt>
+            <IntrBkSttlmDt>2024-10-28</IntrBkSttlmDt>
+            <SttlmInf>
+                <SttlmMtd>CLRG</SttlmMtd>
+            </SttlmInf>
+            <InstgAgt>
+                <FinInstnId>
+                    <BICFI>BARCGB22</BICFI>
+                </FinInstnId>
+            </InstgAgt>
+            <InstdAgt>
+                <FinInstnId>
+                    <BICFI>HBUKGB4B</BICFI>
+                </FinInstnId>
+            </InstdAgt>
+        </GrpHdr>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>INST003A-20241028</InstrId>
+                <EndToEndId>E2E003A-20241028</EndToEndId>
+                <TxId>TXN003A-20241028</TxId>
+            </PmtId>
+            <IntrBkSttlmAmt Ccy="GBP">3250.00</IntrBkSttlmAmt>
+            <ChrgBr>SLEV</ChrgBr>
+            <Dbtr>
+                <Nm>UK Imports Ltd</Nm>
+                <PstlAdr>
+                    <Ctry>GB</Ctry>
+                </PstlAdr>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <IBAN>GB33BUKB20201555555555</IBAN>
+                </Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>BARCGB22</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>HBUKGB4B</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+                <Nm>European Suppliers SA</Nm>
+                <PstlAdr>
+                    <Ctry>GB</Ctry>
+                </PstlAdr>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>GB94BARC10201530093459</IBAN>
+                </Id>
+            </CdtrAcct>
+            <RmtInf>
+                <Ustrd>Goods payment batch 1</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+        <CdtTrfTxInf>
+            <PmtId>
+                <InstrId>INST003B-20241028</InstrId>
+                <EndToEndId>E2E003B-20241028</EndToEndId>
+                <TxId>TXN003B-20241028</TxId>
+            </PmtId>
+            <IntrBkSttlmAmt Ccy="GBP">2500.00</IntrBkSttlmAmt>
+            <ChrgBr>SLEV</ChrgBr>
+            <Dbtr>
+                <Nm>UK Imports Ltd</Nm>
+                <PstlAdr>
+                    <Ctry>GB</Ctry>
+                </PstlAdr>
+            </Dbtr>
+            <DbtrAcct>
+                <Id>
+                    <IBAN>GB33BUKB20201555555555</IBAN>
+                </Id>
+            </DbtrAcct>
+            <DbtrAgt>
+                <FinInstnId>
+                    <BICFI>BARCGB22</BICFI>
+                </FinInstnId>
+            </DbtrAgt>
+            <CdtrAgt>
+                <FinInstnId>
+                    <BICFI>HBUKGB4B</BICFI>
+                </FinInstnId>
+            </CdtrAgt>
+            <Cdtr>
+                <Nm>Logistics Partners Ltd</Nm>
+                <PstlAdr>
+                    <Ctry>GB</Ctry>
+                </PstlAdr>
+            </Cdtr>
+            <CdtrAcct>
+                <Id>
+                    <IBAN>GB29NWBK60161331926819</IBAN>
+                </Id>
+            </CdtrAcct>
+            <RmtInf>
+                <Ustrd>Shipping services Q4</Ustrd>
+            </RmtInf>
+        </CdtTrfTxInf>
+    </FIToFICstmrCdtTrf>
+</Document>
