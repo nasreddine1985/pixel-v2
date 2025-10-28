@@ -1,4 +1,4 @@
-package com.pixel.v2.flow.model;
+package com.pixel.v2.persistence.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -138,14 +138,9 @@ public class Pacs008Message {
 
     @Override
     public String toString() {
-        return "Pacs008Message{" +
-                "id=" + id +
-                ", jmsMessageId='" + jmsMessageId + '\'' +
-                ", jmsCorrelationId='" + jmsCorrelationId + '\'' +
-                ", messageType='" + messageType + '\'' +
-                ", processingRoute='" + processingRoute + '\'' +
-                ", processedTimestamp=" + processedTimestamp +
-                ", createdAt=" + createdAt +
-                '}';
+        return "Pacs008Message{" + "id=" + id + ", jmsMessageId='" + jmsMessageId + '\''
+                + ", jmsCorrelationId='" + jmsCorrelationId + '\'' + ", messageType='" + messageType
+                + '\'' + ", processingRoute='" + processingRoute + '\'' + ", processedTimestamp="
+                + processedTimestamp + ", createdAt=" + createdAt + '}';
     }
 }

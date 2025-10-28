@@ -1,0 +1,137 @@
+# PACS.008 Message Processing Routes using k-mq-message-receiver kamelet
+# This routes messages from ActiveMQ Artemis to our batch processing logic
+
+# Route 1: Use k-mq-message-receiver kamelet for message consumption
+- route:
+    id: "pacs008-kamelet-consumer"
+    from:
+      uri: "kamelet:k-mq-message-receiver"
+      parameters:
+        destination: "PACS008_QUEUE"
+        jmsConnectionFactoryRef: "artemisConnectionFactory"
+      steps:
+        # Log message reception from kamelet
+        - log:
+            message: "Message received via kamelet from ${header.mqQueue}: JMSMessageID=${header.JMSMessageID}, Size=${header.originalMessageSize}"
+            loggingLevel: "INFO"
+        
+        # Route to our existing batch processing logic
+        - to: "direct:pacs008-batch-processing"
+
+# Route 2: Batch processing logic (extracted from Pacs008Route.java)
+- route:
+    id: "pacs008-batch-processing"
+    from:
+      uri: "direct:pacs008-batch-processing"
+      steps:
+        # Add processing metadata
+        - setHeader:
+            name: "ProcessingRoute"
+            constant: "PACS008"
+        - setHeader:
+            name: "MessageType" 
+            constant: "pacs.008.001.08"
+        - setHeader:
+            name: "ProcessedTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        
+        # Validate message content
+        - choice:
+            when:
+              - simple: "${body} == null || ${body} == ''"
+                steps:
+                  - log:
+                      message: "ERROR: Received empty PACS.008 message with JMSMessageID=${header.JMSMessageID}"
+                      loggingLevel: "ERROR"
+                  - to: "direct:error-handler"
+            otherwise:
+              steps:
+                - log:
+                    message: "Processing valid PACS.008 message with ${body.length()} characters"
+                    loggingLevel: "DEBUG"
+                
+                # Message aggregation for batch processing
+                - aggregate:
+                    correlationExpression:
+                      constant: "PACS008_BATCH"
+                    completionSize: 1000
+                    completionTimeout: 1000
+                    aggregationStrategy: "#messageBatchAggregationStrategy"
+                    steps:
+                      - to: "direct:persist-batch"
+
+# Route 3: Batch persistence using k-db-tx kamelet
+- route:
+    id: "persist-batch-route"
+    from:
+      uri: "direct:persist-batch"
+      steps:
+        - log:
+            message: "Persisting batch of ${header.CamelAggregatedSize} messages via k-db-tx kamelet"
+            loggingLevel: "INFO"
+        
+        # Set headers for k-db-tx kamelet
+        - setHeader:
+            name: "messageType"
+            constant: "PACS.008"
+        - setHeader:
+            name: "messageSource"
+            constant: "JMS_QUEUE"
+        - setHeader:
+            name: "EntityType"
+            constant: "MESSAGE"
+        - setHeader:
+            name: "PersistenceOperation" 
+            constant: "CREATE"
+        
+        # Route to k-db-tx kamelet for batch persistence
+        - to:
+            uri: "kamelet:k-db-tx"
+            parameters:
+              entityType: "MESSAGE"
+              persistenceOperation: "CREATE"
+              enableAuditTrail: "true"
+        
+        - log:
+            message: "Batch persisted successfully via k-db-tx: ${header.CamelAggregatedSize} messages"
+            loggingLevel: "INFO"
+
+# Route 4: Individual message persistence using k-db-tx kamelet
+- route:
+    id: "persist-message-route"
+    from:
+      uri: "direct:persist-message"
+      steps:
+        - log:
+            message: "Persisting individual message with JMSMessageID: ${header.JMSMessageID} via k-db-tx kamelet"
+            loggingLevel: "INFO"
+        
+        # Set headers for k-db-tx kamelet
+        - setHeader:
+            name: "messageType"
+            constant: "PACS.008"
+        - setHeader:
+            name: "messageSource"
+            constant: "JMS_QUEUE"
+        - setHeader:
+            name: "EntityType"
+            constant: "MESSAGE"
+        - setHeader:
+            name: "PersistenceOperation"
+            constant: "CREATE"
+        
+        # Route to k-db-tx kamelet
+        - to:
+            uri: "kamelet:k-db-tx"
+            parameters:
+              entityType: "MESSAGE"
+              persistenceOperation: "CREATE"
+              enableAuditTrail: "true"
+        
+        - log:
+            message: "Message persisted successfully via k-db-tx with status: ${header.persistenceStatus}"
+            loggingLevel: "INFO"
+
+
+        
+       

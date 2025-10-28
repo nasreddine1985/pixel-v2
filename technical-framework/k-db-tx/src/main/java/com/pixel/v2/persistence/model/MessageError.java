@@ -1,4 +1,4 @@
-package com.pixel.v2.flow.model;
+package com.pixel.v2.persistence.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -105,13 +105,8 @@ public class MessageError {
 
     @Override
     public String toString() {
-        return "MessageError{" +
-                "id=" + id +
-                ", jmsMessageId='" + jmsMessageId + '\'' +
-                ", errorRoute='" + errorRoute + '\'' +
-                ", errorMessage='" + errorMessage + '\'' +
-                ", errorTimestamp=" + errorTimestamp +
-                ", createdAt=" + createdAt +
-                '}';
+        return "MessageError{" + "id=" + id + ", jmsMessageId='" + jmsMessageId + '\''
+                + ", errorRoute='" + errorRoute + '\'' + ", errorMessage='" + errorMessage + '\''
+                + ", errorTimestamp=" + errorTimestamp + ", createdAt=" + createdAt + '}';
     }
 }
