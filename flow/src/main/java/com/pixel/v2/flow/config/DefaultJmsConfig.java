@@ -4,11 +4,13 @@ import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 
+/**
+ * Default JMS Configuration for Flow module Provides JMS connectivity for k-mq-message-receiver
+ * kamelet
+ */
 @Configuration
-@Profile("jms")
-public class MinimalJmsConfig {
+public class DefaultJmsConfig {
 
     @Value("${spring.artemis.broker-url}")
     private String brokerUrl;

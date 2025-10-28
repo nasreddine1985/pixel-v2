@@ -46,6 +46,7 @@ public class Pacs008BatchPersistenceProcessor implements Processor {
 
             // Convert each message in the batch to Pacs008Message entity
             for (Object messageObj : messageList) {
+                logger.info("--->Processing message size: {}", messageList.size());
                 if (messageObj instanceof Exchange) {
                     Exchange messageExchange = (Exchange) messageObj;
                     Pacs008Message pacs008Message =

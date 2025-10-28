@@ -1,0 +1,130 @@
+# PACS.008 Message Processing Routes
+# Flow: k-mq-message-receiver kamelet -> MessageBatchAggregation -> k-db-tx kamelet
+
+# Route 1: Message Consumption using k-mq-message-receiver kamelet
+- route:
+    id: "pacs008-message-consumer"
+    from:
+      uri: "kamelet:k-mq-message-receiver?destination={{flow.pacs008.queue.name}}"
+      steps:
+        - log:
+            message: "[PACS008-CONSUMER] Message received from queue: messageId=${header.JMSMessageID}, size=${body.length()}"
+            loggingLevel: "INFO"
+        
+        # Set processing metadata
+        - setHeader:
+            name: "ProcessingRoute"
+            constant: "PACS008"
+        - setHeader:
+            name: "MessageType"
+            constant: "pacs.008.001.08"
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - setHeader:
+            name: "MessageSource"
+            constant: "ARTEMIS_QUEUE"
+        
+        # Route to batch processing
+        - to: "direct:pacs008-batch-aggregation"
+
+# Route 2: Batch Processing with MessageBatchAggregation
+- route:
+    id: "pacs008-batch-aggregation"
+    from:
+      uri: "direct:pacs008-batch-aggregation"
+      steps:
+        - log:
+            message: "[PACS008-BATCH] Starting batch aggregation for message: ${header.JMSMessageID}"
+            loggingLevel: "DEBUG"
+        
+        # Validate message content
+        - choice:
+            when:
+              - simple: "${body} == null || ${body} == ''"
+                steps:
+                  - log:
+                      message: "[PACS008-ERROR] Empty message detected: ${header.JMSMessageID}"
+                      loggingLevel: "ERROR"
+                  - to: "direct:pacs008-error-handler"
+            otherwise:
+              steps:
+                # Message aggregation using MessageBatchAggregationStrategy
+                - aggregate:
+                    correlationExpression:
+                      constant: "PACS008_BATCH_KEY"
+                    completionSize: 1000
+                    completionTimeout: 50000
+                    aggregationStrategy: "#messageBatchAggregationStrategy"
+                    steps:
+                      - log:
+                          message: "[PACS008-BATCH] Batch ready for persistence: ${header.CamelAggregatedSize} messages"
+                          loggingLevel: "INFO"
+                      - to: "direct:pacs008-persistence"
+
+# Route 3: Batch Persistence using batch processor
+- route:
+    id: "pacs008-persistence"
+    from:
+      uri: "direct:pacs008-persistence"
+      steps:
+        - log:
+            message: "[PACS008-PERSIST] Starting batch persistence for ${header.CamelAggregatedSize} messages"
+            loggingLevel: "INFO"
+        
+        # Prepare headers for batch persistence
+        - setHeader:
+            name: "batchSize"
+            simple: "${header.CamelAggregatedSize}"
+        - setHeader:
+            name: "messageType"
+            constant: "pacs.008.001.08"
+        - setHeader:
+            name: "processingRoute"
+            constant: "PACS008"
+        - setHeader:
+            name: "messageSource"
+            constant: "ARTEMIS_QUEUE"
+        
+        # Route the entire collection to the batch persistence processor
+        - to: "bean:pacs008BatchPersistenceProcessor?method=process"
+        
+        - log:
+            message: "[PACS008-PERSIST] Batch persistence completed: status=${header.persistenceStatus}, count=${header.persistedCount}"
+            loggingLevel: "INFO"
+
+# Route 4: Error Handler
+- route:
+    id: "pacs008-error-handler"
+    from:
+      uri: "direct:pacs008-error-handler"
+      steps:
+        - log:
+            message: "[PACS008-ERROR] Processing error for message: ${header.JMSMessageID}, error: ${exception.message}"
+            loggingLevel: "ERROR"
+        
+        # Set error metadata
+        - setHeader:
+            name: "ErrorTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - setHeader:
+            name: "ErrorRoute"
+            constant: "PACS008"
+        - setHeader:
+            name: "ErrorMessage"
+            simple: "${exception.message}"
+        - setHeader:
+            name: "entityType"
+            constant: "ERROR"
+        
+        # Route to k-db-tx for error persistence
+        - to:
+            uri: "kamelet:k-db-tx"
+            parameters:
+              entityType: "ERROR"
+              persistenceOperation: "CREATE"
+              enableAuditTrail: "false"
+        
+        - log:
+            message: "[PACS008-ERROR] Error logged and persisted: ${header.ErrorTimestamp}"
+            loggingLevel: "INFO"
