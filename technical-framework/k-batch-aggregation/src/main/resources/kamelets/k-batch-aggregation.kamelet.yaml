@@ -27,14 +27,12 @@ spec:
         title: "Batch Size"
         description: "Maximum number of messages to aggregate into a single batch"
         type: integer
-        default: 1000
-        example: 1000
+        default: 1
       timeoutMs:
         title: "Timeout (milliseconds)"
         description: "Maximum time to wait for batch completion in milliseconds"
         type: integer
         default: 5000
-        example: 5000
       correlationKey:
         title: "Correlation Key"
         description: "Key used to correlate messages for aggregation (messages with same key are batched together)"

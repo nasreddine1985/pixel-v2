@@ -1,4 +1,4 @@
-package com.pixel.v2.flow.config;
+package com.pixel.v2.mq.config;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -6,19 +6,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Default JMS Configuration for Flow module Provides JMS connectivity for k-mq-message-receiver
- * kamelet
+ * Default JMS Configuration for k-mq-message-receiver kamelet Provides JMS connectivity using
+ * ActiveMQ Artemis with configurable parameters
  */
 @Configuration
 public class DefaultJmsConfig {
 
-    @Value("${spring.artemis.broker-url}")
+    @Value("${mq.broker-url}")
     private String brokerUrl;
 
-    @Value("${spring.artemis.user}")
+    @Value("${mq.user}")
     private String username;
 
-    @Value("${spring.artemis.password}")
+    @Value("${mq.password}")
     private String password;
 
     @Bean("artemisConnectionFactory")

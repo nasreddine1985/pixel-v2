@@ -13,23 +13,18 @@ spec:
       destination:
         title: "MQ destination (queue)"
         type: string
-        default: "${mq.destination}"
-      host:
-        title: "Broker host"
+      brokerUrl:
+        title: "Broker URL"
         type: string
-        default: "localhost"
-      port:
-        title: "Broker port"
-        type: integer
-        default: 61616
-      username:
+        description: "ActiveMQ Artemis broker URL (e.g., tcp://localhost:61616)"
+      user:
         title: "Broker username"
         type: string
-        default: "artemis"
+        description: "Username for connecting to the broker"
       password:
         title: "Broker password"
         type: string
-        default: "artemis"
+        description: "Password for connecting to the broker"
       jmsConnectionFactoryRef:
         title: "JMS Connection Factory Bean name"
         type: string
