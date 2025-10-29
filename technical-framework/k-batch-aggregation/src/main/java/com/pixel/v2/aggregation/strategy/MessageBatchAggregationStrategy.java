@@ -1,4 +1,4 @@
-package com.pixel.v2.flow.strategy;
+package com.pixel.v2.aggregation.strategy;
 
 import org.apache.camel.AggregationStrategy;
 import org.apache.camel.Exchange;

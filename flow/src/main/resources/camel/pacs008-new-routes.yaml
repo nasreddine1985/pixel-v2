@@ -1,5 +1,5 @@
 # PACS.008 Message Processing Routes
-# Flow: k-mq-message-receiver kamelet -> MessageBatchAggregation -> k-db-tx kamelet
+# Flow: k-mq-message-receiver kamelet -> k-batch-aggregation kamelet -> batch persistence processor
 
 # Route 1: Message Consumption using k-mq-message-receiver kamelet
 - route:
@@ -28,39 +28,27 @@
         # Route to batch processing
         - to: "direct:pacs008-batch-aggregation"
 
-# Route 2: Batch Processing with MessageBatchAggregation
+# Route 2: Batch Processing using k-batch-aggregation kamelet
 - route:
     id: "pacs008-batch-aggregation"
     from:
       uri: "direct:pacs008-batch-aggregation"
       steps:
         - log:
-            message: "[PACS008-BATCH] Starting batch aggregation for message: ${header.JMSMessageID}"
+            message: "[PACS008-BATCH] Routing to batch aggregation kamelet: ${header.JMSMessageID}"
             loggingLevel: "DEBUG"
         
-        # Validate message content
-        - choice:
-            when:
-              - simple: "${body} == null || ${body} == ''"
-                steps:
-                  - log:
-                      message: "[PACS008-ERROR] Empty message detected: ${header.JMSMessageID}"
-                      loggingLevel: "ERROR"
-                  - to: "direct:pacs008-error-handler"
-            otherwise:
-              steps:
-                # Message aggregation using MessageBatchAggregationStrategy
-                - aggregate:
-                    correlationExpression:
-                      constant: "PACS008_BATCH_KEY"
-                    completionSize: 1000
-                    completionTimeout: 50000
-                    aggregationStrategy: "#messageBatchAggregationStrategy"
-                    steps:
-                      - log:
-                          message: "[PACS008-BATCH] Batch ready for persistence: ${header.CamelAggregatedSize} messages"
-                          loggingLevel: "INFO"
-                      - to: "direct:pacs008-persistence"
+        # Route to k-batch-aggregation kamelet with PACS008 configuration
+        - to:
+            uri: "kamelet:k-batch-aggregation"
+            parameters:
+              batchSize: 1000
+              timeoutMs: 5000
+              correlationKey: "PACS008_BATCH_KEY"
+              messageType: "PACS.008"
+        
+        # After batch aggregation, route to persistence
+        - to: "direct:pacs008-persistence"
 
 # Route 3: Batch Persistence using batch processor
 - route:
