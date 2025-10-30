@@ -4,6 +4,7 @@ import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jms.connection.JmsTransactionManager;
 
 /**
  * Default JMS Configuration for k-mq-message-receiver kamelet Provides JMS connectivity using
@@ -27,5 +28,12 @@ public class DefaultJmsConfig {
         connectionFactory.setUser(username);
         connectionFactory.setPassword(password);
         return connectionFactory;
+    }
+
+    @Bean("jmsTransactionManager")
+    public JmsTransactionManager jmsTransactionManager() {
+        JmsTransactionManager transactionManager = new JmsTransactionManager();
+        transactionManager.setConnectionFactory(artemisConnectionFactory());
+        return transactionManager;
     }
 }

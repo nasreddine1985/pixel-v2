@@ -29,21 +29,31 @@ spec:
         title: "JMS Connection Factory Bean name"
         type: string
         default: "artemisConnectionFactory"
+      acknowledgmentModeName:
+        title: "JMS Acknowledgment Mode"
+        type: string
+        description: "JMS acknowledgment mode (AUTO_ACKNOWLEDGE, CLIENT_ACKNOWLEDGE, DUPS_OK_ACKNOWLEDGE)"
+        default: "AUTO_ACKNOWLEDGE"
+      transacted:
+        title: "Enable JMS Transactions"
+        type: boolean
+        description: "Enable JMS local transactions for transactional message processing"
+        default: false
   template:
     from:
       uri: "jms:queue:{{destination}}"
       parameters:
         # Use ActiveMQ Artemis ConnectionFactory
         connectionFactory: "#{{jmsConnectionFactoryRef}}"
-        # Auto-acknowledge messages for best performance
-        acknowledgementModeName: "AUTO_ACKNOWLEDGE"
+        # Configurable acknowledgment mode for transactional processing
+        acknowledgementModeName: "{{acknowledgmentModeName}}"
         # Concurrent consumers for high throughput
         concurrentConsumers: 5
         # Maximum concurrent consumers
         maxConcurrentConsumers: 10
         # Auto-start the consumer
         autoStartup: true
-        # Disable local transactions for better performance
-        transacted: false
+        # Configurable local transactions
+        transacted: "{{transacted}}"
         # Enable message caching for improved performance
         cacheLevelName: "CACHE_CONSUMER"

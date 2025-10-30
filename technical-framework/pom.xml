@@ -29,7 +29,6 @@
         <module>k-pacs009-to-cdm-transformer</module>
         <module>k-pain001-to-cdm-transformer</module>
         <module>k-camt053-to-cdm-transformer</module>
-        <module>k-batch-aggregation</module>
     </modules>
 
     <properties>
