@@ -19,6 +19,12 @@ settings.xml
 
 # Logs
 *.log
+logs/
+**/logs/
+
+# Scripts
+scripts/
+**/scripts/
 
 # OS
 .DS_Store
