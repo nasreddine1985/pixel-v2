@@ -65,6 +65,18 @@
             <artifactId>camel-direct</artifactId>
         </dependency>
 
+        <!-- HTTP component for kamelet HTTP calls -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-http</artifactId>
+        </dependency>
+
+        <!-- JSON Path for parsing referentiel responses -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-jsonpath</artifactId>
+        </dependency>
+
         <!-- Minimal JMS support for kamelet (Spring Boot Artemis starter) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -93,6 +105,12 @@
         <dependency>
             <groupId>com.pixel.v2</groupId>
             <artifactId>k-db-tx</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.pixel.v2</groupId>
+            <artifactId>k-referentiel-data-loader</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 

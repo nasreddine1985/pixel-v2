@@ -32,20 +32,20 @@
     </appender>
 
     <!-- Application-specific loggers -->
-    <logger name="com.pixel.v2.flow" level="DEBUG" />
-    <logger name="org.apache.camel" level="DEBUG" />
-    <logger name="org.apache.camel.dsl.yaml" level="DEBUG" />
-    <logger name="org.apache.camel.impl.engine.DefaultRouteLoader" level="DEBUG" />
-    <logger name="org.apache.camel.main.DefaultRoutesCollector" level="DEBUG" />
+    <logger name="com.pixel.v2.flow" level="INFO" />
+    <logger name="org.apache.camel" level="INFO" />
+    <logger name="org.apache.camel.dsl.yaml" level="INFO" />
+    <logger name="org.apache.camel.impl.engine.DefaultRouteLoader" level="INFO" />
+    <logger name="org.apache.camel.main.DefaultRoutesCollector" level="INFO" />
 
     <!-- Database/JPA loggers -->
     <logger name="org.hibernate" level="INFO" />
-    <logger name="org.hibernate.SQL" level="DEBUG" />
-    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />
+    <logger name="org.hibernate.SQL" level="INFO" />
+    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="INFO" />
 
     <!-- JMS/ActiveMQ loggers -->
     <logger name="org.apache.activemq" level="INFO" />
-    <logger name="org.springframework.jms" level="DEBUG" />
+    <logger name="org.springframework.jms" level="INFO" />
 
     <!-- Spring Boot loggers -->
     <logger name="org.springframework.boot" level="INFO" />

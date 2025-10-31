@@ -11,24 +11,6 @@
 
 PIXEL-V2 is a next-generation payment processing platform built with modern microservices architecture. It provides intelligent message routing, synchronous processing capabilities, and comprehensive audit trails for payment messages across multiple channels and formats.
 
-### 🎯 Key Capabilities
-
-| Feature                     | Description                                                    | Technology            |
-| --------------------------- | -------------------------------------------------------------- | --------------------- |
-| **Multi-Channel Ingestion** | Simultaneous processing from MQ, HTTP, Kafka, and file systems | Apache Camel Kamelets |
-| **Intelligent Routing**     | Smart message distribution based on source and content         | Conditional Routing   |
-| **Synchronous Processing**  | Sub-second processing for critical payment messages            | Spring Boot + Camel   |
-| **Asynchronous Processing** | High-throughput processing for file-based operations           | Kafka Streams         |
-| **Message Transformation**  | ISO 20022 to CDM format conversion                             | XSLT Transformers     |
-| **Audit & Compliance**      | Complete transaction trails with centralized logging           | Structured Logging    |
-
-### 📊 Performance Metrics
-
-- **Throughput**: 100,000+ messages/second for asynchronous processing
-- **Latency**: <100ms for synchronous message processing
-- **Availability**: 99.9% uptime with circuit breaker patterns
-- **Scalability**: Horizontal scaling with Kafka partitioning
-
 ## 🏗️ System Architecture
 
 ### 🔄 Message Flow
@@ -275,41 +257,12 @@ kubectl apply -f k8s/services/
 4. Push to branch: `git push origin feature-name`
 5. Submit a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 📞 Support
-
-- 📧 **Email**: support@pixel-v2.com
-- 📖 **Documentation**: [Wiki](../../wiki)
-- 🐛 **Issues**: [GitHub Issues](../../issues)
-- 💬 **Discussions**: [GitHub Discussions](../../discussions)
-
----
-
-<div align="center">
-  <strong>Built with ❤️ by the PIXEL-V2 Team</strong><br/>
-  <em>Modern Payment Processing for the Digital Age</em>
-</div>
-
 **Features:**
 
 - Multi-topic consumption (pacs.008, pain.001, default)
 - Message deserialization and validation
 - Integration with business module
 - Error handling and dead letter topic support
-
-### k-db-tx (Enhanced Kamelet)
-
-Kamelet for unified database persistence operations supporting both initial and enriched data storage.
-
-**Features:**
-
-- Dual persistence mode (initial + enriched)
-- Transaction management
-- Oracle database integration
-- Persistence status tracking
 
 ## Getting Started
 
@@ -463,40 +416,6 @@ logging.level.org.apache.camel=INFO
 - **Message Type Detection**: XML/JSON format detection and processing
 - **Dual Processing Architecture**: Synchronous + asynchronous processing optimization
 
-## 🔄 Smart Routing Usage
-
-### Message Flow Examples
-
-#### Synchronous Processing (HTTP/MQ)
-
-```bash
-# Submit payment via HTTP API (routes to business module)
-curl -X POST http://localhost:8080/ingestion/api/v1/payments \
-  -H "Content-Type: application/json" \
-  -d '{
-    "messageType": "pacs.008",
-    "payload": "<?xml version=\"1.0\"?>..."
-  }'
-```
-
-#### Asynchronous Processing (CFT Files)
-
-```bash
-# Place XML file in watched directory (routes to Kafka)
-cp payment.xml /tmp/payments-in/
-
-# Monitor processing
-tail -f logs/ingestion.log | grep "CFT message - routing to Kafka"
-```
-
-### Routing Decision Matrix
-
-| Source Channel | Processing Type | Route Destination       | Benefits                          |
-| -------------- | --------------- | ----------------------- | --------------------------------- |
-| **HTTP API**   | Synchronous     | Business Module         | Low latency, immediate response   |
-| **MQ Series**  | Synchronous     | Business Module         | Low latency, persistent delivery  |
-| **CFT Files**  | Asynchronous    | Kafka → Business Module | High throughput, memory efficient |
-
 ### Monitoring & Health Checks
 
 ```bash
@@ -514,13 +433,6 @@ curl http://localhost:8082/distribution/routes
 curl http://localhost:8081/processing/actuator/metrics
 curl http://localhost:8082/distribution/actuator/metrics
 ```
-
-### Performance Benefits
-
-- **🚀 50-70% Latency Reduction**: HTTP/MQ messages bypass Kafka queuing
-- **📈 High Throughput**: CFT files maintain optimized asynchronous processing
-- **🔄 Flexible Scaling**: Independent scaling of synchronous vs asynchronous processing
-- **🛡️ Reliability**: Graceful fallback and comprehensive error handling
 
 ## Contributing
 

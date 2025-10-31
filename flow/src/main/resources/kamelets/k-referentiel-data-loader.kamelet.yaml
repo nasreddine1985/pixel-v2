@@ -33,23 +33,10 @@ spec:
         - set-header:
             name: "OriginalBody"
             simple: "${body}"
-        - log: "About to call: {{serviceUrl}}{{configEndpoint}}/{{flowId}}"
         - set-header:
             name: "CamelHttpMethod"
             constant: "GET"
-        - set-header:
-            name: "Accept"
-            constant: "application/json"
-        - set-header:
-            name: "User-Agent"
-            constant: "Camel-Http/4.1.0"
-        - remove-header:
-            name: "Content-Type"
-        - set-body:
-            constant: null
         - to: "{{serviceUrl}}{{configEndpoint}}/{{flowId}}?throwExceptionOnFailure=false"
-        - log: "HTTP Response received: ${body}"
-        - log: "HTTP Response Status: ${header.CamelHttpResponseCode}"
         - choice:
             when:
               - simple: "${body} != null && ${body} != ''"

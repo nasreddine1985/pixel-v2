@@ -17,6 +17,7 @@
         <module>business</module>
         <module>distribution</module>
         <module>flow</module>
+        <module>referentiel</module>
     </modules>
 
     <properties>

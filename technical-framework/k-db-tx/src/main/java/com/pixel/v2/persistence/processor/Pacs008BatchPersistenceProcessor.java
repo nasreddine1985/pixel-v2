@@ -21,6 +21,7 @@ import java.util.List;
 @Component("pacs008BatchPersistenceProcessor")
 public class Pacs008BatchPersistenceProcessor implements Processor {
 
+
     private static final Logger logger =
             LoggerFactory.getLogger(Pacs008BatchPersistenceProcessor.class);
 
