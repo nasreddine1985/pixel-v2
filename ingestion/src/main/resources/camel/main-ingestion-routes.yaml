@@ -131,7 +131,7 @@
 - route:
     id: mq-receipt-route
     from:
-      uri: kamelet:k-mq-message-receiver?queueName={{ingestion.mq.input.queue:PAYMENT_INPUT}}&host={{ingestion.mq.host:localhost}}&port={{ingestion.mq.port:1414}}&queueManager={{ingestion.mq.queue.manager:QM1}}&channel={{ingestion.mq.channel:DEV.ADMIN.SVRCONN}}&username={{ingestion.mq.username:admin}}&password={{ingestion.mq.password:admin}}
+      uri: kamelet:k-mq-message-receiver?queueName={{ingestion.mq.input.queue:PAYMENT_INPUT}}&host={{ingestion.mq.host:localhost}}&port={{ingestion.mq.port:1414}}&queueManager={{ingestion.mq.queue.manager:QM1}}&channel={{ingestion.mq.channel:DEV.ADMIN.SVRCONN}}&username={{ingestion.mq.username:admin}}&password={{ingestion.mq.password:admin}}&concurrentConsumers={{ingestion.mq.concurrent-consumers:5}}&maxConcurrentConsumers={{ingestion.mq.max-concurrent-consumers:10}}
       steps:
         - log:
             message: "[MQ-RECEIPT] Message received from k-mq-message-receiver kamelet"

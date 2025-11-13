@@ -1,0 +1,146 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: k-message-split
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "4.1.0"
+    camel.apache.org/kamelet.icon: "data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDI1LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPgo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4IgoJIHdpZHRoPSIyNTZweCIgaGVpZ2h0PSIyNTZweCIgdmlld0JveD0iMCAwIDI1NiAyNTYiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDI1NiAyNTY7IiB4bWw6c3BhY2U9InByZXNlcnZlIj4KPHN0eWxlIHR5cGU9InRleHQvY3NzIj4KCS5zdDB7ZmlsbDojRjY5ODIzO30KCS5zdDF7ZmlsbDojRkZGRkZGO30KPC9zdHlsZT4KPGc+Cgk8cGF0aCBjbGFzcz0ic3QwIiBkPSJNMjI4LDEyOGMwLDU1LjIzLTQ0Ljc3LDEwMC0xMDAsMTAwUzI4LDE4My4yMywyOCwxMjhTNzIuNzcsMjgsMTI4LDI4UzIyOCw72.77LDIyOCwxMjh6Ii8+Cgk8cGF0aCBjbGFzcz0ic3QxIiBkPSJNMTI4LDUyYy00MS45MSwwLTc2LDM0LjA5LTc2LDc2czM0LjA5LDc2LDc2LDc2czc2LTM0LjA5LDc2LTc2UzE2OS45MSw1MiwxMjgsNTJ6Ii8+CjwvZz4KPC9zdmc+Cg=="
+    camel.apache.org/provider: "Pixel V2"
+    camel.apache.org/kamelet.group: "Message Processing"
+    camel.apache.org/kamelet.namespace: "Message"
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "Message Split"
+    description: |-
+      Split a collection of messages based on properties like correlation ID or size.
+      This kamelet performs the inverse operation of message concatenation.
+      
+      The kamelet can split messages using different strategies:
+      - By correlation ID: Group messages by a correlation property
+      - By size: Split into fixed-size chunks
+      - Individual: Split each message separately (default)
+      
+      Only properties with non-empty values are considered for splitting logic.
+    required: []
+    type: object
+    properties:
+      correlationId:
+        title: Correlation ID Property
+        description: Name of the property to use for correlation-based splitting. Messages with the same correlation value will be grouped together.
+        type: string
+        example: "orderId"
+      size:
+        title: Chunk Size
+        description: Maximum number of messages per chunk when splitting by size. Must be a positive integer.
+        type: integer
+        minimum: 1
+        example: 10
+      splitStrategy:
+        title: Split Strategy
+        description: Strategy to use for splitting messages
+        type: string
+        enum: ["BY_CORRELATION", "BY_SIZE", "INDIVIDUAL"]
+        default: "BY_CORRELATION"
+      errorHandling:
+        title: Error Handling Mode
+        description: How to handle errors during split processing
+        type: string
+        enum: ["STRICT", "LENIENT", "IGNORE"]
+        default: "STRICT"
+      preserveHeaders:
+        title: Preserve Original Headers
+        description: Whether to preserve original message headers in split results
+        type: boolean
+        default: true
+      addMetadata:
+        title: Add Split Metadata
+        description: Whether to add metadata headers about the split operation
+        type: boolean
+        default: true
+  dependencies:
+    - "camel:core"
+    - "camel:jackson"
+    - "camel:spring-boot"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - setHeader:
+            name: "correlationId"
+            simple: "{{correlationId:}}"
+        - setHeader:
+            name: "size"
+            simple: "{{size:}}"
+        - setHeader:
+            name: "splitStrategy"
+            simple: "{{splitStrategy:BY_CORRELATION}}"
+        - setHeader:
+            name: "errorHandling"
+            simple: "{{errorHandling:STRICT}}"
+        - setHeader:
+            name: "preserveHeaders"
+            simple: "{{preserveHeaders:true}}"
+        - setHeader:
+            name: "addMetadata"
+            simple: "{{addMetadata:true}}"
+        - choice:
+            when:
+              - simple: "${header.errorHandling} == 'STRICT'"
+                steps:
+                  - process:
+                      ref: "messageSplitProcessor"
+              - simple: "${header.errorHandling} == 'LENIENT'"
+                steps:
+                  - doTry:
+                      steps:
+                        - process:
+                            ref: "messageSplitProcessor"
+                      doCatch:
+                        - exception: "java.lang.Exception"
+                          steps:
+                            - log:
+                                message: "Split processing failed in LENIENT mode: ${exception.message}"
+                                level: "WARN"
+                            - setBody:
+                                simple: "[]"
+                            - setHeader:
+                                name: "splitError"
+                                simple: "${exception.message}"
+              - simple: "${header.errorHandling} == 'IGNORE'"
+                steps:
+                  - doTry:
+                      steps:
+                        - process:
+                            ref: "messageSplitProcessor"
+                      doCatch:
+                        - exception: "java.lang.Exception"
+                          steps:
+                            - log:
+                                message: "Split processing failed in IGNORE mode: ${exception.message}"
+                                level: "DEBUG"
+                            - setBody:
+                                simple: "${body}"
+            otherwise:
+              steps:
+                - process:
+                    ref: "messageSplitProcessor"
+        - choice:
+            when:
+              - simple: "${header.addMetadata} == 'true'"
+                steps:
+                  - setHeader:
+                      name: "CamelSplitTimestamp"
+                      simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+                  - setHeader:
+                      name: "CamelSplitStrategy"
+                      simple: "${header.splitStrategy}"
+        - choice:
+            when:
+              - simple: "${header.preserveHeaders} != 'true'"
+                steps:
+                  - removeHeaders:
+                      pattern: "correlationId|size|splitStrategy|errorHandling|preserveHeaders|addMetadata"
+        - to: "kamelet:sink"

@@ -1,0 +1,157 @@
+#!/usr/bin/env jbang camel@apache/camel run "$0" "$@"
+
+# //DEPS org.apache.camel:camel-bom:4.1.0@pom
+# //DEPS org.apache.camel:camel-core
+# //DEPS org.apache.camel:camel-kamelet
+# //DEPS org.apache.camel:camel-yaml-dsl
+# //DEPS org.apache.camel:camel-jms
+# //DEPS org.apache.activemq:artemis-jakarta-client-all:2.31.2
+# //DEPS ch.qos.logback:logback-classic:1.4.11
+
+# PACS-008 Flow - Production JBang YAML Route
+# Full 10-step PACS-008 message processing flow using technical-framework kamelets
+
+# Error Handler Configuration
+- errorHandler:
+    deadLetterChannel:
+      uri: "jms:queue:{{pacs008.error.queue}}?connectionFactory=#artemisConnectionFactory"
+      redeliveryPolicy:
+        maximumRedeliveries: 3
+        redeliveryDelay: 1000
+        maximumRedeliveryDelay: 30000
+        retryAttemptedLogLevel: WARN
+        retriesExhaustedLogLevel: ERROR
+
+# Main PACS-008 Processing Route
+- route:
+    id: "pacs008-processing-flow-yaml"
+    from:
+      # Production: Direct kamelet integration for message reception
+      uri: "kamelet:k-mq-message-receiver?destination=pacs008.input.queue&brokerUrl={{artemis.broker.url}}&user={{artemis.user}}&password={{artemis.password}}&concurrentConsumers=5&maxConcurrentConsumers=10"
+      steps:
+        # Step 1: Initial logging with correlation ID
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.JMSMessageID}"
+        - log:
+            message: "[PACS-008] Starting message processing - CorrelationId: ${header.CorrelationId}, MessageId: ${header.JMSMessageID}"
+            
+        # Step 2: Message Aggregation (k-message-concat)
+        - to:
+            uri: "kamelet:k-message-concat?correlationId=${header.CorrelationId}&size={{aggregation.max.size}}&timeout={{aggregation.timeout.ms}}&parallelProcessing=false"
+        - log:
+            message: "[PACS-008] Message aggregation completed - CorrelationId: ${header.CorrelationId}, BatchSize: ${header.CamelAggregatedSize}"
+            
+        # Step 3: Persist received message collection (k-db-tx)
+        - setHeader:
+            name: "EntityType"
+            constant: "MESSAGE"
+        - setHeader:
+            name: "PersistenceOperation"
+            constant: "CREATE"
+        - to:
+            uri: "kamelet:k-db-tx?entityManagerRef=entityManager&persistenceUnitName=pixelPersistenceUnit&transactionManagerRef=transactionManager&entityType=MESSAGE&enableAuditTrail=true"
+        - log:
+            message: "[PACS-008] Messages persisted successfully - EntityType: ${header.EntityType}, CorrelationId: ${header.CorrelationId}"
+            
+        # Step 4: Load referential data for PACS008 flow (k-referentiel-data-loader)
+        - to:
+            uri: "kamelet:k-referentiel-data-loader?serviceUrl={{referentiel.service.url}}&flowCode=PACS008&configEndpoint=/api/flows"
+        - log:
+            message: "[PACS-008] Referential data loaded - FlowCode: PACS008, CorrelationId: ${header.CorrelationId}"
+            
+        # Step 5: Persist referential data (k-db-tx)
+        - setHeader:
+            name: "EntityType"
+            constant: "CDM"
+        - setHeader:
+            name: "PersistenceOperation"
+            constant: "CREATE"
+        - to:
+            uri: "kamelet:k-db-tx?entityManagerRef=entityManager&persistenceUnitName=pixelPersistenceUnit&transactionManagerRef=transactionManager&entityType=CDM&enableAuditTrail=true"
+        - log:
+            message: "[PACS-008-PROD] Referential data persisted - EntityType: ${header.EntityType}, CorrelationId: ${header.CorrelationId}"
+            
+        # Step 6: XSD Validation of PACS008 messages (k-xsd-validation)
+        - setHeader:
+            name: "ValidationStartTime"
+            simple: "${date:now}"
+        - to:
+            uri: "kamelet:k-xsd-validation?xsdFileName={{xsd.pacs008.file}}&validationMode=STRICT&enableDetailedErrors=true&logValidationResult=true"
+        - setHeader:
+            name: "ValidationDuration"
+            simple: "${date:now} - ${header.ValidationStartTime}"
+        - log:
+            message: "[PACS-008] PACS008 XSD validation successful - Schema: {{xsd.pacs008.file}}, Duration: ${header.ValidationDuration}ms, CorrelationId: ${header.CorrelationId}"
+            
+        # Step 7: XSL Transformation to CDM format (k-xsl-transformation)
+        - setHeader:
+            name: "TransformationStartTime"
+            simple: "${date:now}"
+        - to:
+            uri: "kamelet:k-xsl-transformation?xslFileName={{xsl.pacs008.file}}&transformationMode=STRICT&enableDetailedErrors=true&logTransformationResult=true"
+        - setHeader:
+            name: "TransformationDuration"
+            simple: "${date:now} - ${header.TransformationStartTime}"
+        - log:
+            message: "[PACS-008] XSL transformation to CDM completed - Stylesheet: {{xsl.pacs008.file}}, Duration: ${header.TransformationDuration}ms, CorrelationId: ${header.CorrelationId}"
+            
+        # Step 8: XSD Validation of CDM messages (k-xsd-validation)
+        - to:
+            uri: "kamelet:k-xsd-validation?xsdFileName={{xsd.cdm.file}}&validationMode=STRICT&enableDetailedErrors=true&logValidationResult=true"
+        - log:
+            message: "[PACS-008] CDM XSD validation successful - Schema: {{xsd.cdm.file}}, CorrelationId: ${header.CorrelationId}"
+            
+        # Step 9: Split collection into individual messages (k-message-split)
+        - to:
+            uri: "kamelet:k-message-split?splitStrategy=INDIVIDUAL&errorHandling=STRICT&preserveHeaders=true&addMetadata=true"
+        - log:
+            message: "[PACS-008] Message split completed - Processing individual message: ${header.CamelSplitIndex}, CorrelationId: ${header.CorrelationId}"
+            
+        # Step 10: Send individual messages to destination MQ
+        - setHeader:
+            name: "JMSDestination"
+            constant: "{{pacs008.output.queue}}"
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - to:
+            uri: "jms:queue:{{pacs008.output.queue}}?connectionFactory=#artemisConnectionFactory"
+        - log:
+            message: "[PACS-008-PROD] Individual message sent successfully - Queue: ${header.JMSDestination}, Split Index: ${header.CamelSplitIndex}, CorrelationId: ${header.CorrelationId}, Timestamp: ${header.ProcessingTimestamp}"
+
+# Error Handler Route
+- route:
+    id: "pacs008-error-handler-yaml"  
+    from:
+      uri: "jms:queue:{{pacs008.error.queue}}?connectionFactory=#artemisConnectionFactory"
+      steps:
+        - setHeader:
+            name: "ErrorTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - setHeader:
+            name: "ErrorCorrelationId"
+            simple: "${header.JMSCorrelationID}"
+        - log:
+            message: "[PACS-008-ERROR] Processing failed message - CorrelationId: ${header.ErrorCorrelationId}, Timestamp: ${header.ErrorTimestamp}"
+        - to:
+            uri: "kamelet:k-db-tx?entityManagerRef=entityManager&persistenceUnitName=pixelPersistenceUnit&transactionManagerRef=transactionManager&entityType=ERROR&enableAuditTrail=true"
+        - log:
+            message: "[PACS-008-ERROR] Error persisted - CorrelationId: ${header.ErrorCorrelationId}"
+
+# Health Check Route
+- route:
+    id: "pacs008-health-check-yaml"
+    from:
+      uri: "timer:health?period=30000"
+      steps:
+        - setHeader:
+            name: "HealthCheckTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - setHeader:
+            name: "FlowStatus"
+            constant: "RUNNING"
+        - log:
+            message: "[PACS-008-HEALTH] Flow status check - Status: ${header.FlowStatus}, Timestamp: ${header.HealthCheckTimestamp}"
+        # Optional: Send health status to monitoring queue
+        # - to: "jms:queue:pacs008.monitoring.queue?connectionFactory=#artemisConnectionFactory"

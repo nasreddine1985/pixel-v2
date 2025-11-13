@@ -1,15 +1,17 @@
-# K-Database Transaction Kamelet
+# K-DB-TX Persistence Layer
 
-A powerful Camel Kamelet for persisting payment messages and CDM (Common Data Model) objects to the database using JPA/Hibernate with comprehensive transaction management and audit trail capabilities.
+A comprehensive JPA-based persistence layer for the payment processing system. This module provides entities, repositories, services, and processors for handling database operations converted from Oracle to PostgreSQL.
 
 ## Overview
 
-The `k-db-tx` kamelet provides unified persistence capabilities for both:
+The `k-db-tx` module provides a complete persistence layer for four main database tables:
 
-- **ReceivedMessage entities**: Raw payment messages from various sources (MQ, HTTP API, CFT files)
-- **CdmMessage entities**: Transformed CDM objects after processing through transformation kamelets
+- **FLOW_REFERENCE**: Flow configuration and reference data
+- **LOG_EVENT**: Event tracking and logging for payment flows
+- **FLOW_SUMMARY**: Summary information for payment flows
+- **PAYMENT_AUDIT_DETAILS**: Detailed audit information for payments
 
-This kamelet handles dual entity types with flexible operation modes for complete payment message lifecycle management.
+This module includes JPA entities, Spring Data repositories, transactional services, and Apache Camel processors for comprehensive database operations.
 
 ## Features
 

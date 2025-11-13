@@ -1,0 +1,106 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-message-concat
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "K-Message Concatenation"
+    description: "Aggregates messages into collections based on correlation properties like correlationId, size, timeout"
+    properties:
+      correlationId:
+        title: "Correlation ID"
+        description: "The correlation identifier used to group messages for aggregation. Only messages with the same correlation ID will be aggregated together."
+        type: string
+        example: "PAYMENT_BATCH_001"
+      size:
+        title: "Aggregation Size"
+        description: "The target number of messages to aggregate before completing the aggregation. If specified, aggregation completes when this many messages are collected."
+        type: integer
+        example: 10
+      timeout:
+        title: "Aggregation Timeout"
+        description: "The maximum time (in milliseconds) to wait for messages before completing the aggregation. Aggregation completes after this timeout even if target size is not reached."
+        type: integer
+        example: 5000
+      completionPredicate:
+        title: "Completion Predicate"
+        description: "Custom completion predicate expression. If specified, this expression will determine when aggregation is complete."
+        type: string
+        example: "${header.AggregationCount} >= 5"
+      aggregationRepository:
+        title: "Aggregation Repository"
+        description: "Optional aggregation repository bean name for persistent aggregation across application restarts."
+        type: string
+        example: "hazelcastAggregationRepository"
+      parallelProcessing:
+        title: "Parallel Processing"
+        description: "Whether to process aggregated messages in parallel after completion."
+        type: boolean
+        default: false
+
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - log: "Processing message for concatenation - CorrelationId: {{correlationId}}, Size: {{size}}, Timeout: {{timeout}}"
+        
+        # Set aggregation properties as headers for processing
+        - setHeader:
+            name: "correlationId"
+            simple: "{{correlationId}}"
+        - setHeader:
+            name: "size" 
+            simple: "{{size}}"
+        - setHeader:
+            name: "timeout"
+            simple: "{{timeout}}"
+        
+        # Process message and prepare for aggregation
+        - process:
+            ref: "messageConcatenationProcessor"
+        
+        # Check if aggregation should be applied
+        - choice:
+            when:
+              - simple: "${header.MessageConcatenationEnabled} == true"
+                steps:
+                  - log: "✅ Applying message aggregation with properties"
+                  
+                  # Apply aggregation based on available properties
+                  - aggregate:
+                      aggregationStrategy: "messageConcatenationStrategy"
+                      correlationExpression:
+                        simple: "${header.CorrelationId}"
+                      completionSize: "{{size}}"
+                      completionTimeout: "{{timeout}}"
+                      eagerCheckCompletion: true
+                      ignoreInvalidCorrelationKeys: true
+                      steps:
+                        - log: "🔄 Aggregation completed - Messages: ${header.AggregationCount}, Duration: ${header.AggregationDuration}ms"
+                        
+                        # Set completion metadata
+                        - setHeader:
+                            name: "AggregationCompleted"
+                            constant: true
+                        - setHeader:
+                            name: "AggregationCompletionTime"
+                            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+                        
+                        # Log aggregation results
+                        - log: "✅ Message concatenation completed - Total messages: ${header.AggregationCount}, Collection size: ${body.size()}"
+            
+            otherwise:
+              steps:
+                - log: "⚠️ No valid aggregation properties - message passed through without concatenation"
+                - setHeader:
+                    name: "AggregationCompleted"
+                    constant: false
+                - setHeader:
+                    name: "AggregationCount"
+                    constant: 1
+        
+        # Final processing and routing
+        - log: "Message concatenation processing completed - Aggregated: ${header.AggregationCompleted}"
+        - to: "kamelet:sink"

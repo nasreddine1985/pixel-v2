@@ -1,0 +1,89 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-xsd-validation
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "K-XSD Validation"
+    description: "Validates XML messages (single or collection) against XSD schemas stored in the kamelet's resource folder. Supports both single String messages and Collection<String> for batch validation."
+    required: [xsdFileName]
+    properties:
+      xsdFileName:
+        title: "XSD File Name"
+        type: string
+        description: "Name of the XSD schema file to use for validation (file must exist in /xsd folder)"
+        example: "pacs.008.001.08.xsd"
+      validationMode:
+        title: "Validation Mode"
+        type: string
+        description: "Validation mode: STRICT (stop on error) or LENIENT (log warnings but continue)"
+        default: "STRICT"
+        enum: ["STRICT", "LENIENT"]
+      enableDetailedErrors:
+        title: "Enable Detailed Error Messages"
+        type: boolean
+        description: "Include detailed XSD validation error messages in exceptions"
+        default: true
+      logValidationResult:
+        title: "Log Validation Results"
+        type: boolean
+        description: "Log validation success/failure messages"
+        default: true
+      namespaceAware:
+        title: "Namespace Aware Validation"
+        type: boolean
+        description: "Enable namespace-aware XML parsing and validation"
+        default: true
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Log incoming validation request
+        - choice:
+            when:
+              - simple: "{{logValidationResult}} == true"
+                steps:
+                  - log:
+                      message: "[XSD-VALIDATION] Starting validation - XSD: {{xsdFileName}}, Mode: {{validationMode}}"
+                      loggingLevel: INFO
+        
+        # Set validation headers
+        - setHeader:
+            name: "ValidationStartTime"
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+            
+        - setHeader:
+            name: "XsdFileName"
+            simple: "{{xsdFileName}}"
+            
+        - setHeader:
+            name: "ValidationMode"
+            simple: "{{validationMode}}"
+            
+        # Validate XML against XSD using custom processor
+        # Supports both single String messages and Collection<String> for batch validation
+        - to:
+            uri: "bean:xsdValidationProcessor"
+            
+        # Log validation success
+        - choice:
+            when:
+              - simple: "{{logValidationResult}} == true"
+                steps:
+                  - log:
+                      message: "[XSD-VALIDATION] ✅ Validation successful - XSD: {{xsdFileName}}, Scope: ${header.ValidationScope}, Count: ${header.ValidationCount}, Duration: ${header.ValidationDuration}ms"
+                      loggingLevel: INFO
+                      
+        # Set success headers
+        - setHeader:
+            name: "ValidationStatus"
+            constant: "SUCCESS"
+            
+        - setHeader:
+            name: "ValidationTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+            
+        # Continue to next step (validation passed)
+        - to: "kamelet:sink"

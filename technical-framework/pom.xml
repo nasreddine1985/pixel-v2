@@ -25,10 +25,10 @@
         <module>k-payment-idempotence-helper</module>
         <module>k-log-tx</module>
         <module>k-kafka-message-receiver</module>
-        <module>k-pacs008-to-cdm-transformer</module>
-        <module>k-pacs009-to-cdm-transformer</module>
-        <module>k-pain001-to-cdm-transformer</module>
-        <module>k-camt053-to-cdm-transformer</module>
+        <module>k-xsd-validation</module>
+        <module>k-xsl-transformation</module>
+        <module>k-message-concat</module>
+        <module>k-message-split</module>
     </modules>
 
     <properties>

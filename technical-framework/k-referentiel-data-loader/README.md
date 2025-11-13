@@ -1,4 +1,154 @@
-# k-referentiel-data-loader Kamelet
+# K-Referentiel Data Loader
+
+A Camel Kamelet for loading FlowReference configuration from external services, providing JSON data structured like the FlowReference entity from k-db-tx module.
+
+## Overview
+
+The K-Referentiel Data Loader kamelet retrieves FlowReference configuration data from an external REST service based on `serviceUrl` and `flowCode` parameters. It returns JSON data that mirrors the FlowReference entity structure, making it easy to integrate flow configuration management into Camel routes.
+
+## Features
+
+- **FlowReference Integration**: Returns JSON structured like FlowReference entity from k-db-tx
+- **Flexible Service Integration**: Configurable service URL and endpoint paths
+- **Graceful Degradation**: Provides default configuration when service is unavailable
+- **Comprehensive Headers**: Sets individual FlowReference fields as message headers
+- **Error Handling**: Robust error handling with fallback configurations
+- **JSON Processing**: Full JSON serialization/deserialization support
+
+## Configuration
+
+### Required Parameters
+
+| Parameter    | Type   | Description                                   | Example                 |
+| ------------ | ------ | --------------------------------------------- | ----------------------- |
+| `serviceUrl` | string | Base URL of the FlowReference service         | `http://localhost:8099` |
+| `flowCode`   | string | Flow code identifier for configuration lookup | `PACS008`               |
+
+### Optional Parameters
+
+| Parameter        | Type   | Default      | Description                                             |
+| ---------------- | ------ | ------------ | ------------------------------------------------------- |
+| `configEndpoint` | string | `/api/flows` | Path appended to serviceUrl for FlowReference retrieval |
+
+## Usage
+
+### Basic Kamelet Usage
+
+```yaml
+- kamelet:
+    name: k-referentiel-data-loader
+    properties:
+      serviceUrl: "http://config-service:8099"
+      flowCode: "PACS008"
+```
+
+### Custom Endpoint Usage
+
+```yaml
+- kamelet:
+    name: k-referentiel-data-loader
+    properties:
+      serviceUrl: "http://config-service:8099"
+      flowCode: "PAIN001"
+      configEndpoint: "/api/v2/flowreference"
+```
+
+### Integration in Route
+
+```yaml
+from:
+  uri: "direct:process-payment"
+  steps:
+    - kamelet:
+        name: k-referentiel-data-loader
+        properties:
+          serviceUrl: "{{config.service.url}}"
+          flowCode: "{{payment.flow.code}}"
+    - choice:
+        when:
+          - simple: "${header.FlowReferenceLoaded} == true"
+            steps:
+              - log: "FlowReference loaded: ${header.FlowName}"
+              - to: "direct:process-with-config"
+        otherwise:
+          steps:
+            - log: "Using default configuration for ${header.FlowCode}"
+            - to: "direct:process-with-defaults"
+```
+
+## FlowReference Data Structure
+
+The kamelet returns JSON with the following FlowReference structure:
+
+```json
+{
+  "flowId": "FLOW_PACS008_PROD_001",
+  "flowCode": "PACS008",
+  "flowName": "PACS.008 Credit Transfer Production",
+  "status": "ACTIVE",
+  "flowType": "PAYMENT",
+  "railMode": "INSTANT",
+  "priority": 1,
+  "slaMaxLatencyMs": 3000,
+  "sourceChannel": "HTTP",
+  "sourceSystem": "BANK_GATEWAY",
+  "sourceFormat": "XML",
+  "targetSystem": "CORE_BANKING",
+  "targetChannel": "KAFKA",
+  "splitEnabled": "TRUE",
+  "splitChunkSize": 100,
+  "concatEnabled": "FALSE",
+  "retentionInEnabled": "TRUE",
+  "retentionInMode": "ARCHIVE",
+  "retentionInDays": 365,
+  "retentionOutEnabled": "TRUE",
+  "retentionOutDays": 90,
+  "shapingEnabled": "TRUE",
+  "shapingMaxTrxPerMin": 5000,
+  "shapingStrategy": "THROTTLE",
+  "piiLevel": "HIGH",
+  "encryptionRequired": "TRUE",
+  "drStrategy": "ACTIVE_PASSIVE",
+  "lastUpdate": "2025-11-12T20:45:00",
+  "version": "2.1.0",
+  "comments": "Production PACS.008 configuration"
+}
+```
+
+## Message Headers
+
+The kamelet sets comprehensive headers for easy access in routes - all FlowReference fields plus processing metadata like `FlowReferenceLoaded`, `FlowReferenceLoadTime`, `FlowReferenceData`, and `FlowReferenceError`.
+
+## Error Handling
+
+Robust error handling with graceful degradation:
+
+1. **Service Unavailable**: Creates default FlowReference configuration
+2. **Invalid JSON**: Falls back to default configuration
+3. **Network Errors**: Graceful degradation with defaults
+4. **Missing FlowCode**: Uses provided flowCode in default configuration
+
+## API Contract
+
+Expected service endpoint: `GET {serviceUrl}{configEndpoint}/{flowCode}`
+Example: `GET http://config-service:8099/api/flows/PACS008`
+
+## Testing
+
+```bash
+mvn test -pl k-referentiel-data-loader
+mvn exec:java -Dexec.mainClass="com.pixel.v2.referentiel.demo.ReferentielLoaderDemo" -pl k-referentiel-data-loader
+```
+
+## Dependencies
+
+- Apache Camel (Core, HTTP, Jackson, JSONPath)
+- Jackson JSR310 (Java Time support)
+- Spring Boot Starter
+
+## Integration with k-db-tx
+
+FlowReferenceDto mirrors the FlowReference entity from k-db-tx module for seamless integration between configuration services and database operations.
 
 A Camel Kamelet that loads flow-specific configuration metadata from the referentiel REST service and enriches message headers for payment processing pipelines. The kamelet retrieves comprehensive configuration information including transformation files, validation schemas, and Kafka settings, while preserving the original message payload.
 

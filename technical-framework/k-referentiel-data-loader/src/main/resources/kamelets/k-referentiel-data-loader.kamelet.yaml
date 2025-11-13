@@ -7,33 +7,45 @@ metadata:
 spec:
   definition:
     title: "K-Referentiel Data Loader"
-    description: "Loads configuration from external REST service and adds metadata to message headers for enrichment processing."
-    required: [serviceUrl, flowId]
+    description: "Loads FlowReference configuration from external REST service and returns JSON data structured like FlowReference entity."
+    required: [serviceUrl, flowCode]
     properties:
       serviceUrl:
         title: "Service URL"
-        description: "The HTTP endpoint used to retrieve configuration metadata."
+        description: "The HTTP endpoint used to retrieve FlowReference configuration."
         type: string
         default: "http://localhost:8099"
-      flowId:
-        title: "Flow ID"
-        description: "The flow identifier to retrieve specific configuration (e.g., pacs008, pacs009, pain001, camt053)"
+      flowCode:
+        title: "Flow Code"
+        description: "The flow code identifier to retrieve specific FlowReference configuration (e.g., PACS008, PACS009, PAIN001, CAMT053)"
         type: string
-        example: "pacs008"
+        example: "PACS008"
       configEndpoint:
         title: "Configuration Endpoint Path"
-        description: "Path to append to serviceUrl for configuration retrieval (e.g., /api/config)"
+        description: "Path to append to serviceUrl for FlowReference retrieval (e.g., /api/flows)"
         type: string
-        default: "/api/config"
+        default: "/api/flows"
   template:
     from:
       uri: "kamelet:source"
       steps:
-        - log: "Loading configuration metadata for message processing"
+        - log: "Loading FlowReference configuration for flowCode: {{flowCode}} from service: {{serviceUrl}}"
+        
+        # Store original message body
         - set-header:
             name: "OriginalBody"
             simple: "${body}"
-        - log: "About to call: {{serviceUrl}}{{configEndpoint}}/{{flowId}}"
+        
+        # Set context headers for processor
+        - set-header:
+            name: "FlowCode"
+            simple: "{{flowCode}}"
+        - set-header:
+            name: "ServiceUrl"
+            simple: "{{serviceUrl}}"
+        
+        # Prepare HTTP request
+        - log: "Calling FlowReference API: {{serviceUrl}}{{configEndpoint}}/{{flowCode}}"
         - set-header:
             name: "CamelHttpMethod"
             constant: "GET"
@@ -45,101 +57,34 @@ spec:
             constant: "Camel-Http/4.1.0"
         - remove-header:
             name: "Content-Type"
+        
+        # Clear body for GET request
         - set-body:
             constant: null
-        - to: "{{serviceUrl}}{{configEndpoint}}/{{flowId}}?throwExceptionOnFailure=false"
-        - log: "HTTP Response received: ${body}"
-        - log: "HTTP Response Status: ${header.CamelHttpResponseCode}"
-        - choice:
-            when:
-              - simple: "${body} != null && ${body} != ''"
-                steps:
-                  - log: "Configuration retrieved successfully: ${body}"
-                  - set-header:
-                      name: "CmdMapping"
-                      jsonpath: "$.cmdMapping"
-                  - set-header:
-                      name: "Rail"
-                      jsonpath: "$.rail"
-                  - set-header:
-                      name: "Mode"
-                      jsonpath: "$.mode"
-                  - set-header:
-                      name: "NeedSplit"
-                      jsonpath: "$.needSplit"
-                  - set-header:
-                      name: "SplitExpr"
-                      jsonpath: "$.splitExpr"
-                  - set-header:
-                      name: "ChunkSize"
-                      jsonpath: "$.chunkSize"
-                  - set-header:
-                      name: "Outputs"
-                      jsonpath: "$.outputs"
-                  - set-header:
-                      name: "XsltFileToCdm"
-                      jsonpath: "$.xsltFileToCdm"
-                  - set-header:
-                      name: "XsltFileFromCdm"
-                      jsonpath: "$.xsltFileFromCdm"
-                  - set-header:
-                      name: "XsdFlowFile"
-                      jsonpath: "$.xsdFlowFile"
-                  - set-header:
-                      name: "XsdCdmFile"
-                      jsonpath: "$.xsdCdmFile"
-                  - set-header:
-                      name: "KafkaBroker"
-                      jsonpath: "$.kafkaBroker"
-                  - set-header:
-                      name: "KafkaTopic"
-                      jsonpath: "$.kafkaTopic"
-                  - log: "Configuration headers set - CmdMapping: ${header.CmdMapping}, Rail: ${header.Rail}, Mode: ${header.Mode}, FlowId: {{flowId}}"
-            otherwise:
-              steps:
-                - log: "Failed to retrieve configuration, using defaults"
-                - set-header:
-                    name: "CmdMapping"
-                    constant: "default_mapping"
-                - set-header:
-                    name: "Rail"
-                    constant: "standard"
-                - set-header:
-                    name: "Mode"
-                    constant: "normal"
-                - set-header:
-                    name: "NeedSplit"
-                    constant: "false"
-                - set-header:
-                    name: "SplitExpr"
-                    constant: ""
-                - set-header:
-                    name: "ChunkSize"
-                    constant: "1000"
-                - set-header:
-                    name: "Outputs"
-                    constant: "[]"
-                - set-header:
-                    name: "XsltFileToCdm"
-                    constant: "xslt/default-to-cdm.xslt"
-                - set-header:
-                    name: "XsltFileFromCdm"
-                    constant: "xslt/cdm-to-default.xslt"
-                - set-header:
-                    name: "XsdFlowFile"
-                    constant: "xsd/default.xsd"
-                - set-header:
-                    name: "XsdCdmFile"
-                    constant: "xsd/cdm.xsd"
-                - set-header:
-                    name: "KafkaBroker"
-                    constant: "localhost:9092"
-                - set-header:
-                    name: "KafkaTopic"
-                    constant: "default-topic"
+        
+        # Call external service to get FlowReference
+        - to: "{{serviceUrl}}{{configEndpoint}}/{{flowCode}}?throwExceptionOnFailure=false"
+        
+        # Log response
+        - log: "FlowReference API Response - Status: ${header.CamelHttpResponseCode}, Body: ${body}"
+        
+        # Process FlowReference response
+        - process:
+            ref: "flowReferenceProcessor"
+        
+        # Log completion
+        - log: "FlowReference processing completed - Loaded: ${header.FlowReferenceLoaded}, FlowCode: {{flowCode}}"
+        
+        # Preserve original message for downstream processing
+        - set-header:
+            name: "FlowReferenceData"
+            simple: "${body}"
         - set-body:
             simple: "${header.OriginalBody}"
         - remove-header:
             name: "OriginalBody"
-        - log: "Message enriched with configuration headers including transformation and Kafka settings, original payload preserved"
+        
+        # Final log with key headers
+        - log: "FlowReference enrichment completed - FlowId: ${header.FlowId}, Status: ${header.FlowStatus}, RailMode: ${header.RailMode}"
+        
         - to: "kamelet:sink"

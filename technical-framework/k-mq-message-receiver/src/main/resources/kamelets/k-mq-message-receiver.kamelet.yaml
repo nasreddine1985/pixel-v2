@@ -6,7 +6,7 @@ metadata:
     camel.apache.org/kamelet.type: "source"
 spec:
   definition:
-    title: "K-MQ Message Receiver (ActiveMQ Artemis)"
+    title: "K-MQ Message Receiver (ActiveMQ)"
     description: "Consumes messages from ActiveMQ Artemis (JMS), logs receipt details, and routes messages for further processing"
     required: [destination]
     properties:
@@ -16,7 +16,7 @@ spec:
       brokerUrl:
         title: "Broker URL"
         type: string
-        description: "ActiveMQ Artemis broker URL (e.g., tcp://localhost:61616)"
+        description: "ActiveMQ broker URL (e.g., tcp://localhost:61616)"
       user:
         title: "Broker username"
         type: string
@@ -39,18 +39,28 @@ spec:
         type: boolean
         description: "Enable JMS local transactions for transactional message processing"
         default: false
+      concurrentConsumers:
+        title: "Concurrent Consumers"
+        type: integer
+        description: "Number of concurrent consumers for parallel message processing"
+        default: 5
+      maxConcurrentConsumers:
+        title: "Maximum Concurrent Consumers"
+        type: integer
+        description: "Maximum number of concurrent consumers that can be created dynamically"
+        default: 10
   template:
     from:
       uri: "jms:queue:{{destination}}"
       parameters:
-        # Use ActiveMQ Artemis ConnectionFactory
+        # Use ActiveMQ ConnectionFactory
         connectionFactory: "#{{jmsConnectionFactoryRef}}"
         # Configurable acknowledgment mode for transactional processing
         acknowledgementModeName: "{{acknowledgmentModeName}}"
         # Concurrent consumers for high throughput
-        concurrentConsumers: 5
+        concurrentConsumers: "{{concurrentConsumers}}"
         # Maximum concurrent consumers
-        maxConcurrentConsumers: 10
+        maxConcurrentConsumers: "{{maxConcurrentConsumers}}"
         # Auto-start the consumer
         autoStartup: true
         # Configurable local transactions

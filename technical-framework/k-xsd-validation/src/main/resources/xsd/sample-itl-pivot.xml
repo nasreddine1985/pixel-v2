@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="http://bnpparibas.com/G02">
+    <ITLHdr>
+        <ITLFlow>
+            <ITLFlowCd>PAYMENT_FLOW</ITLFlowCd>
+            <ITLFlowOcc>001</ITLFlowOcc>
+        </ITLFlow>
+        <ITLMsgNorm>ISO20022</ITLMsgNorm>
+    </ITLHdr>
+    <PmtPvt>
+        <InstrInf>
+            <InstrId>INSTR-001</InstrId>
+            <EndToEndId>E2E-001</EndToEndId>
+            <TxId>TX-001</TxId>
+        </InstrInf>
+        <TxInf>
+            <TxId>TX-001</TxId>
+            <IntrBkSttlmAmt Ccy="EUR">1000.50</IntrBkSttlmAmt>
+            <Dbtr>
+                <Nm>Debtor Name</Nm>
+                <Id>DEBTOR123</Id>
+            </Dbtr>
+            <Cdtr>
+                <Nm>Creditor Name</Nm>
+                <Id>CREDITOR456</Id>
+            </Cdtr>
+        </TxInf>
+    </PmtPvt>
+</Document>

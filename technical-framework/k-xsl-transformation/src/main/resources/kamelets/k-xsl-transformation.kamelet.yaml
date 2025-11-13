@@ -1,0 +1,89 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-xsl-transformation
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "K-XSL Transformation"
+    description: "Transforms XML messages (single or collection) using XSL stylesheets stored in the kamelet's resource folder. Supports both single String messages and Collection<String> for batch transformation."
+    required: [xslFileName]
+    properties:
+      xslFileName:
+        title: "XSL File Name"
+        type: string
+        description: "Name of the XSL stylesheet file to use for transformation (file must exist in /xsl folder)"
+        example: "pacs-008-to-simplified.xsl"
+      transformationMode:
+        title: "Transformation Mode"
+        type: string
+        description: "Transformation mode: STRICT (stop on error) or LENIENT (log warnings but continue)"
+        default: "STRICT"
+        enum: ["STRICT", "LENIENT"]
+      enableDetailedErrors:
+        title: "Enable Detailed Error Messages"
+        type: boolean
+        description: "Include detailed XSL transformation error messages in exceptions"
+        default: true
+      logTransformationResult:
+        title: "Log Transformation Results"
+        type: boolean
+        description: "Log transformation success/failure messages"
+        default: true
+      namespaceAware:
+        title: "Namespace Aware Transformation"
+        type: boolean
+        description: "Enable namespace-aware XML parsing and transformation"
+        default: true
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Log incoming transformation request
+        - choice:
+            when:
+              - simple: "{{logTransformationResult}} == true"
+                steps:
+                  - log:
+                      message: "[XSL-TRANSFORMATION] Starting transformation - XSL: {{xslFileName}}, Mode: {{transformationMode}}"
+                      loggingLevel: INFO
+        
+        # Set transformation headers
+        - setHeader:
+            name: "TransformationStartTime"
+            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+            
+        - setHeader:
+            name: "XslFileName"
+            simple: "{{xslFileName}}"
+            
+        - setHeader:
+            name: "TransformationMode"
+            simple: "{{transformationMode}}"
+            
+        # Transform XML using XSL stylesheet via custom processor
+        # Supports both single String messages and Collection<String> for batch transformation
+        - to:
+            uri: "bean:xslTransformationProcessor"
+            
+        # Log transformation success
+        - choice:
+            when:
+              - simple: "{{logTransformationResult}} == true"
+                steps:
+                  - log:
+                      message: "[XSL-TRANSFORMATION] ✅ Transformation successful - XSL: {{xslFileName}}, Scope: ${header.TransformationScope}, Count: ${header.TransformationCount}, Duration: ${header.TransformationDuration}ms"
+                      loggingLevel: INFO
+                      
+        # Set success headers
+        - setHeader:
+            name: "TransformationStatus"
+            constant: "SUCCESS"
+            
+        - setHeader:
+            name: "TransformationTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+            
+        # Continue to next step (transformation passed)
+        - to: "kamelet:sink"

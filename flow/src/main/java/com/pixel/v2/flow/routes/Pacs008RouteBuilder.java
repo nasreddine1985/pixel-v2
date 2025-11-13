@@ -26,7 +26,9 @@ public class Pacs008RouteBuilder extends RouteBuilder {
                 from("kamelet:k-mq-message-receiver" + "?destination={{flow.pacs008.queue.name}}"
                                 + "&brokerUrl={{mq.broker-url}}" + "&user={{mq.user}}"
                                 + "&password={{mq.password}}"
-                                + "&acknowledgmentModeName=CLIENT_ACKNOWLEDGE" + "&transacted=true")
+                                + "&acknowledgmentModeName=CLIENT_ACKNOWLEDGE" + "&transacted=true"
+                                + "&concurrentConsumers={{flow.pacs008.concurrent-consumers}}"
+                                + "&maxConcurrentConsumers={{flow.pacs008.max-concurrent-consumers}}")
                                                 .routeId("pacs008-message-consumer")
                                                 .log("[PACS008-CONSUMER] Message received from queue: messageId=${header.JMSMessageID}, size=${body.length()}")
                                                 .log("[PACS008-JMS] CLIENT_ACKNOWLEDGE mode - message will be acknowledged on transaction commit")
