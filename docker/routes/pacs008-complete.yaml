@@ -126,7 +126,7 @@
         - log:
             message: "[PACS-008] CDM XSD validation successful - Schema: ISO_Business_ITL_Pivot-v2-Simple.xsd, Duration: ${header.CdmValidationDuration}ms, CorrelationId: ${header.CorrelationId}"
             
-        # Step 9: Message Split processing (simulated - k-message-split kamelet has technical issues)
+        # Step 9: Message Split processing (k-message-split kamelet has technical issues)
         - setHeader:
             name: "SplitStartTime"
             simple: "${date:now}"
@@ -171,28 +171,6 @@
         # - to: "kafka:pixel-v2-dlq?brokers=kafka:29092"
 
 
-# Test Message Sender Route - Injects test PACS-008 messages into processing flow
-- route:
-    id: "pacs008-test-message-sender"
-    from:
-      uri: "timer:test-sender?period=60000&repeatCount=3"
-      steps:
-        # Create test PACS-008 message
-        - setBody:
-            constant: '<?xml version="1.0" encoding="UTF-8"?><Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08"><FIToFICstmrCdtTrf><GrpHdr><MsgId>TEST-MSG-001</MsgId><CreDtTm>2025-11-15T10:00:00</CreDtTm><NbOfTxs>1</NbOfTxs><SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf><InstgAgt><FinInstnId><BICFI>TESTBIC1</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>TESTBIC2</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>TEST-INSTR-001</InstrId><EndToEndId>TEST-E2E-001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy="EUR">1000.00</IntrBkSttlmAmt></CdtTrfTxInf></FIToFICstmrCdtTrf></Document>'
-        - setHeader:
-            name: "JMSMessageID"
-            simple: "TEST-DIRECT-${date:now:yyyyMMddHHmmss}"
-        - setHeader:
-            name: "TestMessageId"
-            simple: "${header.JMSMessageID}"
-        - log:
-            message: "[PACS-008-TEST] Sending test message to MQ queue - MessageId: ${header.TestMessageId}, Size: ${body.length()}"
-        # Send to MQ queue using JMS component with Jakarta JMS ConnectionFactory
-        - to:
-            uri: "jms:queue:pacs008.input.queue?connectionFactory=#jmsConnectionFactory"
-        - log:
-            message: "[PACS-008-TEST] ✅ Test message sent to MQ queue: pacs008.input.queue - MessageId: ${header.TestMessageId}"
 
 # Health Check Route
 - route:
