@@ -6,9 +6,9 @@ metadata:
     camel.apache.org/kamelet.type: "source"
 spec:
   definition:
-    title: "K-MQ Message Receiver (ActiveMQ)"
-    description: "Consumes messages from ActiveMQ Artemis (JMS), logs receipt details, and routes messages for further processing"
-    required: [destination]
+    title: "K-MQ Message Receiver (ActiveMQ Classic)"
+    description: "Consumes messages from ActiveMQ Classic (JMS), logs receipt details, and routes messages for further processing"
+    required: [destination, brokerUrl]
     properties:
       destination:
         title: "MQ destination (queue)"
@@ -16,54 +16,33 @@ spec:
       brokerUrl:
         title: "Broker URL"
         type: string
-        description: "ActiveMQ broker URL (e.g., tcp://localhost:61616)"
+        description: "ActiveMQ broker URL (e.g., tcp://localhost:61617)"
       user:
         title: "Broker username"
         type: string
         description: "Username for connecting to the broker"
+        default: "admin"
       password:
         title: "Broker password"
         type: string
         description: "Password for connecting to the broker"
-      jmsConnectionFactoryRef:
-        title: "JMS Connection Factory Bean name"
-        type: string
-        default: "artemisConnectionFactory"
-      acknowledgmentModeName:
-        title: "JMS Acknowledgment Mode"
-        type: string
-        description: "JMS acknowledgment mode (AUTO_ACKNOWLEDGE, CLIENT_ACKNOWLEDGE, DUPS_OK_ACKNOWLEDGE)"
-        default: "AUTO_ACKNOWLEDGE"
-      transacted:
-        title: "Enable JMS Transactions"
-        type: boolean
-        description: "Enable JMS local transactions for transactional message processing"
-        default: false
+        default: "admin"
       concurrentConsumers:
         title: "Concurrent Consumers"
         type: integer
         description: "Number of concurrent consumers for parallel message processing"
-        default: 5
-      maxConcurrentConsumers:
-        title: "Maximum Concurrent Consumers"
-        type: integer
-        description: "Maximum number of concurrent consumers that can be created dynamically"
-        default: 10
+        default: 1
   template:
     from:
-      uri: "jms:queue:{{destination}}"
+      uri: "activemq:queue:{{destination}}"
       parameters:
-        # Use ActiveMQ ConnectionFactory
-        connectionFactory: "#{{jmsConnectionFactoryRef}}"
-        # Configurable acknowledgment mode for transactional processing
-        acknowledgementModeName: "{{acknowledgmentModeName}}"
-        # Concurrent consumers for high throughput
+        # ActiveMQ connection parameters
+        brokerURL: "{{brokerUrl}}"
+        userName: "{{user}}"
+        password: "{{password}}"
+        # Consumer configuration
         concurrentConsumers: "{{concurrentConsumers}}"
-        # Maximum concurrent consumers
-        maxConcurrentConsumers: "{{maxConcurrentConsumers}}"
+        # Connection settings
+        trustAllPackages: true
         # Auto-start the consumer
         autoStartup: true
-        # Configurable local transactions
-        transacted: "{{transacted}}"
-        # Enable message caching for improved performance
-        cacheLevelName: "CACHE_CONSUMER"

@@ -5,16 +5,42 @@
 # //DEPS org.apache.camel:camel-kamelet
 # //DEPS org.apache.camel:camel-yaml-dsl
 # //DEPS org.apache.camel:camel-jms
-# //DEPS org.apache.activemq:artemis-jakarta-client-all:2.31.2
+# //DEPS org.apache.camel:camel-jdbc
+# //DEPS org.apache.camel:camel-sql
+# //DEPS org.apache.camel:camel-xpath
+# //DEPS org.apache.camel:camel-xslt
+# //DEPS org.apache.camel:camel-http
+# //DEPS org.apache.activemq:activemq-client:5.18.3
+# //DEPS org.postgresql:postgresql:42.6.0
 # //DEPS ch.qos.logback:logback-classic:1.4.11
+
+# Technical Framework Dependencies - All Kamelet JARs
+# //REPOS maven-local=file:///Users/n.abassi/.m2/repository
+# //DEPS com.pixel.v2:k-mq-message-receiver:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-message-concat:1.0.1-SNAPSHOT  
+# //DEPS com.pixel.v2:k-db-tx:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-referentiel-data-loader:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-xsd-validation:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-xsl-transformation:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-message-split:1.0.1-SNAPSHOT
 
 # PACS-008 Flow - Production JBang YAML Route
 # Full 10-step PACS-008 message processing flow using technical-framework kamelets
 
+# Bean Configuration
+- beans:
+  - name: "activeMQConnectionFactory"
+    type: "org.apache.activemq.ActiveMQConnectionFactory"
+    properties:
+      brokerURL: "tcp://host.docker.internal:61617"
+      userName: "admin" 
+      password: "admin"
+      trustAllPackages: true
+
 # Error Handler Configuration
 - errorHandler:
     deadLetterChannel:
-      uri: "jms:queue:{{pacs008.error.queue}}?connectionFactory=#artemisConnectionFactory"
+      uri: "jms:queue:pacs008.error.queue?connectionFactory=#activeMQConnectionFactory"
       redeliveryPolicy:
         maximumRedeliveries: 3
         redeliveryDelay: 1000
@@ -26,8 +52,8 @@
 - route:
     id: "pacs008-processing-flow-yaml"
     from:
-      # Production: Direct kamelet integration for message reception
-      uri: "kamelet:k-mq-message-receiver?destination=pacs008.input.queue&brokerUrl={{artemis.broker.url}}&user={{artemis.user}}&password={{artemis.password}}&concurrentConsumers=5&maxConcurrentConsumers=10"
+      # Production: Using k-mq-message-receiver kamelet for ActiveMQ Classic
+      uri: "kamelet:k-mq-message-receiver?destination=pacs008.input.queue&brokerUrl=tcp://host.docker.internal:61617&user=admin&password=admin&concurrentConsumers=2"
       steps:
         # Step 1: Initial logging with correlation ID
         - setHeader:
@@ -116,7 +142,7 @@
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
         - to:
-            uri: "jms:queue:{{pacs008.output.queue}}?connectionFactory=#artemisConnectionFactory"
+            uri: "jms:queue:pacs008.output.queue?connectionFactory=#activeMQConnectionFactory"
         - log:
             message: "[PACS-008-PROD] Individual message sent successfully - Queue: ${header.JMSDestination}, Split Index: ${header.CamelSplitIndex}, CorrelationId: ${header.CorrelationId}, Timestamp: ${header.ProcessingTimestamp}"
 
@@ -124,7 +150,7 @@
 - route:
     id: "pacs008-error-handler-yaml"  
     from:
-      uri: "jms:queue:{{pacs008.error.queue}}?connectionFactory=#artemisConnectionFactory"
+      uri: "jms:queue:pacs008.error.queue?connectionFactory=#activeMQConnectionFactory"
       steps:
         - setHeader:
             name: "ErrorTimestamp"

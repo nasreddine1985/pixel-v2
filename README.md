@@ -37,6 +37,11 @@ PIXEL-V2/
 ├── 📥 ingestion/                           # Message Ingestion & Routing
 ├── ⚙️ business/                            # Core Business Logic & Processing
 ├── 📤 distribution/                        # Message Distribution & Delivery
+├── 🐳 docker/                              # Docker Configuration & Deployment
+├── 📜 scripts/                             # Centralized Shell Scripts
+│   ├── docker/                             # Container Runtime Scripts
+│   ├── pacs008-flow/                       # PACS-008 Processing Scripts
+│   └── integration-tests/                  # Test Automation Scripts
 └── 🔧 technical-framework/                 # Reusable Kamelets Library
     ├── k-mq-message-receiver/              # IBM MQ Integration
     ├── k-http-message-receiver/            # REST API Integration

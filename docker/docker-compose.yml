@@ -1,0 +1,216 @@
+version: '3.8'
+
+# PIXEL-V2 Docker Infrastructure
+# Complete stack for PIXEL-V2 application deployment
+
+services:
+  
+  # Zookeeper for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    hostname: zookeeper
+    container_name: pixel-v2-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+
+  # Apache Kafka Message Broker
+  kafka:
+    build: 
+      context: ./kafka
+      dockerfile: Dockerfile
+    hostname: kafka
+    container_name: pixel-v2-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: kafka-topics --bootstrap-server localhost:9092 --list
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL Database
+  postgresql:
+    build:
+      context: ./postgresql
+      dockerfile: Dockerfile
+    hostname: postgresql
+    container_name: pixel-v2-postgresql
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: pixelv2
+      POSTGRES_USER: pixelv2
+      POSTGRES_PASSWORD: pixelv2_secure_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_logs:/var/log/postgresql
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 5432 -U pixelv2 -d pixelv2"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ActiveMQ Artemis Message Queue
+  artemis-mq:
+    build:
+      context: ./artemis-mq
+      dockerfile: Dockerfile
+    hostname: artemis-mq
+    container_name: pixel-v2-artemis
+    ports:
+      - "61616:61616"  # Core protocol
+      - "5672:5672"    # AMQP
+      - "1883:1883"    # MQTT
+      - "8161:8161"    # Web console
+      - "61613:61613"  # STOMP
+      - "5445:5445"    # HornetQ
+    environment:
+      ARTEMIS_USER: admin
+      ARTEMIS_PASSWORD: admin
+      ARTEMIS_MIN_MEMORY: 512M
+      ARTEMIS_MAX_MEMORY: 2G
+    volumes:
+      - artemis_data:/var/lib/artemis-instance/data
+      - artemis_logs:/var/lib/artemis-instance/log
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8161/console/jolokia/read/org.apache.activemq.artemis:broker=\"artemis\"/Started || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PIXEL-V2 Camel Runtime Application
+  pixel-v2-app:
+    build:
+      context: ./camel-runtime
+      dockerfile: Dockerfile
+    hostname: pixel-v2-app
+    container_name: pixel-v2-camel
+    depends_on:
+      - postgresql
+      - kafka
+    ports:
+      - "8080:8080"    # HTTP/REST API
+      - "8778:8778"    # JMX
+      - "9779:9779"    # Metrics
+    environment:
+      PIXEL_ENV: production
+      PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
+      PIXEL_DB_USERNAME: pixelv2
+      PIXEL_DB_PASSWORD: pixelv2_secure_password
+      PIXEL_MQ_URL: tcp://host.docker.internal:61617
+      PIXEL_MQ_USERNAME: admin
+      PIXEL_MQ_PASSWORD: admin
+      PIXEL_KAFKA_BOOTSTRAP: kafka:29092
+      JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+    volumes:
+      - ./routes:/opt/pixel-v2/routes:ro
+      - app_logs:/opt/pixel-v2/logs
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "/opt/pixel-v2/health-check.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Adminer for PostgreSQL management (optional)
+  adminer:
+    image: adminer:4.8.1
+    container_name: pixel-v2-adminer
+    depends_on:
+      - postgresql
+    ports:
+      - "8091:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgresql
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    profiles:
+      - tools
+
+  # Kafdrop for Kafka management (optional)
+  kafdrop:
+    image: obsidiandynamics/kafdrop:3.30.0
+    container_name: pixel-v2-kafdrop
+    depends_on:
+      - kafka
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: kafka:29092
+      JVM_OPTS: "-Xms32M -Xmx64M"
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    profiles:
+      - tools
+
+  # Hawt.io for Camel Route Management
+  hawtio:
+    build:
+      context: ./hawtio
+      dockerfile: Dockerfile
+    container_name: pixel-v2-hawtio
+    depends_on:
+      - pixel-v2-app
+    ports:
+      - "8090:8080"
+    environment:
+      HAWTIO_PROXYWHITELIST: pixel-v2-app
+      HAWTIO_PROXY_HOST: pixel-v2-app
+      HAWTIO_PROXY_PORT: 8778
+      HAWTIO_AUTH_ENABLED: "false"
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    profiles:
+      - tools
+
+# Volumes for data persistence
+volumes:
+  postgres_data:
+    name: pixel-v2-postgres-data
+  postgres_logs:
+    name: pixel-v2-postgres-logs
+  artemis_data:
+    name: pixel-v2-artemis-data
+  artemis_logs:
+    name: pixel-v2-artemis-logs
+  app_logs:
+    name: pixel-v2-app-logs
+
+# Networks
+networks:
+  pixel-v2-network:
+    name: pixel-v2-network
+    driver: bridge
