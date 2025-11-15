@@ -169,11 +169,12 @@ services:
     ports:
       - "8090:8080"
     environment:
-      HAWTIO_PROXYWHITELIST: pixel-v2-app
+      HAWTIO_PROXYWHITELIST: "pixel-v2-app,localhost,127.0.0.1,172.19.0.*"
       HAWTIO_PROXY_HOST: pixel-v2-app
-      HAWTIO_PROXY_PORT: 8778
+      HAWTIO_PROXY_PORT: 8080
       HAWTIO_AUTH_ENABLED: "false"
-      JAVA_OPTS: "-Xms128m -Xmx256m"
+      HAWTIO_LOCAL_ADDRESS_PROBING: "false"
+      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.proxyAllowlist=pixel-v2-app,localhost,127.0.0.1,172.19.0.* -Dhawtio.authenticationEnabled=false -Dhawtio.localAddressProbing=false"
     networks:
       - pixel-v2-network
     restart: unless-stopped

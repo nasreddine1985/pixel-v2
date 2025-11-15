@@ -22,6 +22,7 @@
 # //DEPS com.pixel.v2:k-http-message-receiver:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-cft-data-receiver:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-kafka-message-receiver:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-kafka-message-publisher:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-message-concat:1.0.1-SNAPSHOT  
 # //DEPS com.pixel.v2:k-message-split:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-db-tx:1.0.1-SNAPSHOT
@@ -141,18 +142,15 @@
         - log:
             message: "[PACS-008] Message split completed - Strategy: SINGLE_MESSAGE, Count: ${header.SplitCount}, Index: ${header.CamelSplitIndex}, Duration: ${header.SplitDuration}ms, CorrelationId: ${header.CorrelationId}"
             
-        # Step 10: Send individual messages to Kafka
+        # Step 10: Send individual messages to Kafka using k-kafka-message-publisher kamelet
         - setHeader:
             name: "KafkaTopic"
             constant: "PACS008_OUTPUT_TOPIC"
         - setHeader:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
-        - setHeader:
-            name: "kafka.KEY"
-            simple: "${header.CorrelationId}"
         - to:
-            uri: "kafka:PACS008_OUTPUT_TOPIC?brokers=kafka:29092&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer&requestTimeoutMs=5000&connectionMaxIdleMs=5000"
+            uri: "kamelet:k-kafka-message-publisher?topic=PACS008_OUTPUT_TOPIC&brokers=kafka:29092&key=${header.CorrelationId}&requestTimeoutMs=5000&connectionMaxIdleMs=5000"
         - log:
             message: "[PACS-008] MESSAGE SENT TO KAFKA TOPIC: ${header.KafkaTopic} - Key: ${header.kafka.KEY}, CorrelationId: ${header.CorrelationId}, MessageSize: ${body.length()}"
 

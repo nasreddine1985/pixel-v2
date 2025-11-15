@@ -1,0 +1,31 @@
+{
+  "branding": {
+    "appName": "PIXEL-V2 Camel Management",
+    "appLogoUrl": ""
+  },
+  "about": {
+    "title": "PIXEL-V2 Camel Routes",
+    "productInfo": [],
+    "additionalInfo": "Manage PACS-008 processing routes",
+    "copyright": ""
+  },
+  "disabledRoutes": [],
+  "urls": [
+    {
+      "name": "PIXEL-V2 Camel App",
+      "url": "http://pixel-v2-app:8080/observe/jolokia",
+      "scheme": "http",
+      "host": "pixel-v2-app",
+      "port": 8080,
+      "path": "/observe/jolokia"
+    },
+    {
+      "name": "Local Camel App",
+      "url": "http://localhost:8080/observe/jolokia", 
+      "scheme": "http",
+      "host": "localhost",
+      "port": 8080,
+      "path": "/observe/jolokia"
+    }
+  ]
+}

@@ -25,6 +25,7 @@
         <module>k-payment-idempotence-helper</module>
         <module>k-log-tx</module>
         <module>k-kafka-message-receiver</module>
+        <module>k-kafka-message-publisher</module>
         <module>k-xsd-validation</module>
         <module>k-xsl-transformation</module>
         <module>k-message-concat</module>

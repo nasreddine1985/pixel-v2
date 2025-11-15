@@ -36,9 +36,9 @@ ENV KAFKA_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX
 # Create directory for custom configuration and topics
 USER root
 RUN mkdir -p /etc/kafka-pixel-v2/topics
-# Copy configuration and scripts (script is copied to build context before build)
+# Copy configuration and scripts from centralized scripts folder
 COPY kafka-pixel-v2.properties /etc/kafka-pixel-v2/
-COPY create-pixel-topics.sh /etc/kafka-pixel-v2/
+COPY ../scripts/docker/kafka/create-pixel-topics.sh /etc/kafka-pixel-v2/
 RUN chmod +x /etc/kafka-pixel-v2/create-pixel-topics.sh
 
 # Expose Kafka ports
