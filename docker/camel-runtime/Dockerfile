@@ -47,9 +47,9 @@ COPY kamelet.properties /opt/pixel-v2/config/
 # Copy technical-framework JAR files (kamelets)
 COPY technical-framework-jars/*.jar /opt/pixel-v2/lib/
 
-# Copy application scripts from centralized scripts folder
-COPY ../scripts/docker/camel-runtime/entrypoint.sh /opt/pixel-v2/
-COPY ../scripts/docker/camel-runtime/health-check.sh /opt/pixel-v2/
+# Copy application scripts
+COPY entrypoint.sh /opt/pixel-v2/
+COPY health-check.sh /opt/pixel-v2/
 
 # Make scripts executable
 RUN chmod +x /opt/pixel-v2/entrypoint.sh /opt/pixel-v2/health-check.sh
