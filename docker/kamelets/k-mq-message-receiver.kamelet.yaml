@@ -34,7 +34,7 @@ spec:
       uri: "jms:queue:{{destination}}?connectionFactory={{connectionFactory}}&concurrentConsumers={{concurrentConsumers}}&autoStartup={{autoStartup}}"
       steps:
         - log:
-            message: "[K-MQ-MESSAGE-RECEIVER] Message received from queue: {{destination}}, MessageId: ${header.JMSMessageID}, CorrelationId: ${header.JMSCorrelationID}"
+            message: "[K-MQ-MESSAGE-RECEIVER] Message received from queue: {{destination}}, MessageId: ${header.JMSMessageID}, CorrelationId: ${header.JMSCorrelationID:${header.JMSMessageID}}"
         - setHeader:
             name: "ReceivedTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"

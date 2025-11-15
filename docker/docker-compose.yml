@@ -74,36 +74,20 @@ services:
       timeout: 10s
       retries: 5
 
-  # ActiveMQ Artemis Message Queue
-  artemis-mq:
-    build:
-      context: ./artemis-mq
-      dockerfile: Dockerfile
-    hostname: artemis-mq
-    container_name: pixel-v2-artemis
+
+  # ActiveMQ Classic Message Broker
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: pixel-v2-activemq
     ports:
-      - "61616:61616"  # Core protocol
-      - "5672:5672"    # AMQP
-      - "1883:1883"    # MQTT
-      - "8161:8161"    # Web console
-      - "61613:61613"  # STOMP
-      - "5445:5445"    # HornetQ
+      - "61616:61616"
+      - "8161:8161"
     environment:
-      ARTEMIS_USER: admin
-      ARTEMIS_PASSWORD: admin
-      ARTEMIS_MIN_MEMORY: 512M
-      ARTEMIS_MAX_MEMORY: 2G
-    volumes:
-      - artemis_data:/var/lib/artemis-instance/data
-      - artemis_logs:/var/lib/artemis-instance/log
+      ACTIVEMQ_ADMIN_LOGIN: admin
+      ACTIVEMQ_ADMIN_PASSWORD: admin
     networks:
       - pixel-v2-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8161/console/jolokia/read/org.apache.activemq.artemis:broker=\"artemis\"/Started || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
 
   # PIXEL-V2 Camel Runtime Application
   pixel-v2-app:
@@ -124,7 +108,7 @@ services:
       PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
       PIXEL_DB_USERNAME: pixelv2
       PIXEL_DB_PASSWORD: pixelv2_secure_password
-      PIXEL_MQ_URL: tcp://host.docker.internal:61617
+      PIXEL_MQ_URL: tcp://pixel-v2-activemq:61616
       PIXEL_MQ_USERNAME: admin
       PIXEL_MQ_PASSWORD: admin
       PIXEL_KAFKA_BOOTSTRAP: kafka:29092

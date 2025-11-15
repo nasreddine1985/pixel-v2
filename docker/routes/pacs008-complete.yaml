@@ -11,59 +11,67 @@
 # //DEPS org.apache.camel:camel-xslt
 # //DEPS org.apache.camel:camel-http
 # //DEPS org.apache.camel:camel-kafka
-# //DEPS org.apache.activemq:activemq-client:5.18.3
+# //DEPS org.apache.activemq:activemq-client-jakarta:6.0.1
+# //DEPS jakarta.jms:jakarta.jms-api:3.1.0
 # //DEPS org.postgresql:postgresql:42.6.0
 # //DEPS ch.qos.logback:logback-classic:1.4.11
 
-# Technical Framework Dependencies - All Kamelet JARs
+# Technical Framework Dependencies - All Kamelet JARs (Latest Version: 1.0.1-SNAPSHOT)
 # //REPOS maven-local=file:///Users/n.abassi/.m2/repository
 # //DEPS com.pixel.v2:k-mq-message-receiver:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-http-message-receiver:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-cft-data-receiver:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-kafka-message-receiver:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-message-concat:1.0.1-SNAPSHOT  
+# //DEPS com.pixel.v2:k-message-split:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-db-tx:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-log-tx:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-referentiel-data-loader:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-ingestion-technical-validation:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-payment-idempotence-helper:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-xsd-validation:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-xsl-transformation:1.0.1-SNAPSHOT
-# //DEPS com.pixel.v2:k-message-split:1.0.1-SNAPSHOT
 
 # PACS-008 Flow - Production JBang YAML Route
 # Full 10-step PACS-008 message processing flow using technical-framework kamelets
 
-# Bean Configuration for Technical Framework Kamelets
 - beans:
-    - name: "messageConcatenationProcessor"
-      type: "com.pixel.v2.aggregation.processor.MessageConcatenationProcessor"
-    - name: "messageConcatenationStrategy"
-      type: "com.pixel.v2.aggregation.strategy.MessageConcatenationStrategy"
-    - name: "xsdValidationProcessor"
-      type: "com.pixel.v2.validation.processor.XsdValidationProcessor"
-    - name: "xslTransformationProcessor"
-      type: "com.pixel.v2.transformation.processor.XslTransformationProcessor"
+  - name: "messageConcatenationProcessor"
+    type: "com.pixel.v2.aggregation.processor.MessageConcatenationProcessor"
+  - name: "messageConcatenationStrategy"
+    type: "com.pixel.v2.aggregation.strategy.MessageConcatenationStrategy"
+  - name: "xsdValidationProcessor"
+    type: "com.pixel.v2.validation.processor.XsdValidationProcessor"
+  - name: "xslTransformationProcessor"
+    type: "com.pixel.v2.transformation.processor.XslTransformationProcessor"
+  - name: "jmsConnectionFactory"
+    type: "org.apache.activemq.ActiveMQConnectionFactory"
+    properties:
+      brokerURL: "tcp://pixel-v2-activemq:61616"
+      username: "admin"
+      password: "admin"
+      trustAllPackages: true
 
 # Bean Configuration (Simplified for testing - ActiveMQ integration pending)
 # Note: ActiveMQ integration requires Jakarta JMS compatibility with Camel 4.x
 
-# Main PACS-008 Processing Route - Complete Production Flow  
+# Main PACS-008 Processing Route - Complete Production Flow with MQ Integration
 - route:
     id: "pacs008-processing-flow-yaml"
     from:
-      # Testing: Timer-based route to test technical framework integration
-      uri: "timer:pacs008-test?period=60000&repeatCount=1"
+      # Step 1: Receive messages from ActiveMQ using k-mq-message-receiver kamelet
+      uri: "kamelet:k-mq-message-receiver?destination=pacs008.input.queue&connectionFactory=#jmsConnectionFactory&concurrentConsumers=1"
       steps:
-        # Create test message body
-        - setBody:
-            constant: '<?xml version="1.0" encoding="UTF-8"?><Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08"><FIToFICstmrCdtTrf><GrpHdr><MsgId>TEST001</MsgId><CreDtTm>2025-11-14T10:00:00</CreDtTm><NbOfTxs>1</NbOfTxs><SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf><InstgAgt><FinInstnId><BICFI>TESTBIC1</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>TESTBIC2</BICFI></FinInstnId></InstdAgt></GrpHdr></FIToFICstmrCdtTrf></Document>'
-        - setHeader:
-            name: "JMSMessageID" 
-            simple: "TEST-${date:now:yyyyMMddHHmmss}"
-        # Step 1: Initial logging with correlation ID
+        # Step 1: Initial logging with correlation ID from MQ message
         - setHeader:
             name: "CorrelationId"
-            simple: "${header.JMSMessageID}"
+            simple: "${header.JMSMessageID:${date:now:yyyyMMddHHmmss}}"
         - log:
-            message: "[PACS-008] Starting message processing - CorrelationId: ${header.CorrelationId}, MessageId: ${header.JMSMessageID}"
+            message: "[PACS-008] Message received from MQ - Queue: pacs008.input.queue, CorrelationId: ${header.CorrelationId}, MessageId: ${header.JMSMessageID}"
+        - log:
+            message: "[PACS-008] Starting PACS-008 processing flow - CorrelationId: ${header.CorrelationId}, MessageSize: ${body.length()}"
             
-        # Step 2: Simple logging instead of message aggregation (testing framework integration)
-                # Step 2: Message Aggregation (k-message-concat)
+        # Step 2: Message Aggregation (k-message-concat)
         - to:
             uri: "kamelet:k-message-concat?correlationId=${header.CorrelationId}&size=1000&timeout=10000&parallelProcessing=false"
         - log:
@@ -164,6 +172,29 @@
         # - to: "kafka:pacs008-error?brokers=kafka:29092"
         # - to: "kafka:pixel-v2-dlq?brokers=kafka:29092"
 
+
+# Test Message Sender Route - Injects test PACS-008 messages into processing flow
+- route:
+    id: "pacs008-test-message-sender"
+    from:
+      uri: "timer:test-sender?period=60000&repeatCount=3"
+      steps:
+        # Create test PACS-008 message
+        - setBody:
+            constant: '<?xml version="1.0" encoding="UTF-8"?><Document xmlns="urn:iso:std:iso:20022:tech:xsd:pacs.008.001.08"><FIToFICstmrCdtTrf><GrpHdr><MsgId>TEST-MSG-001</MsgId><CreDtTm>2025-11-15T10:00:00</CreDtTm><NbOfTxs>1</NbOfTxs><SttlmInf><SttlmMtd>CLRG</SttlmMtd></SttlmInf><InstgAgt><FinInstnId><BICFI>TESTBIC1</BICFI></FinInstnId></InstgAgt><InstdAgt><FinInstnId><BICFI>TESTBIC2</BICFI></FinInstnId></InstdAgt></GrpHdr><CdtTrfTxInf><PmtId><InstrId>TEST-INSTR-001</InstrId><EndToEndId>TEST-E2E-001</EndToEndId></PmtId><IntrBkSttlmAmt Ccy="EUR">1000.00</IntrBkSttlmAmt></CdtTrfTxInf></FIToFICstmrCdtTrf></Document>'
+        - setHeader:
+            name: "JMSMessageID"
+            simple: "TEST-DIRECT-${date:now:yyyyMMddHHmmss}"
+        - setHeader:
+            name: "TestMessageId"
+            simple: "${header.JMSMessageID}"
+        - log:
+            message: "[PACS-008-TEST] Sending test message to MQ queue - MessageId: ${header.TestMessageId}, Size: ${body.length()}"
+        # Send to MQ queue using JMS component with Jakarta JMS ConnectionFactory
+        - to:
+            uri: "jms:queue:pacs008.input.queue?connectionFactory=#jmsConnectionFactory"
+        - log:
+            message: "[PACS-008-TEST] ✅ Test message sent to MQ queue: pacs008.input.queue - MessageId: ${header.TestMessageId}"
 
 # Health Check Route
 - route:

@@ -1,39 +1,30 @@
 package com.pixel.v2.mq.config;
 
-import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jms.connection.JmsTransactionManager;
-
 /**
- * Default JMS Configuration for k-mq-message-receiver kamelet Provides JMS connectivity using
- * ActiveMQ Artemis with configurable parameters
+ * Default JMS Configuration for k-mq-message-receiver kamelet Provides JMS connection parameters
+ * for Jakarta JMS
  */
-@Configuration
 public class DefaultJmsConfig {
 
-    @Value("${mq.broker-url}")
-    private String brokerUrl;
+    private final String brokerUrl;
+    private final String username;
+    private final String password;
 
-    @Value("${mq.user}")
-    private String username;
-
-    @Value("${mq.password}")
-    private String password;
-
-    @Bean("artemisConnectionFactory")
-    public ActiveMQConnectionFactory artemisConnectionFactory() {
-        ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(brokerUrl);
-        connectionFactory.setUser(username);
-        connectionFactory.setPassword(password);
-        return connectionFactory;
+    public DefaultJmsConfig(String brokerUrl, String username, String password) {
+        this.brokerUrl = brokerUrl;
+        this.username = username;
+        this.password = password;
     }
 
-    @Bean("jmsTransactionManager")
-    public JmsTransactionManager jmsTransactionManager() {
-        JmsTransactionManager transactionManager = new JmsTransactionManager();
-        transactionManager.setConnectionFactory(artemisConnectionFactory());
-        return transactionManager;
+    public String getBrokerUrl() {
+        return brokerUrl;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 }
