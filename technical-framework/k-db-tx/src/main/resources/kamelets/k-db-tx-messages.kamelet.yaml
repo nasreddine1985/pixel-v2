@@ -73,33 +73,38 @@ spec:
               message: "k-db-tx-messages: Starting message persistence - messageId=${header.messageId}, correlationId=${header.correlationId}, type=${header.messageType}, source=${header.source}, bodySize=${body.length()}"
               loggingLevel: "INFO"
 
+          # Store original body to restore it after database operation
+          - setHeader:
+              name: "OriginalPayload"
+              simple: "${body}"
+
           - setHeader:
               name: "PersistenceTimestamp"
               simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
 
           - setHeader:
               name: "SqlMessageId"
-              simple: "{{messageId}}"
+              simple: "${header.messageId}"
               
           - setHeader:
               name: "SqlCorrelationId"
-              simple: "{{correlationId}}"
+              simple: "${header.CorrelationId}"
               
           - setHeader:
               name: "SqlMessageType"
-              simple: "{{messageType}}"
+              simple: "${header.messageType}"
               
           - setHeader:
               name: "SqlSource"
-              simple: "{{source}}"
+              simple: "${header.source}"
               
           - setHeader:
               name: "SqlPayload"
-              simple: "{{payload}}"
+              simple: "${header.OriginalPayload}"
               
           - setHeader:
               name: "SqlProcessingStatus"
-              simple: "{{processingStatus}}"
+              constant: "RECEIVED"
 
           # Check if body is a collection and batch processing is enabled
           - choice:
@@ -131,12 +136,19 @@ spec:
                           - setHeader:
                               name: "BatchPayload"
                               simple: "${body}"
+                          # Store current split body before database operation
+                          - setHeader:
+                              name: "CurrentBatchPayload"
+                              simple: "${body}"
                           - doTry:
                               steps:
                                 - setBody:
                                     simple: "INSERT INTO pixel_v2.tb_messages (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.BatchMessageId}', '${header.BatchCorrelationId}', '${header.BatchMessageType}', '${header.BatchSource}', '${header.BatchPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
                                 - to:
                                     uri: "jdbc:dataSource"
+                                # Restore current batch item body
+                                - setBody:
+                                    simple: "${header.CurrentBatchPayload}"
                                 - log:
                                     message: "k-db-tx-messages: ✅ Batch message persisted - Index: ${exchangeProperty.CamelSplitIndex}, ID: ${header.BatchMessageId}"
                                     loggingLevel: "INFO"
@@ -149,6 +161,9 @@ spec:
                                     - throwException:
                                         exceptionType: "java.lang.RuntimeException"
                                         message: "Batch message persistence failed: ${exception.message}"
+                    # Restore original body after batch processing
+                    - setBody:
+                        simple: "${header.OriginalPayload}"
                     - setHeader:
                         name: "PersistenceStatus"
                         constant: "BATCH_SUCCESS"
@@ -174,20 +189,24 @@ spec:
                         - to:
                             uri: "jdbc:dataSource"
                         
+                        # Restore original body after database operation
+                        - setBody:
+                            simple: "${header.OriginalPayload}"
+                        
                         - setHeader:
                             name: "PersistenceStatus"
                             constant: "SUCCESS"
                             
                         - setHeader:
                             name: "PersistenceRecordId"
-                            simple: "{{messageId}}"
+                            simple: "${header.SqlMessageId}"
                             
                         - setHeader:
                             name: "PersistenceOperation"
                             constant: "INSERT"
                             
                         - log:
-                            message: "k-db-tx-messages: ✅ Single message persisted successfully - ID={{messageId}}, Table={{tableName}}"
+                            message: "k-db-tx-messages: ✅ Single message persisted successfully - ID=${header.SqlMessageId}, Table=pixel_v2.tb_messages"
                             loggingLevel: "INFO"
                       doCatch:
                         - exception: ["java.lang.Exception"]
@@ -205,7 +224,7 @@ spec:
                                 constant: "INSERT_FAILED"
                                 
                             - log:
-                                message: "k-db-tx-messages: ❌ Single message persistence failed - ID={{messageId}}, Error=${exception.message}"
+                                message: "k-db-tx-messages: ❌ Single message persistence failed - ID=${header.SqlMessageId}, Error=${exception.message}"
                                 loggingLevel: "ERROR"
                                 
                             # Re-throw exception so parent route can catch it and route to error handler
@@ -214,5 +233,5 @@ spec:
                                 message: "Database persistence failed: ${exception.message}"
 
           - log:
-              message: "k-db-tx-messages: Persistence completed - Status=${header.PersistenceStatus}, ID={{messageId}}"
+              message: "k-db-tx-messages: Persistence completed - Status=${header.PersistenceStatus}, ID=${header.SqlMessageId}"
               loggingLevel: "DEBUG"

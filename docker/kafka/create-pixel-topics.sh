@@ -17,7 +17,7 @@ echo "Kafka broker is ready, creating PIXEL-V2 topics..."
 # Create PACS-008 processing topics
 kafka-topics --bootstrap-server localhost:9092 --create \
     --topic pacs008-input \
-    --partitions 3 \
+    --partitions 1 \
     --replication-factor 1 \
     --config retention.ms=86400000 \
     --config compression.type=lz4 \
@@ -27,7 +27,7 @@ kafka-topics --bootstrap-server localhost:9092 --create \
 
 kafka-topics --bootstrap-server localhost:9092 --create \
     --topic pacs008-output \
-    --partitions 3 \
+    --partitions 1 \
     --replication-factor 1 \
     --config retention.ms=86400000 \
     --config compression.type=lz4 \
@@ -37,7 +37,7 @@ kafka-topics --bootstrap-server localhost:9092 --create \
 
 kafka-topics --bootstrap-server localhost:9092 --create \
     --topic pacs008-error \
-    --partitions 2 \
+    --partitions 1 \
     --replication-factor 1 \
     --config retention.ms=604800000 \
     --config compression.type=lz4 \
@@ -46,7 +46,27 @@ kafka-topics --bootstrap-server localhost:9092 --create \
     --if-not-exists
 
 kafka-topics --bootstrap-server localhost:9092 --create \
+    --topic pacs008-logs \
+    --partitions 1 \
+    --replication-factor 1 \
+    --config retention.ms=86400000 \
+    --config compression.type=lz4 \
+    --config cleanup.policy=delete \
+    --config max.message.bytes=1048576 \
+    --if-not-exists
+
+kafka-topics --bootstrap-server localhost:9092 --create \
     --topic pacs008-monitoring \
+    --partitions 1 \
+    --replication-factor 1 \
+    --config retention.ms=86400000 \
+    --config compression.type=lz4 \
+    --config cleanup.policy=delete \
+    --config max.message.bytes=524288 \
+    --if-not-exists
+
+kafka-topics --bootstrap-server localhost:9092 --create \
+    --topic pacs008-flow-summary \
     --partitions 1 \
     --replication-factor 1 \
     --config retention.ms=86400000 \

@@ -1,7 +1,7 @@
 apiVersion: camel.apache.org/v1alpha1
 kind: Kamelet
 metadata:
-  name: k-xsd-validation
+  name: k-xsd-validation-custom
   labels:
     camel.apache.org/kamelet.type: "action"
 spec:
@@ -65,7 +65,7 @@ spec:
         # Validate XML against XSD using custom processor
         # Supports both single String messages and Collection<String> for batch validation
         - to:
-            uri: "bean:xsdValidationProcessor"
+            uri: "class:com.pixel.v2.validation.processor.XsdValidationProcessor"
             
         # Log validation success
         - choice:

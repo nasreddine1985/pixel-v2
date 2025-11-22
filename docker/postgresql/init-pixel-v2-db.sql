@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS pixel_v2.tb_logevents (
     error_message TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Index for better performance
     CONSTRAINT idx_tb_logevents_message_id UNIQUE (message_id, timestamp)

@@ -85,7 +85,7 @@ public class XsdValidationProcessor implements Processor {
             long duration = System.currentTimeMillis() - startTime;
             exchange.getIn().setHeader(VALIDATION_DURATION, duration);
 
-            logger.debug("[XSD-VALIDATION] Validation completed successfully in {}ms", duration);
+            logger.info("[XSD-VALIDATION] Validation completed successfully in {}ms", duration);
 
         } catch (XsdValidationException e) {
             handleValidationError(exchange, e, System.currentTimeMillis() - startTime);

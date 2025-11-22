@@ -92,6 +92,11 @@
             simple: "{\"level\":\"INFO\",\"timestamp\":\"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"correlationId\":\"${header.CorrelationId}\",\"step\":\"message-received\",\"message\":\"[PACS-008] Message received from MQ - Queue: pacs008.input.queue, CorrelationId: ${header.CorrelationId}, MessageId: ${header.MessageId}\"}"
         - to:
             uri: "kamelet:k-kafka-message-publisher?topic=pacs008-logs&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
+        - setHeader:
+            name: "LogMessage"
+            simple: "{\"flowCode\":\"PACS008\",\"messageId\":\"${header.MessageId}\",\"step\":\"STARTED\",\"timestamp\":\"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"correlationId\":\"${header.CorrelationId}\",\"queue\":\"pacs008.input.queue\"}"
+        - to:
+            uri: "kamelet:k-kafka-message-publisher?topic=pacs008-flow-summary&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
             
         # Step 2: Message Aggregation (k-message-concat) with proper parameters
         - to:
@@ -143,6 +148,12 @@
             simple: "{\"level\":\"INFO\",\"timestamp\":\"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"correlationId\":\"${header.CorrelationId}\",\"step\":\"message-persistence\",\"message\":\"[PACS-008] Message persisted completed - PersistenceRecordId: ${header.PersistenceRecordId}\"}"
         - to:
             uri: "kamelet:k-kafka-message-publisher?topic=pacs008-logs&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
+        - setHeader:
+            name: "LogMessage"
+            simple: "{\"flowCode\":\"PACS008\",\"messageId\":\"${header.MessageId}\",\"step\":\"IN_PROGRESS\",\"timestamp\":\"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"correlationId\":\"${header.CorrelationId}\",\"queue\":\"pacs008.input.queue\"}"
+        - to:
+            uri: "kamelet:k-kafka-message-publisher?topic=pacs008-flow-summary&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
+
 
         
         # Step 4: Simple logging (skipping referential data loading for now - requires service setup)
@@ -155,7 +166,7 @@
         - to:
             uri: "kamelet:k-kafka-message-publisher?topic=pacs008-logs&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
             
-        # Step 5: XSD Validation of PACS008 messages (k-xsd-validation)
+        # Step 5: XSD Validation of PACS008 messages 
         - setHeader:
             name: "ValidationStartTime"
             simple: "${date:now}"
@@ -163,7 +174,7 @@
             name: "CurrentStep"
             constant: "PACS008_XSD_VALIDATION"
         - to:
-            uri: "kamelet:k-xsd-validation?xsdFileName=pacs.008.001.08.xsd&validationMode=LENIENT&enableDetailedErrors=true&logValidationResult=true"
+            uri: "kamelet:k-xsd-validation-custom?xsdFileName=pacs.008.001.08.xsd&validationMode=LENIENT&enableDetailedErrors=true&logValidationResult=true"
         - setHeader:
             name: "ValidationDuration"
             simple: "${date:now} - ${header.ValidationStartTime}"
@@ -199,7 +210,7 @@
             name: "CurrentStep"
             constant: "CDM_XSD_VALIDATION"
         - to:
-            uri: "kamelet:k-xsd-validation?xsdFileName=ISO_Business_ITL_Pivot-v2-Simple.xsd&validationMode=LENIENT&enableDetailedErrors=true&logValidationResult=true"
+            uri: "kamelet:k-xsd-validation-custom?xsdFileName=ISO_Business_ITL_Pivot-v2-Simple.xsd&validationMode=LENIENT&enableDetailedErrors=true&logValidationResult=true"
         - setHeader:
             name: "CdmValidationDuration"
             simple: "${date:now} - ${header.CdmValidationStartTime}"
@@ -248,6 +259,12 @@
             simple: "{\"level\":\"INFO\",\"timestamp\":\"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"correlationId\":\"${header.CorrelationId}\",\"step\":\"kafka-output\",\"message\":\"[PACS-008] MESSAGE SENT TO KAFKA TOPIC: ${header.KafkaTopic} - Key: ${header.kafka.KEY}, CorrelationId: ${header.CorrelationId}, MessageSize: ${body.length()}\"}"
         - to:
             uri: "kamelet:k-kafka-message-publisher?topic=pacs008-logs&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
+        - setHeader:
+            name: "LogMessage"
+            simple: "{\"flowCode\":\"PACS008\",\"messageId\":\"${header.MessageId}\",\"step\":\"COMPLETED\",\"timestamp\":\"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"correlationId\":\"${header.CorrelationId}\",\"queue\":\"pacs008.input.queue\"}"
+        - to:
+            uri: "kamelet:k-kafka-message-publisher?topic=pacs008-flow-summary&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
+
 
         
 # Error Handler Route - Handles errors from main processing flow with detailed error tracking
@@ -310,6 +327,12 @@
         - log:
             message: "${header.LogMessage}"
             loggingLevel: "ERROR"
+        - setHeader:
+            name: "LogMessage"
+            simple: "{\"flowCode\":\"PACS008\",\"messageId\":\"${header.MessageId}\",\"step\":\"ERROR\",\"timestamp\":\"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}\",\"correlationId\":\"${header.CorrelationId}\",\"queue\":\"pacs008.input.queue\"}"
+        - to:
+            uri: "kamelet:k-kafka-message-publisher?topic=pacs008-flow-summary&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
+
         
         # Create comprehensive error record for monitoring
         - setHeader:

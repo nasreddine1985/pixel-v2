@@ -68,7 +68,7 @@ spec:
         uri: "kamelet:source"
         steps:
           - log:
-              message: "k-db-tx-logevents: Starting message persistence - messageId=${header.messageId}, correlationId=${header.correlationId}, type=${header.messageType}, source=${header.source}, bodySize=${body.length()}"
+              message: "k-db-tx-logevents: Starting logevents persistence - logeventsId=${header.messageId}, correlationId=${header.correlationId}, type=${header.messageType}, source=${header.source}, bodySize=${body.length()}"
               loggingLevel: "INFO"
 
           - setHeader:
