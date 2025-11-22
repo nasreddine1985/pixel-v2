@@ -31,9 +31,9 @@ spec:
       steps:
         - log: "Loading FlowReference configuration for flowCode: {{flowCode}} from service: {{serviceUrl}}"
         
-        # Store original message body
-        - set-header:
-            name: "OriginalBody"
+        # Store original message body in exchange property (not header to avoid Kafka pollution)
+        - setProperty:
+            name: "OriginalBodyBackup"
             simple: "${body}"
         
         # Set context headers for processor
@@ -80,9 +80,7 @@ spec:
             name: "FlowReferenceData"
             simple: "${body}"
         - set-body:
-            simple: "${header.OriginalBody}"
-        - remove-header:
-            name: "OriginalBody"
+            simple: "${exchangeProperty.OriginalBodyBackup}"
         
         # Final log with key headers
         - log: "FlowReference enrichment completed - FlowId: ${header.FlowId}, Status: ${header.FlowStatus}, RailMode: ${header.RailMode}"

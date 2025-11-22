@@ -16,8 +16,8 @@ RUN mkdir -p /opt/hawtio
 # Download Hawt.io application
 RUN wget https://repo1.maven.org/maven2/io/hawt/hawtio-app/2.17.7/hawtio-app-2.17.7.jar -O /opt/hawtio/hawtio-app.jar
 
-# Copy Hawt.io startup script from centralized scripts folder and configuration
-COPY ../scripts/docker/hawtio/start-hawtio.sh /opt/hawtio/
+# Copy Hawt.io startup script and configuration
+COPY start-hawtio.sh /opt/hawtio/
 COPY hawtio-config.json /opt/hawtio/
 # Make script executable
 RUN chmod +x /opt/hawtio/start-hawtio.sh

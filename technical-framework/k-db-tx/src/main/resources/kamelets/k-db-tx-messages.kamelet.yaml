@@ -1,0 +1,218 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-db-tx-messages
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+    pixel.v2/category: "persistence"
+    pixel.v2/version: "1.0.0"
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "4.1.0"
+    camel.apache.org/provider: "Pixel V2"
+    pixel.v2/description: "database persistence using SQL component instead of JPA"
+spec:
+    definition:
+      title: "Database Transaction"
+      description: |
+        Persists payment messages to database using SQL component for JBang compatibility.
+        Avoids JPA class loading issues in containerized environments.
+        Uses direct SQL INSERT with proper error handling and transaction support.
+      required: []
+      properties:
+        messageId:
+          title: "Message ID"
+          description: "Unique identifier for the message"
+          type: string
+          default: "${header.messageId}"
+        correlationId:
+          title: "Correlation ID"
+          description: "Correlation identifier for the message"
+          type: string
+          default: "${header.correlationId}"
+        messageType:
+          title: "Message Type"
+          description: "Type of the message (e.g., PACS008, CAMT054)"
+          type: string
+          default: "${header.messageType}"
+        source:
+          title: "Source"
+          description: "Source of the message (e.g., MQ, HTTP, KAFKA)"
+          type: string
+          default: "${header.source}"
+        payload:
+          title: "Payload"
+          description: "Message payload content"
+          type: string
+          default: "${body}"
+        processingStatus:
+          title: "Processing Status"
+          description: "Processing status of the message"
+          type: string
+          default: "RECEIVED"
+        dataSource:
+          title: "Data Source"
+          description: "Reference to the configured DataSource bean"
+          type: string
+          default: "#dataSource"
+        tableName:
+          title: "Table Name"
+          description: "Database table name for persistence"
+          type: string
+          default: "pixel_v2.tb_messages"
+        enableBatchProcessing:
+          title: "Enable Batch Processing"
+          description: "Enable batch processing for collections of messages"
+          type: boolean
+          default: true
+    template:
+      from:
+        uri: "kamelet:source"
+        steps:
+          - log:
+              message: "k-db-tx-messages: Starting message persistence - messageId=${header.messageId}, correlationId=${header.correlationId}, type=${header.messageType}, source=${header.source}, bodySize=${body.length()}"
+              loggingLevel: "INFO"
+
+          - setHeader:
+              name: "PersistenceTimestamp"
+              simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+
+          - setHeader:
+              name: "SqlMessageId"
+              simple: "{{messageId}}"
+              
+          - setHeader:
+              name: "SqlCorrelationId"
+              simple: "{{correlationId}}"
+              
+          - setHeader:
+              name: "SqlMessageType"
+              simple: "{{messageType}}"
+              
+          - setHeader:
+              name: "SqlSource"
+              simple: "{{source}}"
+              
+          - setHeader:
+              name: "SqlPayload"
+              simple: "{{payload}}"
+              
+          - setHeader:
+              name: "SqlProcessingStatus"
+              simple: "{{processingStatus}}"
+
+          # Check if body is a collection and batch processing is enabled
+          - choice:
+              when:
+                - simple: "{{enableBatchProcessing}} == true && ${body} is 'java.util.Collection'"
+                  steps:
+                    - log:
+                        message: "k-db-tx-messages: Processing batch of ${body.size()} messages"
+                        loggingLevel: "INFO"
+                    
+                    # Use split to process each message in the collection
+                    - split:
+                        simple: "${body}"
+                        parallelProcessing: false
+                        streaming: false
+                        steps:
+                          - setHeader:
+                              name: "BatchMessageId"
+                              simple: "MSG-${date:now:yyyyMMddHHmmssSSS}-${exchangeProperty.CamelSplitIndex}"
+                          - setHeader:
+                              name: "BatchCorrelationId"
+                              simple: "${header.correlationId}"
+                          - setHeader:
+                              name: "BatchMessageType"
+                              simple: "${header.messageType}"
+                          - setHeader:
+                              name: "BatchSource"
+                              simple: "${header.source}"
+                          - setHeader:
+                              name: "BatchPayload"
+                              simple: "${body}"
+                          - doTry:
+                              steps:
+                                - setBody:
+                                    simple: "INSERT INTO pixel_v2.tb_messages (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.BatchMessageId}', '${header.BatchCorrelationId}', '${header.BatchMessageType}', '${header.BatchSource}', '${header.BatchPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                                - to:
+                                    uri: "jdbc:dataSource"
+                                - log:
+                                    message: "k-db-tx-messages: ✅ Batch message persisted - Index: ${exchangeProperty.CamelSplitIndex}, ID: ${header.BatchMessageId}"
+                                    loggingLevel: "INFO"
+                              doCatch:
+                                - exception: ["java.lang.Exception"]
+                                  steps:
+                                    - log:
+                                        message: "k-db-tx-messages: ❌ Batch message failed - Index: ${exchangeProperty.CamelSplitIndex}, Error: ${exception.message}"
+                                        loggingLevel: "ERROR"
+                                    - throwException:
+                                        exceptionType: "java.lang.RuntimeException"
+                                        message: "Batch message persistence failed: ${exception.message}"
+                    - setHeader:
+                        name: "PersistenceStatus"
+                        constant: "BATCH_SUCCESS"
+                    - setHeader:
+                        name: "PersistenceOperation"
+                        constant: "BATCH_INSERT"
+                    - log:
+                        message: "k-db-tx-messages: ✅ Batch processing completed successfully"
+                        loggingLevel: "INFO"
+                        
+              otherwise:
+                steps:
+                  # Debug log to verify parameter values for single message
+                  - log:
+                      message: "k-db-tx-messages: About to execute SQL for single message - messageId=${header.messageId}, correlationId=${header.correlationId}, messageType=${header.messageType}, source=${header.source}"
+                      loggingLevel: "INFO"
+
+                  # Execute database insert for single message with proper error handling  
+                  - doTry:
+                      steps:
+                        - setBody:
+                            simple: "INSERT INTO pixel_v2.tb_messages (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.SqlMessageId}', '${header.SqlCorrelationId}', '${header.SqlMessageType}', '${header.SqlSource}', '${header.SqlPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                        - to:
+                            uri: "jdbc:dataSource"
+                        
+                        - setHeader:
+                            name: "PersistenceStatus"
+                            constant: "SUCCESS"
+                            
+                        - setHeader:
+                            name: "PersistenceRecordId"
+                            simple: "{{messageId}}"
+                            
+                        - setHeader:
+                            name: "PersistenceOperation"
+                            constant: "INSERT"
+                            
+                        - log:
+                            message: "k-db-tx-messages: ✅ Single message persisted successfully - ID={{messageId}}, Table={{tableName}}"
+                            loggingLevel: "INFO"
+                      doCatch:
+                        - exception: ["java.lang.Exception"]
+                          steps:
+                            - setHeader:
+                                name: "PersistenceStatus"
+                                constant: "FAILED"
+                                
+                            - setHeader:
+                                name: "PersistenceError"
+                                simple: "${exception.message}"
+                                
+                            - setHeader:
+                                name: "PersistenceOperation"
+                                constant: "INSERT_FAILED"
+                                
+                            - log:
+                                message: "k-db-tx-messages: ❌ Single message persistence failed - ID={{messageId}}, Error=${exception.message}"
+                                loggingLevel: "ERROR"
+                                
+                            # Re-throw exception so parent route can catch it and route to error handler
+                            - throwException:
+                                exceptionType: "java.lang.RuntimeException"
+                                message: "Database persistence failed: ${exception.message}"
+
+          - log:
+              message: "k-db-tx-messages: Persistence completed - Status=${header.PersistenceStatus}, ID={{messageId}}"
+              loggingLevel: "DEBUG"

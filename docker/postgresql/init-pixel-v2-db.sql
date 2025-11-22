@@ -17,26 +17,34 @@ BEGIN
     ALTER DEFAULT PRIVILEGES IN SCHEMA pixel_v2 GRANT ALL ON SEQUENCES TO pixelv2;
 END $$;
 
--- Create PACS-008 transaction tracking table
-CREATE TABLE IF NOT EXISTS pixel_v2.pacs008_transactions (
+-- Create generic messages table for all message types
+CREATE TABLE IF NOT EXISTS pixel_v2.tb_messages (
     id SERIAL PRIMARY KEY,
-    transaction_id VARCHAR(255) NOT NULL UNIQUE,
+    message_id VARCHAR(255) NOT NULL UNIQUE,
     correlation_id VARCHAR(255),
-    message_content TEXT,
+    message_type VARCHAR(50),
+    source VARCHAR(100),
+    payload TEXT,
     processing_status VARCHAR(50) DEFAULT 'RECEIVED',
     error_message TEXT,
+    file_name VARCHAR(500),
+    line_number BIGINT,
+    received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     processed_at TIMESTAMP,
     
     -- Indexes for better performance
-    CONSTRAINT unique_transaction_id UNIQUE (transaction_id)
+    CONSTRAINT unique_message_id UNIQUE (message_id)
 );
 
--- Create index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_pacs008_correlation_id ON pixel_v2.pacs008_transactions(correlation_id);
-CREATE INDEX IF NOT EXISTS idx_pacs008_status ON pixel_v2.pacs008_transactions(processing_status);
-CREATE INDEX IF NOT EXISTS idx_pacs008_created_at ON pixel_v2.pacs008_transactions(created_at);
+-- Create indexes for faster lookups
+CREATE INDEX IF NOT EXISTS idx_tb_messages_correlation_id ON pixel_v2.tb_messages(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_tb_messages_status ON pixel_v2.tb_messages(processing_status);
+CREATE INDEX IF NOT EXISTS idx_tb_messages_type ON pixel_v2.tb_messages(message_type);
+CREATE INDEX IF NOT EXISTS idx_tb_messages_source ON pixel_v2.tb_messages(source);
+CREATE INDEX IF NOT EXISTS idx_tb_messages_received_at ON pixel_v2.tb_messages(received_at);
+CREATE INDEX IF NOT EXISTS idx_tb_messages_created_at ON pixel_v2.tb_messages(created_at);
 
 -- Create referential data table for validation
 CREATE TABLE IF NOT EXISTS pixel_v2.referential_data (
@@ -70,21 +78,21 @@ INSERT INTO pixel_v2.referential_data (entity_type, entity_code, entity_name, en
     ('PAYMENT_TYPE', 'INSTANT', 'Instant Payment', 'Real-time Payment Processing')
 ON CONFLICT (entity_type, entity_code) DO NOTHING;
 
--- Create audit log table for transaction monitoring
+-- Create audit log table for message monitoring
 CREATE TABLE IF NOT EXISTS pixel_v2.audit_log (
     id SERIAL PRIMARY KEY,
-    transaction_id VARCHAR(255),
+    message_id VARCHAR(255),
     operation VARCHAR(100) NOT NULL,
     operation_details TEXT,
     user_context VARCHAR(255),
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
-    -- Foreign key to transaction table
-    FOREIGN KEY (transaction_id) REFERENCES pixel_v2.pacs008_transactions(transaction_id) ON DELETE CASCADE
+    -- Foreign key to messages table
+    FOREIGN KEY (message_id) REFERENCES pixel_v2.tb_messages(message_id) ON DELETE CASCADE
 );
 
 -- Create index for audit log queries
-CREATE INDEX IF NOT EXISTS idx_audit_transaction_id ON pixel_v2.audit_log(transaction_id);
+CREATE INDEX IF NOT EXISTS idx_audit_message_id ON pixel_v2.audit_log(message_id);
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON pixel_v2.audit_log(timestamp);
 CREATE INDEX IF NOT EXISTS idx_audit_operation ON pixel_v2.audit_log(operation);
 
@@ -98,8 +106,8 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers to automatically update updated_at columns
-CREATE TRIGGER update_pacs008_transactions_updated_at
-    BEFORE UPDATE ON pixel_v2.pacs008_transactions
+CREATE TRIGGER update_tb_messages_updated_at
+    BEFORE UPDATE ON pixel_v2.tb_messages
     FOR EACH ROW EXECUTE FUNCTION pixel_v2.update_updated_at_column();
 
 CREATE TRIGGER update_referential_data_updated_at
@@ -114,5 +122,5 @@ DO $$
 BEGIN
     RAISE NOTICE 'PIXEL-V2 PostgreSQL database initialization completed successfully!';
     RAISE NOTICE 'Database: %, Schema: pixel_v2', current_database();
-    RAISE NOTICE 'Tables created: pacs008_transactions, referential_data, audit_log';
+    RAISE NOTICE 'Tables created: tb_messages, referential_data, audit_log';
 END $$;

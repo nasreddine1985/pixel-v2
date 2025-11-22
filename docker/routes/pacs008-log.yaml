@@ -1,0 +1,59 @@
+# YAML DSL for PACS-008 Log Processing Route
+#
+# This route consumes messages from the pacs008-logs Kafka topic
+# and persists them to the database using k-db-tx kamelet
+
+# Dependencies
+#//DEPS com.pixel.v2:k-kafka-message-receiver:1.0.1-SNAPSHOT
+#//DEPS com.pixel.v2:k-db-tx:1.0.1-SNAPSHOT
+#//DEPS org.postgresql:postgresql:42.7.2
+#//DEPS org.apache.camel:camel-jdbc:4.16.0
+#//DEPS org.apache.camel:camel-jackson:4.16.0
+
+- route:
+        id: "pacs008-log-processing-route"
+        from:
+          uri: "kamelet:k-kafka-message-receiver"
+          parameters:
+            bootstrapServers: "kafka:29092"
+            topic: "pacs008-logs"
+            groupId: "pacs008-log-processor-group"
+            offsetReset: "latest"
+          steps:
+            - log:
+                message: "[PACS008-LOG-PROCESSOR] Received log message from topic: pacs008-logs, Size: ${body.length()}"
+            
+            # Parse the JSON log message and extract fields for database persistence
+            - setHeader:
+                name: "logMessageId"
+                simple: "${uuid}"
+            - setHeader:
+                name: "logCorrelationId"
+                simple: "LOG-${date:now:yyyyMMddHHmmssSSS}"
+            - setHeader:
+                name: "logMessageType"
+                constant: "PACS008_LOG"
+            - setHeader:
+                name: "logSource"
+                constant: "KAFKA"
+            - setHeader:
+                name: "logPayload"
+                simple: "${body}"
+            - setHeader:
+                name: "logProcessingStatus"
+                constant: "RECEIVED"
+            
+            # Persist log message to database using k-db-tx-messages  
+            - to:
+                uri: "kamelet:k-db-tx-messages"
+                parameters:
+                  messageId: "${header.logMessageId}"
+                  correlationId: "${header.logCorrelationId}"
+                  messageType: "${header.logMessageType}"
+                  source: "${header.logSource}"
+                  payload: "${header.logPayload}"
+                  processingStatus: "${header.logProcessingStatus}"
+                  dataSource: "#dataSource"
+                  
+            - log:
+                message: "[PACS008-LOG-PROCESSOR] ✅ Log message persisted successfully - ID: ${header.logMessageId}, CorrelationId: ${header.logCorrelationId}"

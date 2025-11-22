@@ -89,13 +89,13 @@ services:
       - pixel-v2-network
     restart: unless-stopped
 
-  # PIXEL-V2 Camel Runtime Application
-  pixel-v2-app:
+  # PIXEL-V2 Camel Runtime Application - Instance 1
+  pixel-v2-app-1:
     build:
       context: ./camel-runtime
       dockerfile: Dockerfile
-    hostname: pixel-v2-app
-    container_name: pixel-v2-camel
+    hostname: pixel-v2-app-1
+    container_name: pixel-v2-camel-1
     depends_on:
       - postgresql
       - kafka
@@ -115,7 +115,7 @@ services:
       JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
     volumes:
       - ./routes:/opt/pixel-v2/routes:ro
-      - app_logs:/opt/pixel-v2/logs
+      - app_logs_1:/opt/pixel-v2/logs
     networks:
       - pixel-v2-network
     restart: unless-stopped
@@ -126,16 +126,95 @@ services:
       retries: 3
       start_period: 60s
 
-  # Adminer for PostgreSQL management (optional)
-  adminer:
-    image: adminer:4.8.1
-    container_name: pixel-v2-adminer
+  # PIXEL-V2 Camel Runtime Application - Instance 2
+  pixel-v2-app-2:
+    build:
+      context: ./camel-runtime
+      dockerfile: Dockerfile
+    hostname: pixel-v2-app-2
+    container_name: pixel-v2-camel-2
+    depends_on:
+      - postgresql
+      - kafka
+    ports:
+      - "8081:8080"    # HTTP/REST API
+      - "8781:8778"    # JMX
+      - "9781:9779"    # Metrics
+    environment:
+      PIXEL_ENV: production
+      PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
+      PIXEL_DB_USERNAME: pixelv2
+      PIXEL_DB_PASSWORD: pixelv2_secure_password
+      PIXEL_MQ_URL: tcp://pixel-v2-activemq:61616
+      PIXEL_MQ_USERNAME: admin
+      PIXEL_MQ_PASSWORD: admin
+      PIXEL_KAFKA_BOOTSTRAP: kafka:29092
+      JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+    volumes:
+      - ./routes:/opt/pixel-v2/routes:ro
+      - app_logs_2:/opt/pixel-v2/logs
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/observe/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # PIXEL-V2 Camel Runtime Application - Instance 3
+  pixel-v2-app-3:
+    build:
+      context: ./camel-runtime
+      dockerfile: Dockerfile
+    hostname: pixel-v2-app-3
+    container_name: pixel-v2-camel-3
+    depends_on:
+      - postgresql
+      - kafka
+    ports:
+      - "8082:8080"    # HTTP/REST API
+      - "8782:8778"    # JMX
+      - "9782:9779"    # Metrics
+    environment:
+      PIXEL_ENV: production
+      PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
+      PIXEL_DB_USERNAME: pixelv2
+      PIXEL_DB_PASSWORD: pixelv2_secure_password
+      PIXEL_MQ_URL: tcp://pixel-v2-activemq:61616
+      PIXEL_MQ_USERNAME: admin
+      PIXEL_MQ_PASSWORD: admin
+      PIXEL_KAFKA_BOOTSTRAP: kafka:29092
+      JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+    volumes:
+      - ./routes:/opt/pixel-v2/routes:ro
+      - app_logs_3:/opt/pixel-v2/logs
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/observe/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # pgAdmin for PostgreSQL management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pixel-v2-pgadmin
     depends_on:
       - postgresql
     ports:
-      - "8091:8080"
+      - "8091:80"
     environment:
-      ADMINER_DEFAULT_SERVER: postgresql
+      PGADMIN_DEFAULT_EMAIL: admin@pixel-v2.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
     networks:
       - pixel-v2-network
     restart: unless-stopped
@@ -166,16 +245,16 @@ services:
       dockerfile: Dockerfile
     container_name: pixel-v2-hawtio
     depends_on:
-      - pixel-v2-app
+      - pixel-v2-app-1
     ports:
       - "8090:8080"
     environment:
-      HAWTIO_PROXYWHITELIST: "pixel-v2-app,localhost,127.0.0.1,172.19.0.*"
-      HAWTIO_PROXY_HOST: pixel-v2-app
+      HAWTIO_PROXYWHITELIST: "pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-3,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.*"
+      HAWTIO_PROXY_HOST: pixel-v2-app-1
       HAWTIO_PROXY_PORT: 8080
       HAWTIO_AUTH_ENABLED: "false"
       HAWTIO_LOCAL_ADDRESS_PROBING: "false"
-      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.proxyAllowlist=pixel-v2-app,localhost,127.0.0.1,172.19.0.* -Dhawtio.authenticationEnabled=false -Dhawtio.localAddressProbing=false"
+      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.proxyAllowlist=pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-3,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.* -Dhawtio.authenticationEnabled=false -Dhawtio.localAddressProbing=false"
     networks:
       - pixel-v2-network
     restart: unless-stopped
@@ -188,12 +267,14 @@ volumes:
     name: pixel-v2-postgres-data
   postgres_logs:
     name: pixel-v2-postgres-logs
-  artemis_data:
-    name: pixel-v2-artemis-data
-  artemis_logs:
-    name: pixel-v2-artemis-logs
-  app_logs:
-    name: pixel-v2-app-logs
+  pgadmin_data:
+    name: pixel-v2-pgadmin-data
+  app_logs_1:
+    name: pixel-v2-app-logs-1
+  app_logs_2:
+    name: pixel-v2-app-logs-2
+  app_logs_3:
+    name: pixel-v2-app-logs-3
 
 # Networks
 networks:

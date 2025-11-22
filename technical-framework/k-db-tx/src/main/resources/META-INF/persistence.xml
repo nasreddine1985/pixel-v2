@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd"
+    version="3.0">
+
+    <persistence-unit name="pixelPersistenceUnit" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <!-- Entity classes -->
+        <class>com.pixel.v2.persistence.model.ReceivedMessage</class>
+
+        <!-- Exclude unlisted classes to avoid scanning issues -->
+        <exclude-unlisted-classes>true</exclude-unlisted-classes>
+
+        <properties>
+            <!-- PostgreSQL Database connection properties -->
+            <property name="jakarta.persistence.jdbc.driver" value="org.postgresql.Driver" />
+            <property name="jakarta.persistence.jdbc.url"
+                value="jdbc:postgresql://pixel-v2-postgresql:5432/pixelv2" />
+            <property name="jakarta.persistence.jdbc.user" value="pixelv2" />
+            <property name="jakarta.persistence.jdbc.password" value="pixelv2_secure_password" />
+
+            <!-- Hibernate properties -->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect" />
+            <property name="hibernate.hbm2ddl.auto" value="none" />
+            <property name="hibernate.show_sql" value="false" />
+            <property name="hibernate.format_sql" value="true" />
+            <property name="hibernate.use_sql_comments" value="false" />
+
+            <!-- Connection pool settings -->
+            <property name="hibernate.connection.pool_size" value="5" />
+            <property name="hibernate.connection.autocommit" value="false" />
+
+            <!-- Performance settings -->
+            <property name="hibernate.cache.use_second_level_cache" value="false" />
+            <property name="hibernate.cache.use_query_cache" value="false" />
+
+            <!-- Schema settings -->
+            <property name="hibernate.default_schema" value="pixel_v2" />
+        </properties>
+    </persistence-unit>
+
+</persistence>

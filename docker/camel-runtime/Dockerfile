@@ -77,4 +77,4 @@ USER pixel
 ENTRYPOINT ["/opt/pixel-v2/entrypoint.sh"]
 
 # Default command to run PIXEL-V2 route
-CMD ["pacs008-complete.yaml"]
+# CMD ["pacs008-complete.yaml"]
