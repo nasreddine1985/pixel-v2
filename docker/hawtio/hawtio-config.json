@@ -26,14 +26,6 @@
       "host": "pixel-v2-app-2",
       "port": 8080,
       "path": "/observe/jolokia"
-    },
-    {
-      "name": "PIXEL-V2 Camel Instance 3",
-      "url": "http://pixel-v2-app-3:8080/observe/jolokia",
-      "scheme": "http",
-      "host": "pixel-v2-app-3", 
-      "port": 8080,
-      "path": "/observe/jolokia"
     }
   ]
 }

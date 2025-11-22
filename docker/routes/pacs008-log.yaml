@@ -10,50 +10,71 @@
 #//DEPS org.apache.camel:camel-jdbc:4.16.0
 #//DEPS org.apache.camel:camel-jackson:4.16.0
 
+- beans:
+  - name: "dataSource"
+    type: "org.postgresql.ds.PGSimpleDataSource"
+    properties:
+      serverName: "pixel-v2-postgresql"
+      portNumber: 5432
+      databaseName: "pixelv2"
+      user: "pixelv2"
+      password: "pixelv2_secure_password"
+
+- route:
+        id: "pacs008-log-kafka-consumer-route"
+        from:
+          uri: "kafka:pacs008-logs"
+          parameters:
+            brokers: "kafka:29092"
+            groupId: "pacs008-log-processor-group"
+            autoOffsetReset: "latest"
+            maxPollRecords: 500
+            sessionTimeoutMs: 30000
+            autoCommitIntervalMs: 5000
+          steps:
+            - log:
+                message: "[PACS008-LOG-RECEIVER] Received message from topic 'pacs008-logs' with key: ${header.kafka.KEY}, partition: ${header.kafka.PARTITION}, offset: ${header.kafka.OFFSET}"
+            - to:
+                uri: "direct:kafka-message-processing"
+
 - route:
         id: "pacs008-log-processing-route"
         from:
-          uri: "kamelet:k-kafka-message-receiver"
-          parameters:
-            bootstrapServers: "kafka:29092"
-            topic: "pacs008-logs"
-            groupId: "pacs008-log-processor-group"
-            offsetReset: "latest"
+          uri: "direct:kafka-message-processing"
           steps:
-            - log:
-                message: "[PACS008-LOG-PROCESSOR] Received log message from topic: pacs008-logs, Size: ${body.length()}"
             
             # Parse the JSON log message and extract fields for database persistence
             - setHeader:
-                name: "logMessageId"
+                name: "messageId"
                 simple: "${uuid}"
             - setHeader:
-                name: "logCorrelationId"
+                name: "correlationId"
                 simple: "LOG-${date:now:yyyyMMddHHmmssSSS}"
             - setHeader:
-                name: "logMessageType"
+                name: "messageType"
                 constant: "PACS008_LOG"
             - setHeader:
-                name: "logSource"
+                name: "source"
                 constant: "KAFKA"
             - setHeader:
-                name: "logPayload"
+                name: "payload"
                 simple: "${body}"
             - setHeader:
-                name: "logProcessingStatus"
+                name: "processingStatus"
                 constant: "RECEIVED"
             
-            # Persist log message to database using k-db-tx-messages  
+            # Persist log message to database using k-db-tx-logevents kamelet
             - to:
-                uri: "kamelet:k-db-tx-messages"
+                uri: "kamelet:k-db-tx-logevents"
                 parameters:
-                  messageId: "${header.logMessageId}"
-                  correlationId: "${header.logCorrelationId}"
-                  messageType: "${header.logMessageType}"
-                  source: "${header.logSource}"
-                  payload: "${header.logPayload}"
-                  processingStatus: "${header.logProcessingStatus}"
+                  messageId: "${header.messageId}"
+                  correlationId: "${header.correlationId}"
+                  messageType: "${header.messageType}"
+                  source: "${header.source}"
+                  payload: "${header.payload}"
+                  processingStatus: "${header.processingStatus}"
                   dataSource: "#dataSource"
+                  tableName: "pixel_v2.tb_logevents"
                   
             - log:
-                message: "[PACS008-LOG-PROCESSOR] ✅ Log message persisted successfully - ID: ${header.logMessageId}, CorrelationId: ${header.logCorrelationId}"
+                message: "[PACS008-LOG-PROCESSOR] ✅ Log message persisted to tb_logevents successfully - ID: ${header.messageId}, CorrelationId: ${header.correlationId}, MessageType: ${header.messageType}, Source: ${header.source}"

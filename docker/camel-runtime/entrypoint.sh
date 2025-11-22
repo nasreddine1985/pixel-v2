@@ -8,8 +8,8 @@ set -e
 echo "Starting PIXEL-V2 Camel Runtime..."
 
 # Set default values
-# Default route file (can be overridden)
-ROUTE_FILE=${1:-"pacs008-complete.yaml"}
+# Default route file (can be overridden by environment variable or command line argument)
+ROUTE_FILE=${ROUTE_FILE:-${1:-"pacs008-complete.yaml"}}
 CONFIG_DIR="/opt/pixel-v2/config"
 ROUTES_DIR="/opt/pixel-v2/routes"
 LOGS_DIR="/opt/pixel-v2/logs"

@@ -112,6 +112,7 @@ services:
       PIXEL_MQ_USERNAME: admin
       PIXEL_MQ_PASSWORD: admin
       PIXEL_KAFKA_BOOTSTRAP: kafka:29092
+      ROUTE_FILE: "pacs008-complete.yaml"
       JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
     volumes:
       - ./routes:/opt/pixel-v2/routes:ro
@@ -149,6 +150,7 @@ services:
       PIXEL_MQ_USERNAME: admin
       PIXEL_MQ_PASSWORD: admin
       PIXEL_KAFKA_BOOTSTRAP: kafka:29092
+      ROUTE_FILE: "pacs008-log.yaml"
       JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
     volumes:
       - ./routes:/opt/pixel-v2/routes:ro
@@ -163,42 +165,7 @@ services:
       retries: 3
       start_period: 60s
 
-  # PIXEL-V2 Camel Runtime Application - Instance 3
-  pixel-v2-app-3:
-    build:
-      context: ./camel-runtime
-      dockerfile: Dockerfile
-    hostname: pixel-v2-app-3
-    container_name: pixel-v2-camel-3
-    depends_on:
-      - postgresql
-      - kafka
-    ports:
-      - "8082:8080"    # HTTP/REST API
-      - "8782:8778"    # JMX
-      - "9782:9779"    # Metrics
-    environment:
-      PIXEL_ENV: production
-      PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
-      PIXEL_DB_USERNAME: pixelv2
-      PIXEL_DB_PASSWORD: pixelv2_secure_password
-      PIXEL_MQ_URL: tcp://pixel-v2-activemq:61616
-      PIXEL_MQ_USERNAME: admin
-      PIXEL_MQ_PASSWORD: admin
-      PIXEL_KAFKA_BOOTSTRAP: kafka:29092
-      JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
-    volumes:
-      - ./routes:/opt/pixel-v2/routes:ro
-      - app_logs_3:/opt/pixel-v2/logs
-    networks:
-      - pixel-v2-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/observe/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+
 
   # pgAdmin for PostgreSQL management (optional)
   pgadmin:
@@ -249,12 +216,12 @@ services:
     ports:
       - "8090:8080"
     environment:
-      HAWTIO_PROXYWHITELIST: "pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-3,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.*"
+      HAWTIO_PROXYWHITELIST: "pixel-v2-app-1,pixel-v2-app-2,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.*"
       HAWTIO_PROXY_HOST: pixel-v2-app-1
       HAWTIO_PROXY_PORT: 8080
       HAWTIO_AUTH_ENABLED: "false"
       HAWTIO_LOCAL_ADDRESS_PROBING: "false"
-      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.proxyAllowlist=pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-3,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.* -Dhawtio.authenticationEnabled=false -Dhawtio.localAddressProbing=false"
+      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.proxyAllowlist=pixel-v2-app-1,pixel-v2-app-2,plocalhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.* -Dhawtio.authenticationEnabled=false -Dhawtio.localAddressProbing=false"
     networks:
       - pixel-v2-network
     restart: unless-stopped

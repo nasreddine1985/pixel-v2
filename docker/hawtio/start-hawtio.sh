@@ -10,8 +10,8 @@ echo "Port: ${HAWTIO_PORT}"
 echo "JVM Options: ${JAVA_OPTS}"
 
 # Set JVM options for Hawt.io - Use both proxyWhitelist and proxyAllowlist for compatibility
-JAVA_OPTS="${JAVA_OPTS} -Dhawtio.proxyWhitelist=${HAWTIO_PROXYWHITELIST:-pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-3,localhost,127.0.0.1,172.19.0.*}"
-JAVA_OPTS="${JAVA_OPTS} -Dhawtio.proxyAllowlist=${HAWTIO_PROXYWHITELIST:-pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-3,localhost,127.0.0.1,172.19.0.*}"
+JAVA_OPTS="${JAVA_OPTS} -Dhawtio.proxyWhitelist=${HAWTIO_PROXYWHITELIST:-pixel-v2-app-1,pixel-v2-app-2,localhost,127.0.0.1,172.19.0.*}"
+JAVA_OPTS="${JAVA_OPTS} -Dhawtio.proxyAllowlist=${HAWTIO_PROXYWHITELIST:-pixel-v2-app-1,pixel-v2-app-2,localhost,127.0.0.1,172.19.0.*}"
 JAVA_OPTS="${JAVA_OPTS} -Dhawtio.proxyHost=${HAWTIO_PROXY_HOST:-localhost}"
 JAVA_OPTS="${JAVA_OPTS} -Dhawtio.proxyPort=${HAWTIO_PROXY_PORT:-8080}"
 JAVA_OPTS="${JAVA_OPTS} -Dhawtio.authenticationEnabled=${HAWTIO_AUTH_ENABLED:-false}"
