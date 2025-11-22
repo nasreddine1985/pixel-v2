@@ -46,6 +46,35 @@ CREATE INDEX IF NOT EXISTS idx_tb_messages_source ON pixel_v2.tb_messages(source
 CREATE INDEX IF NOT EXISTS idx_tb_messages_received_at ON pixel_v2.tb_messages(received_at);
 CREATE INDEX IF NOT EXISTS idx_tb_messages_created_at ON pixel_v2.tb_messages(created_at);
 
+-- Create log events table for Camel route logging
+CREATE TABLE IF NOT EXISTS pixel_v2.tb_logevents (
+    id SERIAL PRIMARY KEY,
+    message_id VARCHAR(255),
+    correlation_id VARCHAR(255),
+    message_type VARCHAR(50),
+    source VARCHAR(100),
+    payload TEXT,
+    processing_status VARCHAR(50) DEFAULT 'LOGGED',
+    log_level VARCHAR(20) DEFAULT 'INFO',
+    route_id VARCHAR(255),
+    exchange_id VARCHAR(255),
+    error_message TEXT,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Index for better performance
+    CONSTRAINT idx_tb_logevents_message_id UNIQUE (message_id, timestamp)
+);
+
+-- Create indexes for log events queries
+CREATE INDEX IF NOT EXISTS idx_tb_logevents_correlation_id ON pixel_v2.tb_logevents(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_tb_logevents_status ON pixel_v2.tb_logevents(processing_status);
+CREATE INDEX IF NOT EXISTS idx_tb_logevents_type ON pixel_v2.tb_logevents(message_type);
+CREATE INDEX IF NOT EXISTS idx_tb_logevents_source ON pixel_v2.tb_logevents(source);
+CREATE INDEX IF NOT EXISTS idx_tb_logevents_timestamp ON pixel_v2.tb_logevents(timestamp);
+CREATE INDEX IF NOT EXISTS idx_tb_logevents_route_id ON pixel_v2.tb_logevents(route_id);
+CREATE INDEX IF NOT EXISTS idx_tb_logevents_log_level ON pixel_v2.tb_logevents(log_level);
+
 -- Create referential data table for validation
 CREATE TABLE IF NOT EXISTS pixel_v2.referential_data (
     id SERIAL PRIMARY KEY,
@@ -122,5 +151,5 @@ DO $$
 BEGIN
     RAISE NOTICE 'PIXEL-V2 PostgreSQL database initialization completed successfully!';
     RAISE NOTICE 'Database: %, Schema: pixel_v2', current_database();
-    RAISE NOTICE 'Tables created: tb_messages, referential_data, audit_log';
+    RAISE NOTICE 'Tables created: tb_messages, tb_logevents, referential_data, audit_log';
 END $$;

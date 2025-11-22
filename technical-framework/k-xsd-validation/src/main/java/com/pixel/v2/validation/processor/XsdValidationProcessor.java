@@ -1,18 +1,5 @@
 package com.pixel.v2.validation.processor;
 
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Component;
-import org.xml.sax.SAXException;
-
-import javax.xml.XMLConstants;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -22,6 +9,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+
+import javax.xml.XMLConstants;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+
+import org.apache.camel.Exchange;
+import org.apache.camel.Processor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Component;
+import org.xml.sax.SAXException;
 
 /**
  * XSD Validation Processor for validating XML messages against XSD schemas Supports schema caching
@@ -218,6 +219,15 @@ public class XsdValidationProcessor implements Processor {
      */
     private void validateXmlContent(String xmlContent, Schema schema, String xsdFileName,
             String validationMode) throws XsdValidationException {
+
+        // Skip validation for JSON content to prevent routing loops
+        if (xmlContent != null
+                && (xmlContent.trim().startsWith("{") || xmlContent.trim().startsWith("["))) {
+            logger.warn("[XSD-VALIDATION] ⚠️ Skipping XSD validation for JSON content - XSD: {}",
+                    xsdFileName);
+            return; // Skip validation for JSON content
+        }
+
         try {
             Validator validator = schema.newValidator();
 
