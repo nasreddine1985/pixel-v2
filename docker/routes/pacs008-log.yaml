@@ -32,10 +32,23 @@
             sessionTimeoutMs: 30000
             autoCommitIntervalMs: 5000
           steps:
-            - log:
-                message: "[PACS008-LOG-RECEIVER] Received message from topic 'pacs008-logs' with key: ${header.kafka.KEY}, partition: ${header.kafka.PARTITION}, offset: ${header.kafka.OFFSET}"
             - to:
                 uri: "direct:kafka-message-processing"
+
+- route:
+        id: "pacs008-flow-summary-kafka-consumer-route"
+        from:
+          uri: "kafka:pacs008-flow-summary"
+          parameters:
+            brokers: "kafka:29092"
+            groupId: "pacs008-flow-summary-processor-group"
+            autoOffsetReset: "latest"
+            maxPollRecords: 500
+            sessionTimeoutMs: 30000
+            autoCommitIntervalMs: 5000
+          steps:
+            - to:
+                uri: "direct:kafka-flow-summary-processing"
 
 - route:
         id: "pacs008-log-processing-route"
@@ -75,6 +88,43 @@
                   processingStatus: "${header.processingStatus}"
                   dataSource: "#dataSource"
                   tableName: "pixel_v2.tb_logevents"
+
+- route:
+        id: "pacs008-flow-summary-processing-route"
+        from:
+          uri: "direct:kafka-flow-summary-processing"
+          steps:
+            
+            # Parse the JSON flow summary message and extract fields for database persistence
+            - setHeader:
+                name: "messageId"
+                simple: "${uuid}"
+            - setHeader:
+                name: "correlationId"
+                simple: "FLOW-${date:now:yyyyMMddHHmmssSSS}"
+            - setHeader:
+                name: "messageType"
+                constant: "PACS008_FLOW_SUMMARY"
+            - setHeader:
+                name: "source"
+                constant: "KAFKA"
+            - setHeader:
+                name: "payload"
+                simple: "${body}"
+            - setHeader:
+                name: "processingStatus"
+                constant: "RECEIVED"
+            
+            # Persist flow summary message to database using k-db-tx-flow-summary kamelet
+            - to:
+                uri: "kamelet:k-db-tx-flow-summary"
+                parameters:
+                  messageId: "${header.messageId}"
+                  correlationId: "${header.correlationId}"
+                  messageType: "${header.messageType}"
+                  source: "${header.source}"
+                  payload: "${header.payload}"
+                  processingStatus: "${header.processingStatus}"
+                  dataSource: "#dataSource"
+                  tableName: "pixel_v2.tb_flow_summary"
                   
-            - log:
-                message: "[PACS008-LOG-PROCESSOR] ✅ Log message persisted to tb_logevents successfully - ID: ${header.messageId}, CorrelationId: ${header.correlationId}, MessageType: ${header.messageType}, Source: ${header.source}"

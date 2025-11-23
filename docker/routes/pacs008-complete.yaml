@@ -83,7 +83,7 @@
             simple: "${header.JMSMessageID}"
         - setHeader:
             name: "CorrelationId"
-            constant: "PACS008_BATCH"  # Fixed correlation ID for aggregation 
+            simple: "${header.JMSMessageID}"
         - setProperty:
             name: "CurrentStep"
             constant: "MESSAGE_RECEIPT"
@@ -102,9 +102,9 @@
         - to:
             uri: "kamelet:k-message-concat"
             parameters:
-              correlationId: "PACS008_BATCH"  # Fixed correlation ID for aggregation
-              size: 1000
-              timeout: 10000
+              correlationId: "${header.messageID}"  
+              size: 1
+              timeout: 1
               parallelProcessing: false
         - setProperty:
             name: "CurrentStep"
@@ -116,9 +116,6 @@
             uri: "kamelet:k-kafka-message-publisher?topic=pacs008-logs&brokers=kafka:29092&key=${header.CorrelationId}&logMessage=${header.LogMessage}"
             
         # Step 3: Database Persistence using k-db-tx kamelet
-        - setHeader:
-            name: "messageId"
-            simple: "${uuid}"
         - setHeader:
             name: "messageType"
             constant: "PACS008"

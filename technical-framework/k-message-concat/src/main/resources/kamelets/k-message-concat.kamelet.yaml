@@ -74,7 +74,7 @@ spec:
                       correlationExpression:
                         simple: "${header.CorrelationId}"
                       completionSize: "{{size:1}}"
-                      completionTimeout: "{{timeout:5000}}"
+                      completionTimeout: "{{timeout:1}}"
                       eagerCheckCompletion: true
                       ignoreInvalidCorrelationKeys: true
                   

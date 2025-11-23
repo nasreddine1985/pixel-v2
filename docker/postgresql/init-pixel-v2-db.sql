@@ -77,6 +77,37 @@ CREATE INDEX IF NOT EXISTS idx_tb_logevents_timestamp ON pixel_v2.tb_logevents(t
 CREATE INDEX IF NOT EXISTS idx_tb_logevents_route_id ON pixel_v2.tb_logevents(route_id);
 CREATE INDEX IF NOT EXISTS idx_tb_logevents_log_level ON pixel_v2.tb_logevents(log_level);
 
+-- Create flow summary table for flow tracking and monitoring
+CREATE TABLE IF NOT EXISTS pixel_v2.tb_flow_summary (
+    id SERIAL PRIMARY KEY,
+    message_id VARCHAR(255),
+    correlation_id VARCHAR(255),
+    message_type VARCHAR(50),
+    source VARCHAR(100),
+    payload TEXT,
+    processing_status VARCHAR(50) DEFAULT 'RECEIVED',
+    flow_code VARCHAR(100),
+    step VARCHAR(100),
+    queue VARCHAR(255),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Index for better performance
+    CONSTRAINT idx_tb_flow_summary_message_id_timestamp UNIQUE (message_id, timestamp)
+);
+
+-- Create indexes for flow summary queries
+CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_correlation_id ON pixel_v2.tb_flow_summary(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_status ON pixel_v2.tb_flow_summary(processing_status);
+CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_type ON pixel_v2.tb_flow_summary(message_type);
+CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_source ON pixel_v2.tb_flow_summary(source);
+CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_timestamp ON pixel_v2.tb_flow_summary(timestamp);
+CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_flow_code ON pixel_v2.tb_flow_summary(flow_code);
+CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_step ON pixel_v2.tb_flow_summary(step);
+CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_queue ON pixel_v2.tb_flow_summary(queue);
+
 -- Create referential data table for validation
 CREATE TABLE IF NOT EXISTS pixel_v2.referential_data (
     id SERIAL PRIMARY KEY,
@@ -141,6 +172,10 @@ CREATE TRIGGER update_tb_messages_updated_at
     BEFORE UPDATE ON pixel_v2.tb_messages
     FOR EACH ROW EXECUTE FUNCTION pixel_v2.update_updated_at_column();
 
+CREATE TRIGGER update_tb_flow_summary_updated_at
+    BEFORE UPDATE ON pixel_v2.tb_flow_summary
+    FOR EACH ROW EXECUTE FUNCTION pixel_v2.update_updated_at_column();
+
 CREATE TRIGGER update_referential_data_updated_at
     BEFORE UPDATE ON pixel_v2.referential_data
     FOR EACH ROW EXECUTE FUNCTION pixel_v2.update_updated_at_column();
@@ -153,5 +188,5 @@ DO $$
 BEGIN
     RAISE NOTICE 'PIXEL-V2 PostgreSQL database initialization completed successfully!';
     RAISE NOTICE 'Database: %, Schema: pixel_v2', current_database();
-    RAISE NOTICE 'Tables created: tb_messages, tb_logevents, referential_data, audit_log';
+    RAISE NOTICE 'Tables created: tb_messages, tb_logevents, tb_flow_summary, referential_data, audit_log';
 END $$;
