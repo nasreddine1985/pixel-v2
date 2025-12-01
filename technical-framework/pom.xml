@@ -30,6 +30,7 @@
         <module>k-xsl-transformation</module>
         <module>k-message-concat</module>
         <module>k-message-split</module>
+        <module>k-log-flow-summary</module>
     </modules>
 
     <properties>

@@ -238,12 +238,38 @@ camel.component.kafka.configuration.max-poll-records=500
 
 ## 🚢 Deployment
 
-### Docker Deployment
+### Clean Deployment (Recommended)
+
+For a complete clean deployment that removes all old JAR files and ensures fresh builds:
 
 ```bash
-docker build -t pixel-v2/ingestion:latest ingestion/
-docker build -t pixel-v2/business:latest business/
-docker build -t pixel-v2/distribution:latest distribution/
+# Run the cleanup and deployment script
+./scripts/cleanup-and-deploy.sh
+```
+
+This script will:
+
+- 🧹 Remove all old JAR files from flow-ch and technical-framework
+- 🔨 Build fresh JAR files for all modules
+- 📦 Copy updated technical framework JARs
+- 🚀 Deploy to Docker with the correct JAR name
+- 🔄 Restart containers with fresh code
+
+### Manual Docker Deployment
+
+```bash
+# Build and copy JARs manually
+mvn clean install -DskipTests
+cp technical-framework/*/target/*.jar flow-ch/technical-jars/
+cd flow-ch && mvn clean install -DskipTests
+cp target/pixel-camel-app-1.0.0.jar ../docker/camel-runtime-spring/pixel-v2-app-spring-1-1.0.0.jar
+
+# Deploy to Docker
+cd ../docker
+docker-compose stop pixel-v2-app-spring-1
+docker-compose rm -f pixel-v2-app-spring-1
+docker rmi pixel-v2-app-spring-1:latest || true
+docker-compose up -d pixel-v2-app-spring-1
 ```
 
 ### Kubernetes Deployment

@@ -14,8 +14,7 @@
     <modules>
         <module>technical-framework</module>
         <module>referentiel</module>
-        <module>pacs008-flow</module>
-        <module>integration-tests</module>
+        <module>flow-ch</module>
     </modules>
 
     <properties>

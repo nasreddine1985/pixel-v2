@@ -1,5 +1,3 @@
-version: '3.8'
-
 # PIXEL-V2 Docker Infrastructure
 # Complete stack for PIXEL-V2 application deployment
 
@@ -92,7 +90,7 @@ services:
   # PIXEL-V2 Camel Runtime Application - Instance 1
   pixel-v2-app-1:
     build:
-      context: ./camel-runtime
+      context: ./camel-runtime-jbang
       dockerfile: Dockerfile
     hostname: pixel-v2-app-1
     container_name: pixel-v2-camel-1
@@ -130,7 +128,7 @@ services:
   # PIXEL-V2 Camel Runtime Application - Instance 2
   pixel-v2-app-2:
     build:
-      context: ./camel-runtime
+      context: ./camel-runtime-jbang
       dockerfile: Dockerfile
     hostname: pixel-v2-app-2
     container_name: pixel-v2-camel-2
@@ -165,7 +163,58 @@ services:
       retries: 3
       start_period: 60s
 
-
+  # PIXEL-V2 Camel Spring Boot Application
+  pixel-v2-app-spring-1:
+    build: 
+      context: ./camel-runtime-spring
+      dockerfile: Dockerfile
+    image: pixel-v2-app-spring-1:latest
+    container_name: pixel-v2-app-spring-1
+    hostname: pixel-v2-app-spring-1
+    restart: unless-stopped
+    depends_on:
+      - postgresql
+      - kafka
+      - activemq
+    environment:
+      # Spring Boot Configuration
+      SPRING_PROFILES_ACTIVE: prod
+      JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Djava.security.egd=file:/dev/./urandom -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8778 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+      
+      # Database Configuration
+      PIXEL_DB_HOST: postgresql
+      PIXEL_DB_PORT: 5432
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/pixelv2
+      SPRING_DATASOURCE_USERNAME: pixelv2
+      SPRING_DATASOURCE_PASSWORD: pixelv2_secure_password
+      
+      # ActiveMQ Configuration  
+      PIXEL_ACTIVEMQ_HOST: activemq
+      PIXEL_ACTIVEMQ_PORT: 61616
+      PIXEL_ACTIVEMQ_BROKER_URL: tcp://activemq:61616
+      PIXEL_ACTIVEMQ_USERNAME: admin
+      PIXEL_ACTIVEMQ_PASSWORD: admin
+      
+      # Kafka Configuration
+      CAMEL_COMPONENT_KAFKA_BROKERS: kafka:29092
+      
+      # Application Configuration
+      SERVER_PORT: 8080
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,camel,jolokia,prometheus
+      
+    ports:
+      - "8082:8080"   # Application port
+      - "8782:8778"   # JMX port
+    volumes:
+      - pixel_v2_app_spring_1_logs:/opt/pixel-v2-app-spring-1/logs
+    networks:
+      - pixel-v2-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # pgAdmin for PostgreSQL management (optional)
   pgadmin:
@@ -213,15 +262,16 @@ services:
     container_name: pixel-v2-hawtio
     depends_on:
       - pixel-v2-app-1
+      - pixel-v2-app-spring-1
     ports:
       - "8090:8080"
     environment:
-      HAWTIO_PROXYWHITELIST: "pixel-v2-app-1,pixel-v2-app-2,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.*"
+      HAWTIO_PROXYWHITELIST: "pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-spring-1,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.*"
       HAWTIO_PROXY_HOST: pixel-v2-app-1
       HAWTIO_PROXY_PORT: 8080
       HAWTIO_AUTH_ENABLED: "false"
       HAWTIO_LOCAL_ADDRESS_PROBING: "false"
-      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.proxyAllowlist=pixel-v2-app-1,pixel-v2-app-2,plocalhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.* -Dhawtio.authenticationEnabled=false -Dhawtio.localAddressProbing=false"
+      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.proxyAllowlist=pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-spring-1,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.* -Dhawtio.authenticationEnabled=false -Dhawtio.localAddressProbing=false"
     networks:
       - pixel-v2-network
     restart: unless-stopped
@@ -240,8 +290,8 @@ volumes:
     name: pixel-v2-app-logs-1
   app_logs_2:
     name: pixel-v2-app-logs-2
-  app_logs_3:
-    name: pixel-v2-app-logs-3
+  pixel_v2_app_spring_1_logs:
+    name: pixel-v2-app-spring-1-logs
 
 # Networks
 networks:

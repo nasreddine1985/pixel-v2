@@ -1,0 +1,186 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-log-flow-summary
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "4.1.0"
+    camel.apache.org/kamelet.icon: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4K"
+    camel.apache.org/provider: "PIXEL-V2"
+    camel.apache.org/kamelet.group: "PIXEL-V2 Logging"
+    camel.apache.org/kamelet.namespace: "PIXEL-V2"
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "Log Flow Summary"
+    description: |-
+      Construct and publish flow summary log messages to Kafka for PACS008 payment processing monitoring.
+      This kamelet creates structured JSON log messages containing flow status, processing metrics, 
+      and partner information, then publishes them to a specified Kafka topic.
+    required:
+      - step
+      - kafkaTopicName
+    type: object
+    properties:
+      step:
+        title: Flow Step
+        description: Current processing step status
+        type: string
+        enum: ["IN_PROGRESS", "COMPLETED", "ERROR"]
+        example: "IN_PROGRESS"
+      kafkaTopicName:
+        title: Kafka Topic Name
+        description: Name of the Kafka topic to publish log messages
+        type: string
+        example: "pacs008-flow-summary"
+      brokers:
+        title: Kafka Brokers
+        description: Comma-separated list of Kafka broker addresses
+        type: string
+        default: "pixel-v2-kafka:9092"
+        example: "pixel-v2-kafka:9092"
+      keySerializer:
+        title: Key Serializer
+        description: Serializer class for message keys
+        type: string
+        default: "org.apache.kafka.common.serialization.StringSerializer"
+      valueSerializer:
+        title: Value Serializer
+        description: Serializer class for message values
+        type: string
+        default: "org.apache.kafka.common.serialization.StringSerializer"
+  dependencies:
+    - "camel:kamelet"
+    - "camel:kafka"
+    - "camel:jackson"
+    - "camel:jsonpath"
+    - "camel:groovy"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - setHeader:
+            name: logMessage
+            groovy: |
+              // Determine flow status based on step
+              def flowStatusCode = "STARTED"
+              def flowComment = "PACS008 payment processing started"
+              def lastLogStatusCode = "SUCCESS"
+              def nbOutCompleted = 0
+              def nbError = 0
+              def endFlowDatetime = null
+              def endFlowDate = null
+              def rootErrorCode = null
+              def rootErrorLogId = null
+              def rootErrorDatetime = null
+              
+              switch(exchange.getIn().getHeader("step")) {
+                case "IN_PROGRESS":
+                  flowStatusCode = "IN_PROGRESS"
+                  flowComment = "PACS008 payment processing in progress"
+                  break
+                case "COMPLETED":
+                  flowStatusCode = "COMPLETED"
+                  flowComment = "PACS008 payment processing completed successfully"
+                  nbOutCompleted = 1
+                  endFlowDatetime = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").format(new Date())
+                  endFlowDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date())
+                  break
+                case "ERROR":
+                  flowStatusCode = "ERROR"
+                  flowComment = "PACS008 payment processing failed with error"
+                  nbError = 1
+                  lastLogStatusCode = "ERROR"
+                  rootErrorCode = "PROCESSING_ERROR"
+                  rootErrorLogId = "ERROR-" + new java.text.SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date())
+                  rootErrorDatetime = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").format(new Date())
+                  endFlowDatetime = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").format(new Date())
+                  endFlowDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date())
+                  break
+              }
+              
+              // Get current datetime strings
+              def currentDateTime = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS").format(new Date())
+              def currentDate = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new Date())
+              def logId = "LOG-" + new java.text.SimpleDateFormat("yyyyMMddHHmmssSSS").format(new Date())
+              
+              // Get message ID, default if not present
+              def messageId = exchange.getIn().getHeader("MessageId") ?: exchange.getIn().getHeader("JMSMessageID") ?: exchange.getIn().getHeader("MessageType", "PACS008") + "-" + UUID.randomUUID().toString()
+              
+              // Get body size safely
+              def bodySize = "0B"
+              try {
+                def body = exchange.getIn().getBody()
+                if (body != null) {
+                  if (body instanceof String) {
+                    bodySize = body.length() + "B"
+                  } else if (body instanceof byte[]) {
+                    bodySize = ((byte[])body).length + "B"
+                  } else {
+                    bodySize = body.toString().length() + "B"
+                  }
+                }
+              } catch (Exception e) {
+                bodySize = "0B"
+              }
+              
+              // Construct the JSON log message
+              def logMessage = [
+                flowOccurId: messageId,
+                flowCode: "PACS008",
+                flowStatusCode: flowStatusCode,
+                flowCountryCode: "FR",
+                flowCountryId: 250,
+                flowTypeId: 1,
+                flowComment: flowComment,
+                nbOutExpected: 1,
+                nbOutCompleted: nbOutCompleted,
+                nbError: nbError,
+                nbRemitance: 0,
+                nbTransaction: 1,
+                nbReplay: 0,
+                issuingPartnerCode: "MQ_ACTIVEMQ",
+                issuingPartnerLink: "tcp://pixel-v2-activemq:61616",
+                recipientPartnerCode: "KAFKA_CLUSTER",
+                recipientPartnerLink: "kafka:29092",
+                lastLogId: logId,
+                lastLogComponent: "pacs008-processing-flow",
+                lastLogDatetime: currentDateTime,
+                lastLogStatusCode: lastLogStatusCode,
+                lastUpdateDatetime: currentDateTime,
+                lastUpdateUser: "system",
+                rootErrorCode: rootErrorCode,
+                rootErrorLogId: rootErrorLogId,
+                rootErrorDatetime: rootErrorDatetime,
+                inputFilePath: "pacs008.input.queue",
+                inputFileSize: bodySize,
+                refFlowId: messageId,
+                beginFlowDatetime: currentDateTime,
+                endFlowDatetime: endFlowDatetime,
+                currentClientDatetime: currentDateTime,
+                beginFlowDate: currentDate,
+                endFlowDate: endFlowDate,
+                lastUpdateDate: currentDate,
+                replayId: null,
+                region: "EU"
+              ]
+              
+              // Convert to JSON string
+              return new groovy.json.JsonBuilder(logMessage).toString()
+        
+        - log:
+            message: "Publishing flow summary log: step=${header.step}, topic={{kafkaTopicName}}, message=${header.logMessage}"
+            
+        - to:
+            uri: "kamelet:k-kafka-message-publisher"
+            parameters:
+              topic: "{{kafkaTopicName}}"
+              brokers: "{{brokers}}"
+              key: "${header.MessageId}"
+              keySerializer: "{{keySerializer}}"
+              valueSerializer: "{{valueSerializer}}"
+              logMessage: "${header.logMessage}"
+              
+        - log:
+            message: "Flow summary log published successfully to topic {{kafkaTopicName}}"
