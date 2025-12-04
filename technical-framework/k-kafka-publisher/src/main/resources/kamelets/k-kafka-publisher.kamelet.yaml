@@ -1,12 +1,12 @@
 apiVersion: camel.apache.org/v1alpha1
 kind: Kamelet
 metadata:
-  name: k-kafka-message-publisher
+  name: k-kafka-publisher
   labels:
     camel.apache.org/kamelet.type: "sink"
 spec:
   definition:
-    title: "K-Kafka Message Publisher"
+    title: "K-Kafka Publisher"
     description: "Publishes messages to Kafka topics with configurable serializers and delivery options"
     required: [topic, brokers]
     properties:
@@ -59,10 +59,6 @@ spec:
         type: boolean
         description: "Enable idempotent producer to avoid duplicate messages"
         default: false
-      logMessage:
-        title: "Log Message"
-        type: string
-        description: "Optional log message to publish instead of the body. When provided, this message will be sent to Kafka instead of the exchange body, preserving the original message flow."
       sendHeaders:
         title: "Send Headers"
         type: boolean
@@ -82,31 +78,10 @@ spec:
         - setHeader:
             name: "kafka.KEY"
             simple: "{{key}}"
-        # Use logMessage if provided, otherwise use body
-        - choice:
-            when:
-              - simple: "'{{logMessage:}}' != ''"
-                steps:
-                  # Store original body in exchange property (not header to avoid sending to Kafka)
-                  - setProperty:
-                      name: "OriginalBodyBackup"
-                      simple: "${body}"
-                  - setBody:
-                      simple: "{{logMessage}}"
-                  - log:
-                      message: "[K-KAFKA-MESSAGE-PUBLISHER] Publishing log message to topic: {{topic}}, Key: ${header.kafka.KEY}"
-                  - to:
-                      uri: "kafka:{{topic}}?brokers={{brokers}}&keySerializer={{keySerializer}}&valueSerializer={{valueSerializer}}&requestTimeoutMs={{requestTimeoutMs}}&connectionMaxIdleMs={{connectionMaxIdleMs}}&retries={{retries}}&requestRequiredAcks={{requestRequiredAcks}}&enableIdempotence={{enableIdempotence}}"
-                  # Restore original body from exchange property
-                  - setBody:
-                      simple: "${exchangeProperty.OriginalBodyBackup}"
-                  - log:
-                      message: "[K-KAFKA-MESSAGE-PUBLISHER] ✅ Log message published to topic: {{topic}}, original body restored"
-            otherwise:
-              steps:
-                - log:
-                    message: "[K-KAFKA-MESSAGE-PUBLISHER] Publishing message to topic: {{topic}}, Key: ${header.kafka.KEY}, MessageSize: ${body.length()}"
-                - to:
-                    uri: "kafka:{{topic}}?brokers={{brokers}}&keySerializer={{keySerializer}}&valueSerializer={{valueSerializer}}&requestTimeoutMs={{requestTimeoutMs}}&connectionMaxIdleMs={{connectionMaxIdleMs}}&retries={{retries}}&requestRequiredAcks={{requestRequiredAcks}}&enableIdempotence={{enableIdempotence}}"
-                - log:
-                    message: "[K-KAFKA-MESSAGE-PUBLISHER] ✅ Message successfully published to topic: {{topic}}, Key: ${header.kafka.KEY}"
+        # Publish message to Kafka
+        - log:
+            message: "[K-KAFKA-PUBLISHER] Publishing message to topic: {{topic}}, Key: ${header.kafka.KEY}, MessageSize: ${body.length()}"
+        - to:
+            uri: "kafka:{{topic}}?brokers={{brokers}}&keySerializer={{keySerializer}}&valueSerializer={{valueSerializer}}&requestTimeoutMs={{requestTimeoutMs}}&connectionMaxIdleMs={{connectionMaxIdleMs}}&retries={{retries}}&requestRequiredAcks={{requestRequiredAcks}}&enableIdempotence={{enableIdempotence}}"
+        - log:
+            message: "[K-KAFKA-PUBLISHER] ✅ Message successfully published to topic: {{topic}}, Key: ${header.kafka.KEY}"

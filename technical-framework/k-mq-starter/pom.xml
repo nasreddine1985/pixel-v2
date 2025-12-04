@@ -9,10 +9,10 @@
         <version>1.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>k-mq-message-receiver</artifactId>
+    <artifactId>k-mq-starter</artifactId>
     <packaging>jar</packaging>
 
-    <name>k-mq-message-receiver kamelet</name>
+    <name>k-mq-starter kamelet</name>
 
     <dependencies>
         <!-- Core Apache Camel dependencies for JMS and Kamelet support -->

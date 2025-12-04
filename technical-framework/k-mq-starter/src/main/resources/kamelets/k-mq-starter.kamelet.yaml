@@ -1,0 +1,108 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-mq-starter
+  labels:
+    camel.apache.org/kamelet.type: "source"
+spec:
+  definition:
+    title: "K-MQ Starter"
+    description: |-
+      JMS Queue listener that processes messages and forwards to k-log-flow-summary
+    required:
+      - mqFileName
+      - connectionFactory
+    type: object
+    properties:
+      mqFileName:
+        title: MQ File Name
+        description: Name of the JMS queue to listen to
+        type: string
+      connectionFactory:
+        title: Connection Factory
+        description: JMS connection factory bean name
+        type: string
+        default: "jmsConnectionFactory"
+      concurrentConsumers:
+        title: Concurrent Consumers
+        description: Number of concurrent consumers
+        type: integer
+        default: 1
+      flowCode:
+        title: Flow Code
+        description: Flow processing code
+        type: string
+        default: "PACS008"
+      messageType:
+        title: Message Type
+        description: Type of message being processed
+        type: string
+        default: "PACS008"
+      kafkaTopicName:
+        title: Kafka Topic Name
+        description: Kafka topic for flow summary logs
+        type: string
+        default: "flow-summary"
+      sinkEndpoint:
+        title: Sink Endpoint
+        description: Endpoint where processed messages should be sent
+        type: string
+        default: "direct:pacs008-main-processing"
+      brokers:
+        title: Kafka Brokers
+        description: Kafka brokers for flow summary
+        type: string
+        default: "pixel-v2-kafka:29092"
+      flowCountryCode:
+        title: Flow Country Code
+        description: Country code for flow processing
+        type: string
+      flowCountryId:
+        title: Flow Country ID
+        description: Country ID for flow processing
+        type: string
+  template:
+    from:
+      uri: "jms:queue:{{mqFileName}}?connectionFactory=#{{connectionFactory}}&concurrentConsumers={{concurrentConsumers}}"
+      steps:
+        - log:
+            message: "[K-MQ-STARTER] - Message received from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}, CorrelationId: ${header.JMSCorrelationID}"
+        - setHeader:
+            name: "ReceivedTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - setHeader:
+            name: "SourceQueue"
+            simple: "{{mqFileName}}"
+        - setHeader:
+            name: "queueName"
+            simple: "{{mqFileName}}"
+        - setHeader:
+            name: "flowCode"
+            constant: "{{flowCode}}"
+        - setHeader:
+            name: "MessageType"
+            constant: "{{messageType}}"
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - setHeader:
+            name: "step"
+            constant: "IN_PROGRESS"
+        - setHeader:
+            name: "kafkaTopicName"
+            constant: "{{kafkaTopicName}}"
+        - setHeader:
+          name: "flowCountryCode"
+          simple: "{{flowCountryCode}}"
+        - setHeader:
+          name: "flowCountryId"
+          simple: "{{flowCountryId}}"
+        - wireTap:
+            uri: "kamelet:k-log-flow-summary"
+            parameters:
+              step: "${header.step}"
+              kafkaTopicName: "${header.kafkaTopicName}"
+              brokers: "{{brokers}}"
+        - log:
+            message: "[K-MQ-STARTER] - Processing completed for message from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}"
+        - to: "{{sinkEndpoint}}"

@@ -177,7 +177,7 @@
         <!-- Technical Framework Dependencies -->
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-mq-message-receiver</artifactId>
+            <artifactId>k-mq-starter</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 
@@ -249,7 +249,7 @@
 
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-kafka-message-publisher</artifactId>
+            <artifactId>k-kafka-publisher</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 
@@ -358,9 +358,10 @@
                             <outputDirectory>${project.build.outputDirectory}/kamelets</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>${project.build.directory}/extracted-resources</directory>
+                                    <directory>
+                                        ${project.build.directory}/extracted-resources/kamelets</directory>
                                     <includes>
-                                        <include>**/*.kamelet.yaml</include>
+                                        <include>*.kamelet.yaml</include>
                                     </includes>
                                 </resource>
                             </resources>
@@ -368,6 +369,8 @@
                     </execution>
                 </executions>
             </plugin>
+
+
         </plugins>
     </build>
 

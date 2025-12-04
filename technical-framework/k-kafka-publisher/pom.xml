@@ -9,10 +9,10 @@
         <version>1.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>k-kafka-message-publisher</artifactId>
+    <artifactId>k-kafka-publisher</artifactId>
     <packaging>jar</packaging>
 
-    <name>k-kafka-message-publisher kamelet</name>
+    <name>k-kafka-publisher kamelet</name>
 
     <dependencies>
         <!-- Core Apache Camel dependencies for Kafka and Kamelet support -->

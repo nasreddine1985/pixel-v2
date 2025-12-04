@@ -77,32 +77,32 @@ spec:
 
           - setHeader:
               name: "SqlMessageId"
-              simple: "{{messageId}}"
+              simple: "${header.messageId}"
               
           - setHeader:
               name: "SqlCorrelationId"
-              simple: "{{correlationId}}"
+              simple: "${header.correlationId}"
               
           - setHeader:
               name: "SqlMessageType"
-              simple: "{{messageType}}"
+              simple: "${header.messageType}"
               
           - setHeader:
               name: "SqlSource"
-              simple: "{{source}}"
+              simple: "${header.source}"
               
           - setHeader:
               name: "SqlPayload"
-              simple: "{{payload}}"
+              simple: "${body}"
               
           - setHeader:
               name: "SqlProcessingStatus"
-              simple: "{{processingStatus}}"
+              simple: "${header.processingStatus}"
 
           # Check if body is a collection and batch processing is enabled
           - choice:
               when:
-                - simple: "{{enableBatchProcessing}} == true && ${body} is 'java.util.Collection'"
+                - simple: "${header.enableBatchProcessing} == true && ${body} is 'java.util.Collection'"
                   steps:
                     - log:
                         message: "k-db-tx-logevents: Processing batch of ${body.size()} logevents"
@@ -178,14 +178,14 @@ spec:
                             
                         - setHeader:
                             name: "PersistenceRecordId"
-                            simple: "{{messageId}}"
+                            simple: "${header.messageId}"
                             
                         - setHeader:
                             name: "PersistenceOperation"
                             constant: "INSERT"
                             
                         - log:
-                            message: "k-db-tx-logevents: ✅ Single message persisted successfully - ID={{messageId}}, Table={{tableName}}"
+                            message: "k-db-tx-logevents: ✅ Single message persisted successfully - ID=${header.messageId}, Table=${header.tableName}"
                             loggingLevel: "INFO"
                       doCatch:
                         - exception: ["java.lang.Exception"]
@@ -203,7 +203,7 @@ spec:
                                 constant: "INSERT_FAILED"
                                 
                             - log:
-                                message: "k-db-tx-logevents: ❌ Single message persistence failed - ID={{messageId}}, Error=${exception.message}"
+                                message: "k-db-tx-logevents: ❌ Single message persistence failed - ID=${header.messageId}, Error=${exception.message}"
                                 loggingLevel: "ERROR"
                                 
                             # Re-throw exception so parent route can catch it and route to error handler
@@ -212,5 +212,5 @@ spec:
                                 message: "Database persistence failed: ${exception.message}"
 
           - log:
-              message: "k-db-tx-logevents: Persistence completed - Status=${header.PersistenceStatus}, ID={{messageId}}"
+              message: "k-db-tx-logevents: Persistence completed - Status=${header.PersistenceStatus}, ID=${header.messageId}"
               loggingLevel: "DEBUG"

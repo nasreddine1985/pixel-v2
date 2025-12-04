@@ -79,6 +79,14 @@ public class CamelConfiguration {
     }
 
     /**
+     * JMS Connection Factory bean for route references
+     */
+    @Bean
+    public ConnectionFactory jmsConnectionFactory() {
+        return cachingConnectionFactory();
+    }
+
+    /**
      * JMS Component for Camel
      */
     @Bean
@@ -90,4 +98,5 @@ public class CamelConfiguration {
         jms.setMaxConcurrentConsumers(10);
         return jms;
     }
+
 }
