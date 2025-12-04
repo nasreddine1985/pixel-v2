@@ -1,28 +1,29 @@
-package com.pixel.v2.kafka.receiver.processor;
+package com.pixel.v2.kafka.starter.processor;
 
-import com.pixel.v2.kafka.receiver.processor.KafkaMessageProcessor;
 import org.apache.camel.Exchange;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.apache.camel.support.DefaultExchange;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
- * Unit tests for KafkaMessageProcessor
+ * Unit tests for KafkaStarterProcessor
  */
 @ExtendWith(MockitoExtension.class)
-public class KafkaMessageProcessorTest {
+public class KafkaStarterProcessorTest {
 
-    private KafkaMessageProcessor processor;
+    private KafkaStarterProcessor processor;
     private Exchange exchange;
 
     @BeforeEach
     void setUp() {
-        processor = new KafkaMessageProcessor();
+        processor = new KafkaStarterProcessor();
         DefaultCamelContext camelContext = new DefaultCamelContext();
         exchange = new DefaultExchange(camelContext);
     }

@@ -1,21 +1,21 @@
-package com.pixel.v2.kafka.receiver.processor;
-
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
-import org.springframework.stereotype.Component;
+package com.pixel.v2.kafka.starter.processor;
 
 import java.time.OffsetDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.camel.Exchange;
+import org.apache.camel.Processor;
+import org.springframework.stereotype.Component;
+
 /**
- * Kafka message processor for handling consumed messages
+ * Kafka starter processor for handling consumed messages
  * Enriches messages with additional metadata and processing information
  */
-@Component("kafkaMessageProcessor")
-public class KafkaMessageProcessor implements Processor {
+@Component("kafkaStarterProcessor")
+public class KafkaStarterProcessor implements Processor {
 
-    private static final Logger logger = Logger.getLogger(KafkaMessageProcessor.class.getName());
+    private static final Logger logger = Logger.getLogger(KafkaStarterProcessor.class.getName());
 
     @Override
     public void process(Exchange exchange) throws Exception {
@@ -28,12 +28,12 @@ public class KafkaMessageProcessor implements Processor {
             String offset = exchange.getIn().getHeader("kafkaOffset", String.class);
             String key = exchange.getIn().getHeader("kafkaKey", String.class);
             
-            logger.info(String.format("[KAFKA-PROCESSOR] Processing message from topic '%s', partition: %s, offset: %s, key: %s", 
+            logger.info(String.format("[KAFKA-STARTER-PROCESSOR] Processing message from topic '%s', partition: %s, offset: %s, key: %s", 
                 topic, partition, offset, key));
             
             // Validate message body
             if (messageBody == null || messageBody.trim().isEmpty()) {
-                logger.warning("[KAFKA-PROCESSOR] Received empty message body");
+                logger.warning("[KAFKA-STARTER-PROCESSOR] Received empty message body");
                 exchange.getIn().setHeader("processingError", "Empty message body received from Kafka");
                 return;
             }
@@ -51,11 +51,11 @@ public class KafkaMessageProcessor implements Processor {
             exchange.getIn().setHeader("kafkaProcessed", true);
             exchange.getIn().setHeader("consumerProcessingTime", System.currentTimeMillis());
             
-            logger.info(String.format("[KAFKA-PROCESSOR] Message processed successfully - Type: %s, Length: %d bytes", 
+            logger.info(String.format("[KAFKA-STARTER-PROCESSOR] Message processed successfully - Type: %s, Length: %d bytes", 
                 messageType, messageBody.length()));
                 
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "[KAFKA-PROCESSOR] Error processing Kafka message", e);
+            logger.log(Level.SEVERE, "[KAFKA-STARTER-PROCESSOR] Error processing Kafka message", e);
             exchange.getIn().setHeader("processingError", e.getMessage());
             exchange.getIn().setHeader("processingStatus", "ERROR");
             throw e;

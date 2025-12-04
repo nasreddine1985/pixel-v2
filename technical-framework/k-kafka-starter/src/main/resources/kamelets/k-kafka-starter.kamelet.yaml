@@ -1,7 +1,7 @@
 apiVersion: camel.apache.org/v1
 kind: Kamelet
 metadata:
-  name: k-kafka-message-receiver
+  name: k-kafka-starter
   labels:
     camel.apache.org/kamelet.type: "source"
     camel.apache.org/kamelet.group: "Kafka"
@@ -12,8 +12,8 @@ metadata:
     camel.apache.org/provider: "Pixel V2"
 spec:
   definition:
-    title: "Kafka Message Receiver"
-    description: "Receives messages from Kafka topics and routes them for processing"
+    title: "Kafka Starter"
+    description: "Starts Kafka message consumption and routes them for processing"
     required:
       - bootstrapServers
       - topic
@@ -93,7 +93,7 @@ spec:
       steps:
         - log:
             loggingLevel: INFO
-            message: "[KAFKA-RECEIVER] Received message from topic '{{topic}}' with key: ${header.kafka.KEY}, partition: ${header.kafka.PARTITION}, offset: ${header.kafka.OFFSET}"
+            message: "[KAFKA-STARTER] Received message from topic '{{topic}}' with key: ${header.kafka.KEY}, partition: ${header.kafka.PARTITION}, offset: ${header.kafka.OFFSET}"
         - setHeader:
             name: messageSource
             constant: "KAFKA_TOPIC"
@@ -123,6 +123,6 @@ spec:
             simple: "${header.kafka.TIMESTAMP}"
         - log:
             loggingLevel: INFO
-            message: "[KAFKA-RECEIVER] Message enriched with Kafka metadata, routing to: {{routingEndpoint}}"
+            message: "[KAFKA-STARTER] Message enriched with Kafka metadata, routing to: {{routingEndpoint}}"
         - to:
             uri: "{{routingEndpoint}}"

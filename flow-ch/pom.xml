@@ -183,7 +183,7 @@
 
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-kafka-message-receiver</artifactId>
+            <artifactId>k-kafka-starter</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 

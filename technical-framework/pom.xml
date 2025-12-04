@@ -24,7 +24,7 @@
         <module>k-ingestion-technical-validation</module>
         <module>k-payment-idempotence-helper</module>
         <module>k-log-tx</module>
-        <module>k-kafka-message-receiver</module>
+        <module>k-kafka-starter</module>
         <module>k-kafka-publisher</module>
         <module>k-xsd-validation</module>
         <module>k-xsl-transformation</module>

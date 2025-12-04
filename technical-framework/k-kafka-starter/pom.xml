@@ -11,9 +11,9 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>k-kafka-message-receiver</artifactId>
-    <name>K-Kafka Message Receiver Kamelet</name>
-    <description>Kafka message receiver kamelet for consuming messages from Kafka topics</description>
+    <artifactId>k-kafka-starter</artifactId>
+    <name>K-Kafka Starter Kamelet</name>
+    <description>Kafka starter kamelet for consuming messages from Kafka topics</description>
 
     <dependencies>
         <!-- Spring Boot Starter -->

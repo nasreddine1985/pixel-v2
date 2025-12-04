@@ -1,9 +1,12 @@
-package com.pixel.v2.kafka.receiver;
+package com.pixel.v2.kafka.starter;
 
 import org.apache.camel.CamelContext;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.test.spring.junit5.CamelSpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,15 +14,13 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ActiveProfiles;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
- * Integration tests for Kafka Message Receiver Kamelet
+ * Integration tests for Kafka Starter Kamelet
  */
 @SpringBootTest
 @CamelSpringBootTest
 @ActiveProfiles("test")
-public class KafkaMessageReceiverTest {
+public class KafkaStarterTest {
 
     @Autowired
     private CamelContext camelContext;
@@ -28,17 +29,17 @@ public class KafkaMessageReceiverTest {
     private ProducerTemplate producerTemplate;
 
     @Test
-    public void testKafkaMessageReceiverKameletExists() throws Exception {
+    public void testKafkaStarterKameletExists() throws Exception {
         // Test that the kamelet can be loaded (would be loaded from classpath in real scenario)
         assertNotNull(camelContext, "Camel context should be available");
         assertTrue(camelContext.getStatus().isStarted(), "Camel context should be started");
     }
 
     @Test
-    public void testKafkaMessageProcessorBean() throws Exception {
+    public void testKafkaStarterProcessorBean() throws Exception {
         // Test that the message processor bean is available
-        assertNotNull(camelContext.getRegistry().lookupByName("kafkaMessageProcessor"), 
-            "KafkaMessageProcessor bean should be available");
+        assertNotNull(camelContext.getRegistry().lookupByName("kafkaStarterProcessor"), 
+            "KafkaStarterProcessor bean should be available");
     }
 
     @Test

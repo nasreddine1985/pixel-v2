@@ -176,7 +176,7 @@ Located in `technical-framework/` directory:
 
 - **`k-mq-message-receiver/`** - IBM MQ message integration
 - **`k-http-message-receiver/`** - REST API message reception
-- **`k-kafka-message-receiver/`** - Kafka message consumption
+- **`k-kafka-starter/`** - Kafka message consumption
 - **`k-cft-data-receiver/`** - CFT file-based message processing
 - **`k-db-tx/`** - Unified database transaction operations
 - **`k-log-tx/`** - Centralized transaction logging

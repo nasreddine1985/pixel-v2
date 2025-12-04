@@ -28,7 +28,7 @@ echo "Copying JARs to Camel Spring app..."
 # List of technical framework modules to copy
 modules=(
     "k-mq-message-receiver"
-    "k-kafka-message-receiver"
+    "k-kafka-starter"
     "k-http-message-receiver"
     "k-cft-data-receiver"
     "k-db-tx"

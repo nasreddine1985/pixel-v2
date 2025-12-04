@@ -133,7 +133,7 @@ This kamelet requires the following Camel components:
 This kamelet is designed to integrate with the PIXEL-V2 payment processing system and can be used in conjunction with other technical framework kamelets such as:
 
 - `k-mq-message-receiver`
-- `k-kafka-message-receiver`
+- `k-kafka-starter`
 - `k-db-tx`
 - `k-log-tx`
 

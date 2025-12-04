@@ -1,10 +1,10 @@
-# K-Kafka Message Receiver Kamelet
+# K-Kafka Starter Kamelet
 
-A specialized Kamelet for receiving messages from Kafka topics and routing them to configurable endpoints for further processing.
+A specialized Kamelet for starting Kafka message consumption and routing them to configurable endpoints for further processing.
 
 ## Overview
 
-The `k-kafka-message-receiver` kamelet provides a standardized way to consume messages from Kafka topics with comprehensive metadata enrichment and flexible routing capabilities.
+The `k-kafka-starter` kamelet provides a standardized way to consume messages from Kafka topics with comprehensive metadata enrichment and flexible routing capabilities.
 
 ## Features
 
@@ -12,7 +12,7 @@ The `k-kafka-message-receiver` kamelet provides a standardized way to consume me
 - **Metadata Enrichment**: Automatically adds Kafka-specific headers (partition, offset, key, timestamp)
 - **Message Type Detection**: Intelligently detects message types (XML, JSON, delimited, etc.)
 - **Flexible Routing**: Routes messages to configurable endpoints for further processing
-- **Comprehensive Logging**: Detailed logging with `[KAFKA-RECEIVER]` prefix for traceability
+- **Comprehensive Logging**: Detailed logging with `[KAFKA-STARTER]` prefix for traceability
 - **Error Handling**: Robust error handling and status tracking
 - **Configurable Consumer Settings**: Full control over Kafka consumer configuration
 
@@ -72,14 +72,14 @@ The kamelet automatically enriches messages with the following headers:
 
 ```yaml
 - from:
-    uri: "kamelet:k-kafka-message-receiver?bootstrapServers=localhost:9092&topic=payment-events"
+    uri: "kamelet:k-kafka-starter?bootstrapServers=localhost:9092&topic=payment-events"
 ```
 
 ### Advanced Configuration
 
 ```yaml
 - from:
-    uri: "kamelet:k-kafka-message-receiver"
+    uri: "kamelet:k-kafka-starter"
     parameters:
       bootstrapServers: "kafka1:9092,kafka2:9092,kafka3:9092"
       topic: "payment-processing-events"
@@ -93,7 +93,7 @@ The kamelet automatically enriches messages with the following headers:
 
 ```yaml
 - from:
-    uri: "kamelet:k-kafka-message-receiver?bootstrapServers={{kafka.brokers}}&topic={{kafka.topic.payments}}&routingEndpoint=direct:custom-processing"
+    uri: "kamelet:k-kafka-starter?bootstrapServers={{kafka.brokers}}&topic={{kafka.topic.payments}}&routingEndpoint=direct:custom-processing"
 ```
 
 ## Message Type Detection
@@ -119,7 +119,7 @@ To integrate with the existing payment ingestion service:
 ```xml
 <dependency>
     <groupId>com.pixel.v2</groupId>
-    <artifactId>k-kafka-message-receiver</artifactId>
+    <artifactId>k-kafka-starter</artifactId>
     <version>1.0.1-SNAPSHOT</version>
 </dependency>
 ```
@@ -127,10 +127,10 @@ To integrate with the existing payment ingestion service:
 2. **Add Route** to `PaymentIngestionRouteBuilder.java`:
 
 ```java
-// Kafka receipt route using k-kafka-message-receiver kamelet
-from("kamelet:k-kafka-message-receiver?bootstrapServers={{kafka.brokers}}&topic={{kafka.topic.incoming}}&routingEndpoint=direct:payment-ingestion")
+// Kafka receipt route using k-kafka-starter kamelet
+from("kamelet:k-kafka-starter?bootstrapServers={{kafka.brokers}}&topic={{kafka.topic.incoming}}&routingEndpoint=direct:payment-ingestion")
     .routeId("kafka-receipt-route")
-    .log("Message received from k-kafka-message-receiver kamelet")
+    .log("Message received from k-kafka-starter kamelet")
     .to("direct:payment-ingestion");
 ```
 
@@ -151,10 +151,10 @@ Add to `payment-ingestion-routes.yaml`:
 - route:
     id: kafka-receipt-route
     from:
-      uri: kamelet:k-kafka-message-receiver?bootstrapServers={{kafka.brokers}}&topic={{kafka.topic.incoming}}&groupId={{kafka.consumer.group.id}}&routingEndpoint=direct:payment-ingestion
+      uri: kamelet:k-kafka-starter?bootstrapServers={{kafka.brokers}}&topic={{kafka.topic.incoming}}&groupId={{kafka.consumer.group.id}}&routingEndpoint=direct:payment-ingestion
       steps:
         - log:
-            message: "Message received from k-kafka-message-receiver kamelet"
+            message: "Message received from k-kafka-starter kamelet"
         - to:
             uri: direct:payment-ingestion
 ```

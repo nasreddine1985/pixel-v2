@@ -26,7 +26,7 @@
 # //DEPS com.pixel.v2:k-mq-message-receiver:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-http-message-receiver:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-cft-data-receiver:1.0.1-SNAPSHOT
-# //DEPS com.pixel.v2:k-kafka-message-receiver:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-kafka-starter:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-kafka-message-publisher:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-message-concat:1.0.1-SNAPSHOT  
 # //DEPS com.pixel.v2:k-message-split:1.0.1-SNAPSHOT

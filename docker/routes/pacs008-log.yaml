@@ -4,7 +4,7 @@
 # and persists them to the database using k-db-tx kamelet
 
 # Dependencies
-#//DEPS com.pixel.v2:k-kafka-message-receiver:1.0.1-SNAPSHOT
+#//DEPS com.pixel.v2:k-kafka-starter:1.0.1-SNAPSHOT
 #//DEPS com.pixel.v2:k-db-tx:1.0.1-SNAPSHOT
 #//DEPS org.postgresql:postgresql:42.7.2
 #//DEPS org.apache.camel:camel-jdbc:4.16.0

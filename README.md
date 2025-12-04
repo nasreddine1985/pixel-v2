@@ -45,7 +45,7 @@ PIXEL-V2/
 └── 🔧 technical-framework/                 # Reusable Kamelets Library
     ├── k-mq-message-receiver/              # IBM MQ Integration
     ├── k-http-message-receiver/            # REST API Integration
-    ├── k-kafka-message-receiver/           # Kafka Integration
+    ├── k-kafka-starter/           # Kafka Integration
     ├── k-cft-data-receiver/                # File System Integration
     ├── k-db-tx/                            # Database Operations
     ├── k-log-tx/                           # Centralized Logging

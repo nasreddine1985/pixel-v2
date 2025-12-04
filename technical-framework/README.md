@@ -17,7 +17,7 @@ technical-framework/
 ├── k-ingestion-technical-validation/         # Technical validation kamelet
 ├── k-payment-idempotence-helper/             # Idempotence checking kamelet
 ├── k-log-tx/                                 # Centralized logging kamelet
-├── k-kafka-message-receiver/                 # Kafka message consumption kamelet
+├── k-kafka-starter/                 # Kafka message consumption kamelet
 ├── k-pacs008-to-cdm-transformer/            # PACS.008 to CDM transformer
 ├── k-pacs009-to-cdm-transformer/            # PACS.009 to CDM transformer
 ├── k-pain001-to-cdm-transformer/            # PAIN.001 to CDM transformer
@@ -30,7 +30,7 @@ technical-framework/
 
 - **k-mq-message-receiver**: Consumes messages from IBM MQ queues with JMS integration
 - **k-http-message-receiver**: Receives messages via HTTP REST endpoints
-- **k-kafka-message-receiver**: Consumes messages from Kafka topics with metadata enrichment
+- **k-kafka-starter**: Starts Kafka message consumption from topics with metadata enrichment
 - **k-cft-data-receiver**: Processes CFT file-based messages with batch optimization
 
 ### 🔧 Processing & Validation
