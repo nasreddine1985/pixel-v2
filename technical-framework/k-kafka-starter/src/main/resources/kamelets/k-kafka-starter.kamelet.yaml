@@ -67,8 +67,8 @@ spec:
         description: Deserializer class for keys
         type: string
         default: "org.apache.kafka.common.serialization.StringDeserializer"
-      routingEndpoint:
-        title: Routing Endpoint
+      sinkEndpoint:
+        title: Sink Endpoint
         description: Endpoint to route consumed messages to
         type: string
         example: "direct:kafka-message-processing"
@@ -123,6 +123,5 @@ spec:
             simple: "${header.kafka.TIMESTAMP}"
         - log:
             loggingLevel: INFO
-            message: "[KAFKA-STARTER] Message enriched with Kafka metadata, routing to: {{routingEndpoint}}"
-        - to:
-            uri: "{{routingEndpoint}}"
+            message: "[KAFKA-STARTER] Message enriched with Kafka metadata, routing to: {{sinkEndpoint}}"
+        - to: "{{sinkEndpoint}}"

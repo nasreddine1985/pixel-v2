@@ -1,0 +1,61 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: k-db-flow-summary
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "4.1.0"
+    camel.apache.org/kamelet.icon: "data:image/svg+xml;base64,..."
+    camel.apache.org/provider: "PIXEL-V2"
+    camel.apache.org/kamelet.group: "Database"
+    camel.apache.org/kamelet.namespace: "Database"
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-Database Flow Summary Sink"
+    description: |-
+      Persists FlowSummary entities to database using JPA.
+      
+      The kamelet expects a JSON message that will be converted to a FlowSummary entity
+      and persisted to the database using JPA operations.
+    required:
+      - entityManagerFactory
+    type: object
+    properties:
+      entityManagerFactory:
+        title: Entity Manager Factory
+        description: Reference to the EntityManagerFactory bean
+        type: string
+        default: "entityManagerFactory"
+      persistenceUnit:
+        title: Persistence Unit
+        description: JPA persistence unit name
+        type: string
+        default: "default"
+  dependencies:
+    - "camel:jackson"
+    - "camel:jpa"
+    - "camel:kamelet"
+  template:
+    beans:
+      - name: flowSummaryPersistenceProcessor
+        type: "#class:com.pixel.v2.db.FlowSummaryPersistenceProcessor"
+    from:
+      uri: "kamelet:source"
+      steps:
+        - log:
+            message: "K-DB-FLOW-SUMMARY: Starting persistence of FlowSummary entity"
+        - setHeader:
+            name: "CamelJpaParameters"
+            constant: {}
+        # - log:
+        #     message: "K-DB-FLOW-SUMMARY: Converting JSON to FlowSummary entity - Body: ${body} -Headers: ${headers}"
+        - to:
+            uri: "bean:flowSummaryPersistenceProcessor?method=persistFlowSummaryFromJson"
+        - log:
+            message: "K-DB-FLOW-SUMMARY: FlowSummary entity created - ID: ${body.flowOccurId}, Code: ${body.flowCode}"
+        - to:
+            uri: "bean:flowSummaryPersistenceProcessor?method=persistFlowSummary"
+        # - log:
+        #     message: "K-DB-FLOW-SUMMARY: FlowSummary entity persisted successfully"

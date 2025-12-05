@@ -20,6 +20,7 @@
         <module>k-http-message-receiver</module>
         <module>k-cft-data-receiver</module>
         <module>k-db-tx</module>
+        <module>k-db</module>
         <module>k-referentiel-data-loader</module>
         <module>k-ingestion-technical-validation</module>
         <module>k-payment-idempotence-helper</module>

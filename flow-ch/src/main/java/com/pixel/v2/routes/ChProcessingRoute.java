@@ -28,7 +28,9 @@ public class ChProcessingRoute extends RouteBuilder {
                                 connectionFactory={{kmq.starter.connectionFactory}}&\
                                 flowCode={{kmq.starter.flowCode}}&\
                                 messageType={{kmq.starter.messageType}}&\
-                                kafkaTopicName={{kmq.starter.kafkaTopicName}}&\
+                                kafkaFlowSummaryTopicName={{kmq.starter.kafkaFlowSummaryTopicName}}&\
+                                kafkaLogTopicName={{kmq.starter.kafkaLogTopicName}}&\
+                                kafkaDistributionTopicName={{kmq.starter.kafkaDistributionTopicName}}&\
                                 brokers={{kmq.starter.brokers}}&\
                                 sinkEndpoint={{kmq.starter.sinkEndpoint}}&\
                                 flowCountryCode={{kmq.starter.flowCountryCode}}&\

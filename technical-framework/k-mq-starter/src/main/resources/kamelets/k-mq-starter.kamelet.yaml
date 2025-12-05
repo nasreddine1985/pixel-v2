@@ -38,11 +38,21 @@ spec:
         description: Type of message being processed
         type: string
         default: "PACS008"
-      kafkaTopicName:
-        title: Kafka Topic Name
+      kafkaFlowSummaryTopicName:
+        title: Kafka  Flow Summary Topic Name
         description: Kafka topic for flow summary logs
         type: string
         default: "flow-summary"
+      kafkaLogTopicName:
+        title: Kafka  Log Topic Name
+        description: Kafka topic for log events
+        type: string
+        default: "log-events"
+      kafkaDistributionTopicName:
+        title: Kafka  Distribution Topic Name
+        description: Kafka topic for distribution logs
+        type: string
+        default: "distribution"
       sinkEndpoint:
         title: Sink Endpoint
         description: Endpoint where processed messages should be sent
@@ -89,19 +99,25 @@ spec:
             name: "step"
             constant: "IN_PROGRESS"
         - setHeader:
-            name: "kafkaTopicName"
-            constant: "{{kafkaTopicName}}"
+            name: "kafkaFlowSummaryTopicName"
+            constant: "{{kafkaFlowSummaryTopicName}}"
         - setHeader:
             name: "flowCountryCode"
             simple: "{{flowCountryCode}}"
         - setHeader:
             name: "flowCountryId"
             simple: "{{flowCountryId}}"
+        - setHeader:
+            name: "MessageId"
+            simple: "${header.JMSMessageID}"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.JMSCorrelationID}"
         - wireTap:
             uri: "kamelet:k-log-flow-summary"
             parameters:
               step: "${header.step}"
-              kafkaTopicName: "${header.kafkaTopicName}"
+              kafkaTopicName: "${header.kafkaFlowSummaryTopicName}"
               brokers: "{{brokers}}"
         - log:
             message: "[K-MQ-STARTER] - Processing completed for message from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}"
