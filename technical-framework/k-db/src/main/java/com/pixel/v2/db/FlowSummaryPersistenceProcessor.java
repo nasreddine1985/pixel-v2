@@ -73,7 +73,7 @@ public class FlowSummaryPersistenceProcessor {
     @Transactional
     public FlowSummary persistFlowSummary(FlowSummary flowSummary) {
         try {
-            logger.info("📊 K-DB: Persisting FlowSummary entity - FlowOccurId: {}, FlowCode: {}", 
+            logger.debug("K-DB: Persisting FlowSummary entity - FlowOccurId: {}, FlowCode: {}", 
                        flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
             
             // Check if entity already exists using flowOccurId as primary key
@@ -90,7 +90,7 @@ public class FlowSummaryPersistenceProcessor {
                 result = entityManager.merge(flowSummary);
             } else {
                 // Persist new entity
-                logger.debug("📊 K-DB: Persisting new FlowSummary entity with FlowOccurId: {}", 
+                logger.debug("K-DB: Persisting new FlowSummary entity with FlowOccurId: {}", 
                            flowSummary.getFlowOccurId());
                 entityManager.persist(flowSummary);
                 result = flowSummary;
@@ -99,13 +99,13 @@ public class FlowSummaryPersistenceProcessor {
             // Force synchronization to database
             entityManager.flush();
             
-            logger.info("✅ K-DB: FlowSummary entity persisted successfully - FlowOccurId: {}, FlowCode: {}", 
+            logger.debug("K-DB: FlowSummary entity persisted successfully - FlowOccurId: {}, FlowCode: {}", 
                        result.getFlowOccurId(), result.getFlowCode());
             
             return result;
             
         } catch (Exception e) {
-            logger.error("❌ K-DB: Failed to persist FlowSummary entity - FlowOccurId: {}, Error: {}", 
+            logger.error("K-DB: Failed to persist FlowSummary entity - FlowOccurId: {}, Error: {}", 
                         flowSummary.getFlowOccurId(), e.getMessage(), e);
             throw new RuntimeException("Failed to persist FlowSummary entity with FlowOccurId: " 
                     + flowSummary.getFlowOccurId(), e);

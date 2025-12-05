@@ -26,11 +26,6 @@ spec:
         type: boolean
         description: "Include detailed XSD validation error messages in exceptions"
         default: true
-      logValidationResult:
-        title: "Log Validation Results"
-        type: boolean
-        description: "Log validation success/failure messages"
-        default: true
       namespaceAware:
         title: "Namespace Aware Validation"
         type: boolean
@@ -41,13 +36,9 @@ spec:
       uri: "kamelet:source"
       steps:
         # Log incoming validation request
-        - choice:
-            when:
-              - simple: "{{logValidationResult}} == true"
-                steps:
-                  - log:
-                      message: "[XSD-VALIDATION] Starting validation - XSD: {{xsdFileName}}, Mode: {{validationMode}}"
-                      loggingLevel: INFO
+        - log:
+            message: "[XSD-VALIDATION] Starting validation - XSD: {{xsdFileName}}, Mode: {{validationMode}}"
+            loggingLevel: INFO
         
         # Set validation headers
         - setHeader:
@@ -61,6 +52,15 @@ spec:
         - setHeader:
             name: "ValidationMode"
             simple: "{{validationMode}}"
+        
+        # Log event before XSD validation
+        - wireTap:
+            uri: "kamelet:k-log-events"
+            parameters:
+              level: "INFO"
+              logMessageTxt: "[XSD-VALIDATION] Starting validation - XSD: {{xsdFileName}}, Mode: {{validationMode}}"
+              kafkaTopicName: "${header.kafkaLogTopicName}"
+              brokers: "${header.brokers}"
             
         # Validate XML against XSD using custom processor
         # Supports both single String messages and Collection<String> for batch validation
@@ -68,13 +68,9 @@ spec:
             uri: "class:com.pixel.v2.validation.processor.XsdValidationProcessor"
             
         # Log validation success
-        - choice:
-            when:
-              - simple: "{{logValidationResult}} == true"
-                steps:
-                  - log:
-                      message: "[XSD-VALIDATION] ✅ Validation successful - XSD: {{xsdFileName}}, Scope: ${header.ValidationScope}, Count: ${header.ValidationCount}, Duration: ${header.ValidationDuration}ms"
-                      loggingLevel: INFO
+        - log:
+            message: "[XSD-VALIDATION] Validation successful - XSD: {{xsdFileName}}, Scope: ${header.ValidationScope}, Count: ${header.ValidationCount}, Duration: ${header.ValidationDuration}ms"
+            loggingLevel: INFO
                       
         # Set success headers
         - setHeader:

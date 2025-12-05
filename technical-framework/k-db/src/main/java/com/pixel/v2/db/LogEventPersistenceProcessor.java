@@ -76,8 +76,7 @@ public class LogEventPersistenceProcessor {
     @Transactional
     public LogEvent persistLogEvent(LogEvent logEvent) {
         try {
-            logger.info(
-                    "📋 K-DB: Persisting LogEvent entity - LogId: {}, FlowId: {}, Component: {}",
+            logger.info("K-DB: Persisting LogEvent entity - LogId: {}, FlowId: {}, Component: {}",
                     logEvent.getLogId(), logEvent.getFlowId(), logEvent.getComponent());
 
             // Check if entity already exists using logId as primary key
@@ -89,12 +88,12 @@ public class LogEventPersistenceProcessor {
             LogEvent result;
             if (existingEntity != null) {
                 // Update existing entity
-                logger.debug("📋 K-DB: Updating existing LogEvent entity with LogId: {}",
+                logger.debug("K-DB: Updating existing LogEvent entity with LogId: {}",
                         logEvent.getLogId());
                 result = entityManager.merge(logEvent);
             } else {
                 // Persist new entity
-                logger.debug("📋 K-DB: Persisting new LogEvent entity with LogId: {}",
+                logger.debug("K-DB: Persisting new LogEvent entity with LogId: {}",
                         logEvent.getLogId());
                 entityManager.persist(logEvent);
                 result = logEvent;
@@ -104,7 +103,7 @@ public class LogEventPersistenceProcessor {
             entityManager.flush();
 
             logger.info(
-                    "✅ K-DB: LogEvent entity persisted successfully - LogId: {}, FlowId: {}, Component: {}",
+                    "K-DB: LogEvent entity persisted successfully - LogId: {}, FlowId: {}, Component: {}",
                     result.getLogId(), result.getFlowId(), result.getComponent());
 
             return result;

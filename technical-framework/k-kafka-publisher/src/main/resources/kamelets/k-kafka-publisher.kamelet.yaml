@@ -79,9 +79,9 @@ spec:
             name: "kafka.KEY"
             simple: "{{key}}"
         # Publish message to Kafka
-        - log:
-            message: "[K-KAFKA-PUBLISHER] Publishing message to topic: {{topic}}, Key: ${header.kafka.KEY}, MessageSize: ${body.length()}"
+        # - log:
+        #     message: "[K-KAFKA-PUBLISHER] Publishing message to topic: {{topic}}, Key: ${header.kafka.KEY}, MessageSize: ${body.length()}"
         - to:
             uri: "kafka:{{topic}}?brokers={{brokers}}&keySerializer={{keySerializer}}&valueSerializer={{valueSerializer}}&requestTimeoutMs={{requestTimeoutMs}}&connectionMaxIdleMs={{connectionMaxIdleMs}}&retries={{retries}}&requestRequiredAcks={{requestRequiredAcks}}&enableIdempotence={{enableIdempotence}}"
-        - log:
-            message: "[K-KAFKA-PUBLISHER] ✅ Message successfully published to topic: {{topic}}, Key: ${header.kafka.KEY}"
+        # - log:
+        #     message: "[K-KAFKA-PUBLISHER] ✅ Message successfully published to topic: {{topic}}, Key: ${header.kafka.KEY}"

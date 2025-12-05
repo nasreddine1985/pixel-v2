@@ -99,8 +99,17 @@ spec:
             name: "step"
             constant: "IN_PROGRESS"
         - setHeader:
+            name: "brokers"
+            constant: "{{brokers}}"
+        - setHeader:
             name: "kafkaFlowSummaryTopicName"
             constant: "{{kafkaFlowSummaryTopicName}}"
+        - setHeader:
+            name: "kafkaLogTopicName"
+            constant: "{{kafkaLogTopicName}}"
+        - setHeader:
+            name: "kafkaDistributionTopicName"
+            constant: "{{kafkaDistributionTopicName}}"
         - setHeader:
             name: "flowCountryCode"
             simple: "{{flowCountryCode}}"

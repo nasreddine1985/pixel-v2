@@ -44,18 +44,10 @@ spec:
     from:
       uri: "kamelet:source"
       steps:
-        - log:
-            message: "K-DB-FLOW-SUMMARY: Starting persistence of FlowSummary entity"
         - setHeader:
             name: "CamelJpaParameters"
             constant: {}
-        # - log:
-        #     message: "K-DB-FLOW-SUMMARY: Converting JSON to FlowSummary entity - Body: ${body} -Headers: ${headers}"
         - to:
             uri: "bean:flowSummaryPersistenceProcessor?method=persistFlowSummaryFromJson"
-        - log:
-            message: "K-DB-FLOW-SUMMARY: FlowSummary entity created - ID: ${body.flowOccurId}, Code: ${body.flowCode}"
         - to:
             uri: "bean:flowSummaryPersistenceProcessor?method=persistFlowSummary"
-        # - log:
-        #     message: "K-DB-FLOW-SUMMARY: FlowSummary entity persisted successfully"

@@ -23,18 +23,19 @@ public class ChProcessingRoute extends RouteBuilder {
                 // .retryAttemptedLogLevel(org.apache.camel.LoggingLevel.WARN));
 
                 // Main PACS008 processing route using k-mq-starter kamelet with sink functionality
-                String kameletMqStarterEndpoint = """
-                                kamelet:k-mq-starter?mqFileName={{kmq.starter.mqFileName}}&\
-                                connectionFactory={{kmq.starter.connectionFactory}}&\
-                                flowCode={{kmq.starter.flowCode}}&\
-                                messageType={{kmq.starter.messageType}}&\
-                                kafkaFlowSummaryTopicName={{kmq.starter.kafkaFlowSummaryTopicName}}&\
-                                kafkaLogTopicName={{kmq.starter.kafkaLogTopicName}}&\
-                                kafkaDistributionTopicName={{kmq.starter.kafkaDistributionTopicName}}&\
-                                brokers={{kmq.starter.brokers}}&\
-                                sinkEndpoint={{kmq.starter.sinkEndpoint}}&\
-                                flowCountryCode={{kmq.starter.flowCountryCode}}&\
-                                flowCountryId={{kmq.starter.flowCountryId}}""";
+                String kameletMqStarterEndpoint =
+                                """
+                                                kamelet:k-mq-starter?mqFileName={{kmq.starter.mqFileName}}&\
+                                                connectionFactory={{kmq.starter.connectionFactory}}&\
+                                                flowCode={{kmq.starter.flowCode}}&\
+                                                messageType={{kmq.starter.messageType}}&\
+                                                kafkaFlowSummaryTopicName={{kmq.starter.kafkaFlowSummaryTopicName}}&\
+                                                kafkaLogTopicName={{kmq.starter.kafkaLogTopicName}}&\
+                                                kafkaDistributionTopicName={{kmq.starter.kafkaDistributionTopicName}}&\
+                                                brokers={{kmq.starter.brokers}}&\
+                                                sinkEndpoint={{kmq.starter.sinkEndpoint}}&\
+                                                flowCountryCode={{kmq.starter.flowCountryCode}}&\
+                                                flowCountryId={{kmq.starter.flowCountryId}}""";
 
                 from(kameletMqStarterEndpoint).routeId("ch-processing-flow").log(
                                 "K-MQ-Starter kamelet initiated - message will be processed and sent to sink")
@@ -42,7 +43,6 @@ public class ChProcessingRoute extends RouteBuilder {
 
                 // Sink endpoint to receive messages from k-mq-starter kamelet
                 from("{{kmq.starter.sinkEndpoint}}").routeId("ch-main-processing")
-                                .log("Received message from k-mq-starter sink: ${body}")
                                 .setHeader("MessageType", constant("PACS008"))
                                 .setHeader("ProcessingTimestamp",
                                                 simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
@@ -50,11 +50,12 @@ public class ChProcessingRoute extends RouteBuilder {
 
                 // CH processing logic
                 from("direct:process-ch-message").routeId("ch-message-processing")
-                                .log("Processing CH message with ID: ${header.JMSMessageID}")
                                 // Enrich message with metadata
                                 .setHeader("RouteName", constant("CH-Processing"))
                                 .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
-                                .log("Message Body: ${body}").log("Message Headers: ${headers}")
+                                // Step 1: XSD Validation using k-xsd-validation kamelet
+                                .to("kamelet:k-xsd-validation-custom?xsdFileName=pacs.008.001.08.xsd&validationMode=STRICT")
+
                                 .end();
 
 

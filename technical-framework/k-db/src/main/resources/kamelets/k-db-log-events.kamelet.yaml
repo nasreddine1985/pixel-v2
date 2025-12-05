@@ -44,14 +44,10 @@ spec:
     from:
       uri: "kamelet:source"
       steps:
-        - log:
-            message: "K-DB-LOG-EVENT: Starting persistence of LogEvent entity"
         - setHeader:
             name: "CamelJpaParameters"
             constant: {}
         - to:
             uri: "bean:logEventPersistenceProcessor?method=persistLogEventFromJson"
-        - log:
-            message: "K-DB-LOG-EVENT: LogEvent entity created - ID: ${body.logId}, FlowId: ${body.flowId}, Component: ${body.component}"
         - to:
             uri: "bean:logEventPersistenceProcessor?method=persistLogEvent"
