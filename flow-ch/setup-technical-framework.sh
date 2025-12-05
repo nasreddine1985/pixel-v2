@@ -34,12 +34,11 @@ modules=(
     "k-db-tx"
     "k-log-tx"
     "k-referentiel-data-loader"
-    "k-payment-idempotence-helper"
-    "k-ingestion-technical-validation"
     "k-xsd-validation"
     "k-xsl-transformation"
     "k-message-concat"
     "k-message-split"
+    "k-log-events"
 )
 
 for module in "${modules[@]}"; do

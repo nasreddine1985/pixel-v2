@@ -239,18 +239,6 @@
 
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-payment-idempotence-helper</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
-            <artifactId>k-ingestion-technical-validation</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
             <artifactId>k-xsd-validation</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
@@ -264,6 +252,12 @@
         <dependency>
             <groupId>com.pixel.v2</groupId>
             <artifactId>k-log-flow-summary</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.pixel.v2</groupId>
+            <artifactId>k-log-events</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 

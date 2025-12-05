@@ -14,9 +14,8 @@ technical-framework/
 ├── k-cft-data-receiver/                      # CFT file processing kamelet
 ├── k-db-tx/                                  # Database transaction kamelet
 ├── k-referentiel-data-loader/                # Reference data loading kamelet
-├── k-ingestion-technical-validation/         # Technical validation kamelet
-├── k-payment-idempotence-helper/             # Idempotence checking kamelet
 ├── k-log-tx/                                 # Centralized logging kamelet
+├── k-log-events/                             # Detailed log events kamelet
 ├── k-kafka-starter/                 # Kafka message consumption kamelet
 ├── k-pacs008-to-cdm-transformer/            # PACS.008 to CDM transformer
 ├── k-pacs009-to-cdm-transformer/            # PACS.009 to CDM transformer
@@ -35,14 +34,13 @@ technical-framework/
 
 ### 🔧 Processing & Validation
 
-- **k-ingestion-technical-validation**: Performs technical validation of incoming messages
-- **k-payment-idempotence-helper**: Provides duplicate detection and idempotence checking
 - **k-referentiel-data-loader**: Loads and enriches messages with reference data
 
 ### 🏗️ Infrastructure
 
 - **k-db-tx**: Unified database persistence with transaction management
 - **k-log-tx**: Centralized logging with audit trail capabilities
+- **k-log-events**: Detailed log event generation with complete LogEvent structure
 
 ### 🔄 Transformers
 

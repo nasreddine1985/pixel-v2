@@ -181,8 +181,6 @@ Located in `technical-framework/` directory:
 - **`k-db-tx/`** - Unified database transaction operations
 - **`k-log-tx/`** - Centralized transaction logging
 - **`k-referentiel-data-loader/`** - Reference data enrichment
-- **`k-payment-idempotence-helper/`** - Duplicate payment detection
-- **`k-ingestion-technical-validation/`** - Message validation engine
 
 #### Message Transformation Kamelets
 
@@ -540,8 +538,6 @@ public class PaymentIngestionRouteBuilder extends RouteBuilder {
                 .to("kamelet:error-handler")
             .end()
             .to("kamelet:k-referentiel-data-loader")
-            .to("kamelet:k-ingestion-technical-validation")
-            .to("kamelet:k-payment-idempotence-helper")
             .choice()
                 .when(header("validation.passed").isEqualTo(true))
                     .to("kafka:{{kafka.topic.processed}}")
@@ -571,8 +567,6 @@ Kamelets are reusable integration components in Apache Camel. Follow these namin
 - k-http-message-receiver (receives messages from HTTP API)
 - k-referentiel-data-loader      (loads reference data)
 - k-pacs008-to-cdm-transformer   (transforms PACS.008 to CDM)
-- k-ingestion-technical-validation (validates ingested messages)
-- k-payment-idempotence-helper   (handles duplicate detection)
 
 ❌ Bad Examples:
 - MQReceiptKamelet      (not following naming pattern - use k-mq-message-receiver)

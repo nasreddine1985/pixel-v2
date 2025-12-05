@@ -1,0 +1,62 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-log-events
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-Log Events"
+    description: |-
+      Creates and publishes detailed log event messages to Kafka for PACS008 processing monitoring
+    type: object
+    properties:
+      logMessageTxt:
+        title: Log Message Text
+        description: The log message text content
+        type: string
+        default: "Processing message"
+      level:
+        title: Log Level
+        description: Log level (INFO, WARN, DEBUG, ERROR)
+        type: string
+        enum: ["INFO", "WARN", "DEBUG", "ERROR"]
+        default: "INFO"
+      kafkaTopicName:
+        title: Kafka Topic Name
+        description: Kafka topic for flow summary logs
+        type: string
+        default: "log-events"
+      brokers:
+        title: Kafka Brokers
+        description: Kafka broker endpoints
+        type: string
+        default: "pixel-v2-kafka:29092"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - setHeader:
+            name: "logMessage"
+            simple: |
+              {"logId":"LOG-${date:now:yyyyMMddHHmmssSSS}","datats":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","flowId":"${header.MessageId}","halfFlowId":"${header.MessageId}-HALF","flowCode":"${header.flowCode}","halfFlowCode":"${header.flowCode}-HALF","contextId":"${header.CorrelationId}","clientLogTimestamp":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","dbLogTimestamp":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","txt":"{{logMessageTxt}}","longTxt":"[{{level}}] {{logMessageTxt}}","logRole":"{{level}}","code":"{{level}}","customStep":"{{logMessageTxt}}","component":"pacs008-processing-flow","instanceId":"INST-001","servicePath":"${header.queueName}","processPath":"/pacs008/processing","refFlowId":1,"beginProcess":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","endProcess":null,"contextTimestamp":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","msgSentTimestamp":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","messagingType":"JMS","msgId":"${header.MessageId}","msgPriority":1,"msgCorrelationId":"${header.CorrelationId}","msgSourceSystem":"PIXEL-V2","msgPrivateContext":"${header.toString()}","msgTransactionId":"${header.MessageId}","msgProperties":"{}","msgBatchName":null,"msgBatchMsgNo":null,"msgBatchSize":null,"xmlMsgAction":null,"msgResubmitInd":"N","msgBody":"${bodyAs(String)}","logDay":"${date:now:yyyy-MM-dd}"}
+        - log:
+            message: "Publishing log event: ${header.logMessage}"
+        - setHeader:
+            name: "kafka.KEY"
+            simple: "${header.MessageId}"
+        - setHeader:
+            name: "originalBody"
+            simple: "${body}"
+        - setBody:
+            simple: "${header.logMessage}"
+        - removeHeader:
+            name: "logMessage"
+        - toD:
+            uri: "kamelet:k-kafka-publisher?topic={{kafkaTopicName}}&brokers={{brokers}}&key=${header.kafka.KEY}"
+        - setBody:
+            simple: "${header.originalBody}"
+        - removeHeader:
+            name: "originalBody"
+        - log:
+            message: "Log event published successfully to topic {{kafkaTopicName}}"
