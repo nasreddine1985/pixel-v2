@@ -1,0 +1,57 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: k-db-log-events
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "4.1.0"
+    camel.apache.org/kamelet.icon: "data:image/svg+xml;base64,..."
+    camel.apache.org/provider: "PIXEL-V2"
+    camel.apache.org/kamelet.group: "Database"
+    camel.apache.org/kamelet.namespace: "Database"
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-Database Log Events Sink"
+    description: |-
+      Persists LogEvent entities to database using JPA.
+      
+      The kamelet expects a JSON message that will be converted to a LogEvent entity
+      and persisted to the LOG_EVENT table using JPA operations.
+    required:
+      - entityManagerFactory
+    type: object
+    properties:
+      entityManagerFactory:
+        title: Entity Manager Factory
+        description: Reference to the EntityManagerFactory bean
+        type: string
+        default: "entityManagerFactory"
+      persistenceUnit:
+        title: Persistence Unit
+        description: JPA persistence unit name
+        type: string
+        default: "default"
+  dependencies:
+    - "camel:jackson"
+    - "camel:jpa"
+    - "camel:kamelet"
+  template:
+    beans:
+      - name: logEventPersistenceProcessor
+        type: "#class:com.pixel.v2.db.LogEventPersistenceProcessor"
+    from:
+      uri: "kamelet:source"
+      steps:
+        - log:
+            message: "K-DB-LOG-EVENT: Starting persistence of LogEvent entity"
+        - setHeader:
+            name: "CamelJpaParameters"
+            constant: {}
+        - to:
+            uri: "bean:logEventPersistenceProcessor?method=persistLogEventFromJson"
+        - log:
+            message: "K-DB-LOG-EVENT: LogEvent entity created - ID: ${body.logId}, FlowId: ${body.flowId}, Component: ${body.component}"
+        - to:
+            uri: "bean:logEventPersistenceProcessor?method=persistLogEvent"

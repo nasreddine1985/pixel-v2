@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Simplified ITL Pivot v2.0 Schema for Testing -->
+<xs:schema xmlns="http://bnpparibas.com/G02"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://bnpparibas.com/G02"
+    version="2.0"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified">
+
+    <!-- Root Document Element -->
+    <xs:element name="Document" type="Document" />
+
+    <!-- Document Complex Type -->
+    <xs:complexType name="Document">
+        <xs:sequence>
+            <xs:element name="ITLHdr" type="ITLHeader" />
+            <xs:element name="PmtPvt" type="PmtPvt" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- ITL Header -->
+    <xs:complexType name="ITLHeader">
+        <xs:sequence>
+            <xs:element name="ITLFlow" type="ITLFlow" />
+            <xs:element name="ITLMsgNorm" type="Max8Text" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- ITL Flow -->
+    <xs:complexType name="ITLFlow">
+        <xs:sequence>
+            <xs:element name="ITLFlowCd" type="Max35Text" />
+            <xs:element name="ITLFlowOcc" type="Max35Text" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Payment Pivot -->
+    <xs:complexType name="PmtPvt">
+        <xs:sequence>
+            <xs:element name="InstrInf" type="InstructionInformation" />
+            <xs:element name="TxInf" type="TransactionInformation" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Instruction Information -->
+    <xs:complexType name="InstructionInformation">
+        <xs:sequence>
+            <xs:element name="InstrId" type="Max35Text" />
+            <xs:element name="EndToEndId" type="Max35Text" />
+            <xs:element name="TxId" type="Max35Text" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Transaction Information -->
+    <xs:complexType name="TransactionInformation">
+        <xs:sequence>
+            <xs:element name="TxId" type="Max35Text" />
+            <xs:element name="IntrBkSttlmAmt" type="ActiveCurrencyAndAmount" />
+            <xs:element name="Dbtr" type="PartyIdentification" minOccurs="0" />
+            <xs:element name="Cdtr" type="PartyIdentification" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Party Identification -->
+    <xs:complexType name="PartyIdentification">
+        <xs:sequence>
+            <xs:element name="Nm" type="Max140Text" minOccurs="0" />
+            <xs:element name="Id" type="Max35Text" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Active Currency and Amount -->
+    <xs:complexType name="ActiveCurrencyAndAmount">
+        <xs:simpleContent>
+            <xs:extension base="ActiveCurrencyAndAmount_SimpleType">
+                <xs:attribute name="Ccy" type="ActiveCurrencyCode" use="required" />
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <!-- Amount Simple Type -->
+    <xs:simpleType name="ActiveCurrencyAndAmount_SimpleType">
+        <xs:restriction base="xs:decimal">
+            <xs:fractionDigits value="5" />
+            <xs:totalDigits value="18" />
+            <xs:minInclusive value="0" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Currency Code -->
+    <xs:simpleType name="ActiveCurrencyCode">
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{3,3}" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <!-- Text Types -->
+    <xs:simpleType name="Max8Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="8" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="Max35Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="35" />
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="Max140Text">
+        <xs:restriction base="xs:string">
+            <xs:minLength value="1" />
+            <xs:maxLength value="140" />
+        </xs:restriction>
+    </xs:simpleType>
+
+</xs:schema>

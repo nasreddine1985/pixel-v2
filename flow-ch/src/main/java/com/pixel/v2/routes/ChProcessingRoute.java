@@ -4,11 +4,11 @@ import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
 
 /**
- * PACS008 Payment Processing Route
+ * CH Payment Processing Route
  * 
- * Main route for processing PACS.008 payment messages using k-kafka-starter kamelet
+ * Main route for processing CH payment messages using k-kafka-starter kamelet
  * 
- * NOTE: This Java RouteBuilder uses k-mq-starter kamelet for PACS008 processing
+ * NOTE: This Java RouteBuilder uses k-mq-starter kamelet for CH processing
  */
 @Component
 public class ChProcessingRoute extends RouteBuilder {
@@ -36,24 +36,23 @@ public class ChProcessingRoute extends RouteBuilder {
                                 flowCountryCode={{kmq.starter.flowCountryCode}}&\
                                 flowCountryId={{kmq.starter.flowCountryId}}""";
 
-                from(kameletMqStarterEndpoint).routeId("pacs008-processing-flow").log(
+                from(kameletMqStarterEndpoint).routeId("ch-processing-flow").log(
                                 "K-MQ-Starter kamelet initiated - message will be processed and sent to sink")
                                 .end();
 
                 // Sink endpoint to receive messages from k-mq-starter kamelet
-                from("{{kmq.starter.sinkEndpoint}}").routeId("pacs008-main-processing")
-                                .log("Received PACS008 message from k-mq-starter sink: ${body}")
+                from("{{kmq.starter.sinkEndpoint}}").routeId("ch-main-processing")
+                                .log("Received message from k-mq-starter sink: ${body}")
                                 .setHeader("MessageType", constant("PACS008"))
                                 .setHeader("ProcessingTimestamp",
                                                 simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
-                                .to("direct:process-pacs008-message");
+                                .to("direct:process-ch-message");
 
-                // PACS008 processing logic
-                from("direct:process-pacs008-message").routeId("pacs008-message-processing")
-                                .log("Processing PACS008 message with ID: ${header.JMSMessageID}")
-
+                // CH processing logic
+                from("direct:process-ch-message").routeId("ch-message-processing")
+                                .log("Processing CH message with ID: ${header.JMSMessageID}")
                                 // Enrich message with metadata
-                                .setHeader("RouteName", constant("PACS008-Processing"))
+                                .setHeader("RouteName", constant("CH-Processing"))
                                 .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
                                 .log("Message Body: ${body}").log("Message Headers: ${headers}")
                                 .end();
@@ -61,7 +60,7 @@ public class ChProcessingRoute extends RouteBuilder {
 
 
                 // Error handling route
-                from("direct:error-handling").routeId("pacs008-error-handler")
+                from("direct:error-handling").routeId("ch-error-handler")
                                 .log("Error processing message: ${exception.message}")
                                 .setHeader("ErrorTimestamp",
                                                 simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))

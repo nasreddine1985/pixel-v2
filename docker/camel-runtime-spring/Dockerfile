@@ -19,6 +19,10 @@ WORKDIR /opt/pixel-v2-app-spring-1
 # Copy pre-built JAR from local context
 COPY pixel-v2-app-spring-1-1.0.0.jar ./pixel-v2-app-spring-1.jar
 
+# Copy XSD and XSL resources
+COPY xsd/ ./xsd/
+COPY xsl/ ./xsl/
+
 # Setup directories, create entrypoint script, and set ownership
 RUN mkdir -p config logs && \
     echo '#!/bin/bash' > entrypoint.sh && \
