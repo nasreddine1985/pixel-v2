@@ -69,7 +69,7 @@ spec:
             
         # Log validation success
         - log:
-            message: "[XSD-VALIDATION] Validation successful - XSD: {{xsdFileName}}, Scope: ${header.ValidationScope}, Count: ${header.ValidationCount}, Duration: ${header.ValidationDuration}ms"
+            message: "[XSD-VALIDATION] ✅ Validation successful - XSD: {{xsdFileName}}, Scope: ${header.ValidationScope}, Count: ${header.ValidationCount}, Duration: ${header.ValidationDuration}ms"
             loggingLevel: INFO
                       
         # Set success headers

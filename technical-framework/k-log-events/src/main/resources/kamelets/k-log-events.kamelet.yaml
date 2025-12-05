@@ -26,12 +26,12 @@ spec:
         title: Kafka Topic Name
         description: Kafka topic for flow summary logs
         type: string
-        default: "log-events"
+        default: "ch-log-events"
       brokers:
         title: Kafka Brokers
         description: Kafka broker endpoints
         type: string
-        default: "pixel-v2-kafka:29092"
+        default: "kafka:29092"
   template:
     from:
       uri: "kamelet:source"
