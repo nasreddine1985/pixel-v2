@@ -59,18 +59,14 @@ public class ChProcessingRoute extends RouteBuilder {
                                 .setHeader("RouteName", constant("CH-Processing"))
                                 .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
 
-                                // Step 1: XSD Validation using k-xsd-validation kamelet with
-                                // explicit error handling
                                 .doTry()
-                                .to("kamelet:k-xsd-validation-custom?xsdFileName=pacs.008.001.08.xsd&validationMode=STRICT")
+                                // Step 1: XSD Validation using k-xsd-validation
+                                .to("kamelet:k-xsd-validation-custom?xsdFileName=pacs.008.001.02.ch.02.xsd&validationMode=STRICT")
+                                // Step 2: XSLT Transformation using k-xsl-transformation
+                                .to("kamelet:k-xsl-transformation?xslFileName=overall-xslt-ch-pacs008-001-02.xsl&transformationMode=STRICT")
+                                // Step 3: Business Validation Processor
                                 .doCatch(Exception.class).to("direct:error-handling").end().end();
 
-                // Test route to verify exception handling works
-                from("direct:test-exception").routeId("test-exception")
-                                .log("Testing exception handling")
-                                .throwException(new RuntimeException(
-                                                "Test exception for error handling verification"))
-                                .end();
 
                 // Error handling route
                 from("direct:error-handling").routeId("ch-error-handler")

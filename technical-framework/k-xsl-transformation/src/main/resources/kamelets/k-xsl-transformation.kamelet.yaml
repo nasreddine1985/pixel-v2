@@ -26,11 +26,6 @@ spec:
         type: boolean
         description: "Include detailed XSL transformation error messages in exceptions"
         default: true
-      logTransformationResult:
-        title: "Log Transformation Results"
-        type: boolean
-        description: "Log transformation success/failure messages"
-        default: true
       namespaceAware:
         title: "Namespace Aware Transformation"
         type: boolean
@@ -40,15 +35,6 @@ spec:
     from:
       uri: "kamelet:source"
       steps:
-        # Log incoming transformation request
-        - choice:
-            when:
-              - simple: "{{logTransformationResult}} == true"
-                steps:
-                  - log:
-                      message: "[XSL-TRANSFORMATION] Starting transformation - XSL: {{xslFileName}}, Mode: {{transformationMode}}"
-                      loggingLevel: INFO
-        
         # Set transformation headers
         - setHeader:
             name: "TransformationStartTime"
@@ -67,15 +53,6 @@ spec:
         - to:
             uri: "bean:xslTransformationProcessor"
             
-        # Log transformation success
-        - choice:
-            when:
-              - simple: "{{logTransformationResult}} == true"
-                steps:
-                  - log:
-                      message: "[XSL-TRANSFORMATION] ✅ Transformation successful - XSL: {{xslFileName}}, Scope: ${header.TransformationScope}, Count: ${header.TransformationCount}, Duration: ${header.TransformationDuration}ms"
-                      loggingLevel: INFO
-                      
         # Set success headers
         - setHeader:
             name: "TransformationStatus"

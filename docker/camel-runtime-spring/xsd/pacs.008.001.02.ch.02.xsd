@@ -1,0 +1,4085 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+(C) Copyright 2017, SIX Interbank Clearing Ltd
+XML Schema used in the Swiss Interbank space:
+	Suffix part 1: .ch:	Identification as a Swiss (CH) version
+	Suffix part 2: .02:   Version of this scheme
+
+Based on ISO pacs.008.001.02 (urn:iso:std:iso:20022:tech:xsd:pacs.008.001.02)
+For comments and suggestions please contact pm@six-group.com
+-->
+<xs:schema xmlns="http://www.six-interbank-clearing.com/de/pacs.008.001.02.ch.02"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://www.six-interbank-clearing.com/de/pacs.008.001.02.ch.02"
+    elementFormDefault="qualified">
+  <xs:element name="Document" type="Document_CH_pacs008"/>
+  <xs:complexType name="AccountIdentification4Choice">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="IBAN" type="IBAN2007Identifier"/>
+        <xs:element name="Othr" type="GenericAccountIdentification1"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="AccountIdentification4Choice_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="AccountIdentification4Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="IBAN" type="IBAN2007Identifier"/>
+            <xs:element name="Othr" type="GenericAccountIdentification1_CH_pacs008"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AccountIdentification4Choice_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restriction base="AccountIdentification4Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="IBAN" type="IBAN2007Identifier">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">IBAN</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">IBAN</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">
+Muss eine g√ºltige IBAN gem√§ss ISO 13616 enthalten.
+Die Pr√ºfziffer (3. und 4. Stelle der IBAN) muss im Bereich 02 bis 98 liegen.
+                </xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">
+Must contain a valid IBAN according to ISO 13616.
+The check digit (3rd and 4th position of the IBAN) must be in the range 02 to 98.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Othr" type="GenericAccountIdentification1_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Proprietary Account Format</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Propriet√§res Kontoformat</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition"/>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AccountIdentification4Choice_CH_pacs008_3">
+    <xs:complexContent>
+      <xs:restriction base="AccountIdentification4Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="IBAN" type="IBAN2007Identifier">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">IBAN</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">IBAN</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">
+Muss eine g√ºltige IBAN gem√§ss ISO 13616 enthalten.
+Die Pr√ºfziffer (3. und 4. Stelle der IBAN) muss im Bereich 02 bis 98 liegen.
+QR-IBAN nicht zugelassen.
+                </xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">
+Must contain a valid IBAN according to ISO 13616.
+The check digit (3rd and 4th position of the IBAN) must be in the range of 02 to 98.
+QR-IBAN not permitted.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Othr" type="GenericAccountIdentification1_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Proprietary Account Format</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Propriet√§res Kontoformat</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition"/>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AccountIdentification4Choice_CH_pacs008_4">
+    <xs:complexContent>
+      <xs:restriction base="AccountIdentification4Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="IBAN" type="IBAN2007Identifier">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">IBAN</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">IBAN</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">
+Muss eine g√ºltige IBAN gem√§ss ISO 13616 enthalten.
+Die Pr√ºfziffer (3. und 4. Stelle der IBAN) muss im Bereich 02 bis 98 liegen.
+                </xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">
+Must contain a valid IBAN according to ISO 13616.
+The check digit (3rd and 4th position of the IBAN) must be in the range of 02 to 98.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Othr" type="GenericAccountIdentification1_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Proprietary Account Format</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Propriet√§res Kontoformat</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition"/>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AccountIdentification4Choice_CH_pacs008_5">
+    <xs:complexContent>
+      <xs:restriction base="AccountIdentification4Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="IBAN" type="IBAN2007Identifier">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">IBAN</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">IBAN</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">
+Muss eine g√ºltige IBAN gem√§ss ISO 13616 enthalten.
+Die Pr√ºfziffer (3. und 4. Stelle der IBAN) muss im Bereich 02 bis 98 liegen.
+                </xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">
+Must contain a valid IBAN according to ISO 13616.
+The check digit (3rd and 4th position of the IBAN) must be in the range of 02 to 98.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Othr" type="GenericAccountIdentification1_CH_pacs008_3">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Proprietary Account Format</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Propriet√§res Kontoformat</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition"/>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AccountSchemeName1Choice">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="Cd" type="ExternalAccountIdentification1Code"/>
+        <xs:element name="Prtry" type="Max35Text"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="AccountSchemeName1Choice_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="AccountSchemeName1Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="ExternalAccountIdentification1Code"/>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="AccountSchemeName1Choice_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restriction base="AccountSchemeName1Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="ExternalAccountIdentification1Code">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="CH-Definition"/>
+                <xs:documentation xml:lang="EN" source="CH-Definition"/>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Account Type</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Art der Kontonummer</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">
+Folgende Codewerte stehen zur Verf√ºgung:
+PRTRY = Konventionelles Format
+PCACC = Postkontonummer
+ESRPT = ESR-Teilnehmernummer
+PSREF = ES-Referenznummer
+                </xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">
+The following code values are available:
+PRTRY = Conventional format
+PCACC = Postal account number
+ESRPT = ISR participant number 
+PSREF = IS reference number
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ActiveCurrencyAndAmount">
+    <xs:simpleContent>
+      <xs:extension base="ActiveCurrencyAndAmount_SimpleType">
+        <xs:attribute name="Ccy" type="ActiveCurrencyCode" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="ActiveCurrencyAndAmount_CH_pacs008">
+    <xs:simpleContent>
+      <xs:restriction base="ActiveCurrencyAndAmount">
+        <xs:attribute name="Ccy" type="ActiveCurrencyCode" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="DE" source="FE_en">Currency Code</xs:documentation>
+            <xs:documentation xml:lang="DE" source="FE_de">W√§hrungscode</xs:documentation>
+            <xs:documentation xml:lang="DE" source="CH-Definition">
+Wenn geliefert, muss W√§hrung identisch sein mit der Angabe beim Verrechnungsbetrag im Element &lt;IntrBkSttlmAmt/@Ccy&gt;.
+Der W√§hrungscode muss CHF oder EUR sein.
+Die W√§hrung muss der W√§hrung des jeweiligen RTGS-Systems entsprechen.
+            </xs:documentation>
+            <xs:documentation xml:lang="EN" source="CH-Definition">
+If present, the currency must be identical with the currency of the settlement amount in the &lt;IntrBkSttlmAmt/@Ccy&gt; element.
+The currency code must be CHF or EUR.
+The currency must correspond to the currency in the respective RTGS system.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="ActiveCurrencyAndAmount_CH_pacs008_2">
+    <xs:simpleContent>
+      <xs:restriction base="ActiveCurrencyAndAmount">
+        <xs:attribute name="Ccy" type="ActiveCurrencyCode" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="DE" source="FE_en">Currency Code</xs:documentation>
+            <xs:documentation xml:lang="DE" source="FE_de">W√§hrungscode</xs:documentation>
+            <xs:documentation xml:lang="DE" source="CH-Definition">
+Der W√§hrungscode muss CHF oder EUR sein.
+Die W√§hrung muss der W√§hrung des jeweiligen RTGS-Systems entsprechen.
+            </xs:documentation>
+            <xs:documentation xml:lang="EN" source="CH-Definition">
+The currency code must be CHF or EUR.
+The currency must correspond to the currency in the respective RTGS system.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="ActiveCurrencyAndAmount_SimpleType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+      <xs:totalDigits value="18"/>
+      <xs:fractionDigits value="5"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ActiveCurrencyCode">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="ActiveOrHistoricCurrencyAndAmount">
+    <xs:simpleContent>
+      <xs:extension base="ActiveOrHistoricCurrencyAndAmount_SimpleType">
+        <xs:attribute name="Ccy" type="ActiveOrHistoricCurrencyCode" use="required"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="ActiveOrHistoricCurrencyAndAmount_CH_pacs008">
+    <xs:simpleContent>
+      <xs:restriction base="ActiveOrHistoricCurrencyAndAmount">
+        <xs:attribute name="Ccy" type="ActiveOrHistoricCurrencyCode" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="DE" source="FE_en">Currency Code</xs:documentation>
+            <xs:documentation xml:lang="DE" source="FE_de">W√§hrungscode</xs:documentation>
+            <xs:documentation xml:lang="DE" source="CH-Definition">Muss g√ºltigen W√§hrungsode gem√§ss ISO 4217 enthalten.</xs:documentation>
+            <xs:documentation xml:lang="EN" source="CH-Definition">Must contain a valid currency code according to ISO 4217.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="ActiveOrHistoricCurrencyAndAmount_CH_pacs008_2">
+    <xs:simpleContent>
+      <xs:restriction base="ActiveOrHistoricCurrencyAndAmount">
+        <xs:attribute name="Ccy" type="ActiveOrHistoricCurrencyCode" use="required">
+          <xs:annotation>
+            <xs:documentation xml:lang="DE" source="FE_en">Currency Code</xs:documentation>
+            <xs:documentation xml:lang="DE" source="FE_de">W√§hrungscode</xs:documentation>
+            <xs:documentation xml:lang="DE" source="CH-Definition">Wenn &lt;ChrgBr&gt; = DEBT: Der W√§hrungscode muss CHF oder EUR sein und muss der W√§hrung des jeweiligen RTGS-Systems entsprechen.</xs:documentation>
+            <xs:documentation xml:lang="EN" source="CH-Definition">If &lt;ChrgBr&gt; = DEBT: The currency code must be CHF or EUR and must correspond to the currency in the respective RTGS system.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:restriction>
+    </xs:simpleContent>
+  </xs:complexType>
+  <xs:simpleType name="ActiveOrHistoricCurrencyAndAmount_SimpleType">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+      <xs:totalDigits value="18"/>
+      <xs:fractionDigits value="5"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ActiveOrHistoricCurrencyCode">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3,3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="AddressType2Code">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="ADDR"/>
+      <xs:enumeration value="BIZZ"/>
+      <xs:enumeration value="DLVY"/>
+      <xs:enumeration value="HOME"/>
+      <xs:enumeration value="MLTO"/>
+      <xs:enumeration value="PBOX"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="AnyBICIdentifier">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="BaseOneRate">
+    <xs:restriction base="xs:decimal">
+      <xs:totalDigits value="11"/>
+      <xs:fractionDigits value="10"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="BatchBookingIndicator">
+    <xs:restriction base="xs:boolean"/>
+  </xs:simpleType>
+  <xs:simpleType name="BICIdentifier">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{6,6}[A-Z2-9][A-NP-Z0-9]([A-Z0-9]{3,3}){0,1}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="BranchAndFinancialInstitutionIdentification4">
+    <xs:sequence>
+      <xs:element name="FinInstnId" type="FinancialInstitutionIdentification7"/>
+      <xs:element name="BrnchId" type="BranchData2" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="BranchAndFinancialInstitutionIdentification4_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="BranchAndFinancialInstitutionIdentification4">
+        <xs:sequence>
+          <xs:element name="FinInstnId" type="FinancialInstitutionIdentification7_CH_pacs008"/>
+          <xs:element name="BrnchId" type="BranchData2" minOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BranchAndFinancialInstitutionIdentification4_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restriction base="BranchAndFinancialInstitutionIdentification4">
+        <xs:sequence>
+          <xs:element name="FinInstnId" type="FinancialInstitutionIdentification7_CH_pacs008_2"/>
+          <xs:element name="BrnchId" type="BranchData2" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BranchAndFinancialInstitutionIdentification4_CH_pacs008_3">
+    <xs:complexContent>
+      <xs:restriction base="BranchAndFinancialInstitutionIdentification4">
+        <xs:sequence>
+          <xs:element name="FinInstnId" type="FinancialInstitutionIdentification7_CH_pacs008_3"/>
+          <xs:element name="BrnchId" type="BranchData2" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BranchAndFinancialInstitutionIdentification4_CH_pacs008_4">
+    <xs:complexContent>
+      <xs:restriction base="BranchAndFinancialInstitutionIdentification4">
+        <xs:sequence>
+          <xs:element name="FinInstnId" type="FinancialInstitutionIdentification7_CH_pacs008_4"/>
+          <xs:element name="BrnchId" type="BranchData2" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BranchAndFinancialInstitutionIdentification4_CH_pacs008_5">
+    <xs:complexContent>
+      <xs:restriction base="BranchAndFinancialInstitutionIdentification4">
+        <xs:sequence>
+          <xs:element name="FinInstnId" type="FinancialInstitutionIdentification7_CH_pacs008_5"/>
+          <xs:element name="BrnchId" type="BranchData2" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BranchAndFinancialInstitutionIdentification4_CH_pacs008_6">
+    <xs:complexContent>
+      <xs:restriction base="BranchAndFinancialInstitutionIdentification4">
+        <xs:sequence>
+          <xs:element name="FinInstnId" type="FinancialInstitutionIdentification7_CH_pacs008_6">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="BrnchId" type="BranchData2" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BranchAndFinancialInstitutionIdentification4_CH_pacs008_7">
+    <xs:complexContent>
+      <xs:restriction base="BranchAndFinancialInstitutionIdentification4">
+        <xs:sequence>
+          <xs:element name="FinInstnId" type="FinancialInstitutionIdentification7_CH_pacs008_7">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="BrnchId" type="BranchData2" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="BranchData2">
+    <xs:sequence>
+      <xs:element name="Id" type="Max35Text" minOccurs="0"/>
+      <xs:element name="Nm" type="Max140Text" minOccurs="0"/>
+      <xs:element name="PstlAdr" type="PostalAddress6" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="CashAccount16">
+    <xs:sequence>
+      <xs:element name="Id" type="AccountIdentification4Choice"/>
+      <xs:element name="Tp" type="CashAccountType2" minOccurs="0"/>
+      <xs:element name="Ccy" type="ActiveOrHistoricCurrencyCode" minOccurs="0"/>
+      <xs:element name="Nm" type="Max70Text" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="CashAccount16_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="CashAccount16">
+        <xs:sequence>
+          <xs:element name="Id" type="AccountIdentification4Choice_CH_pacs008"/>
+          <xs:element name="Tp" type="CashAccountType2_CH_pacs008" minOccurs="0"/>
+          <xs:element name="Ccy" type="ActiveOrHistoricCurrencyCode" minOccurs="0"/>
+          <xs:element name="Nm" type="Max70Text_CH_pacs008" minOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="CashAccount16_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restriction base="CashAccount16">
+        <xs:sequence>
+          <xs:element name="Id" type="AccountIdentification4Choice_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Tp" type="CashAccountType2" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Ccy" type="ActiveOrHistoricCurrencyCode" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Nm" type="Max70Text" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="CashAccount16_CH_pacs008_3">
+    <xs:complexContent>
+      <xs:restriction base="CashAccount16">
+        <xs:sequence>
+          <xs:element name="Id" type="AccountIdentification4Choice_CH_pacs008_3">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Tp" type="CashAccountType2" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Ccy" type="ActiveOrHistoricCurrencyCode" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Nm" type="Max70Text" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="CashAccount16_CH_pacs008_4">
+    <xs:complexContent>
+      <xs:restriction base="CashAccount16">
+        <xs:sequence>
+          <xs:element name="Id" type="AccountIdentification4Choice_CH_pacs008_4">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Tp" type="CashAccountType2" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Ccy" type="ActiveOrHistoricCurrencyCode" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Nm" type="Max70Text" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="CashAccount16_CH_pacs008_5">
+    <xs:complexContent>
+      <xs:restriction base="CashAccount16">
+        <xs:sequence>
+          <xs:element name="Id" type="AccountIdentification4Choice_CH_pacs008_5">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Tp" type="CashAccountType2" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Ccy" type="ActiveOrHistoricCurrencyCode" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Nm" type="Max70Text" minOccurs="0" maxOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="CashAccountType2">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="Cd" type="CashAccountType4Code"/>
+        <xs:element name="Prtry" type="Max35Text"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="CashAccountType2_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="CashAccountType2">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="CashAccountType4Code"/>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="CashAccountType4Code">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="CACC"/>
+      <xs:enumeration value="CASH"/>
+      <xs:enumeration value="CHAR"/>
+      <xs:enumeration value="CISH"/>
+      <xs:enumeration value="COMM"/>
+      <xs:enumeration value="LOAN"/>
+      <xs:enumeration value="MGLD"/>
+      <xs:enumeration value="MOMA"/>
+      <xs:enumeration value="NREX"/>
+      <xs:enumeration value="ODFT"/>
+      <xs:enumeration value="ONDP"/>
+      <xs:enumeration value="SACC"/>
+      <xs:enumeration value="SLRY"/>
+      <xs:enumeration value="SVGS"/>
+      <xs:enumeration value="TAXE"/>
+      <xs:enumeration value="TRAS"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="CategoryPurpose1Choice">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="Cd" type="ExternalCategoryPurpose1Code"/>
+        <xs:element name="Prtry" type="Max35Text"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="CategoryPurpose1Choice_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="CategoryPurpose1Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="ExternalCategoryPurpose1Code">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Category Purpose (code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Transaktionszweckkategorie (Code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">Eine Sal√§r-, Renten- oder Bonuszahlung kann dem Beg√ºnstigten durch Belegung des entsprechenden Purpose Codes (SALA, PENS oder BONU) mitgeteilt werden.</xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">A salary, pension or bonus payment can be communicated to the beneficiary by assigning the appropriate purpose code (SALA, PENS or BONU).</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Category Purpose (proprietary)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Transaktionszweckkategorie (propriet√§r)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">F√ºr die Kennzeichnung von Zahlungen aufgrund eBill is der Wert EBIL zu verwenden.</xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">For the identification of payments due to eBill the value EBIL has to be used.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="ChargeBearerType1Code">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="CRED"/>
+      <xs:enumeration value="DEBT"/>
+      <xs:enumeration value="SHAR"/>
+      <xs:enumeration value="SLEV"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="ChargesInformation5">
+    <xs:sequence>
+      <xs:element name="Amt" type="ActiveOrHistoricCurrencyAndAmount"/>
+      <xs:element name="Pty" type="BranchAndFinancialInstitutionIdentification4"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ChargesInformation5_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="ChargesInformation5">
+        <xs:sequence>
+          <xs:element name="Amt" type="ActiveOrHistoricCurrencyAndAmount_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Charges Amount and Currency</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Spesenbetrag und W√§hrung</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Darf maximal 14 Stellen enthalten (exkl. Dezimaltrennzeichen), davon maximal 5 Dezimalstellen. 
+Wenn &lt;ChrgBr&gt; = DEBT, muss Betrag gr√∂sser als 0,00 sein.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Must contain no more than 14 digits (excl. decimal separator), including a maximum of 5 fractional digits. 
+If &lt;ChrgBr&gt; = DEBT, amount must be greater than 0,00.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Pty" type="BranchAndFinancialInstitutionIdentification4_CH_pacs008_4">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Charges Receiver</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Spesenempf√§nger</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Das Sub-Element &lt;Pty&gt;&lt;FinInstnId&gt;&lt;Nm&gt; kann 
+a) Im Fall, dass der Spesenempf√§nger nicht bekannt ist mit dem Wert NOTPROVIDED 
+oder
+b) bei &lt;ChrgBr&gt; = SLEV mit einem Code f√ºr die Art der bilateral vereinbarten Geb√ºhren
+bef√ºllt werden.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Sub-element &lt;Pty&gt;&lt;FinInstnId&gt;&lt;Nm&gt; may either be filled
+a) with the value NOTPROVIDED if the charges receiver is unknown
+or
+b) If &lt;ChrgBr&gt; = SLEV a Code to identify the typ of bilaterally agreed charges may be provided
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="ClearingChannel2Code">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="BOOK"/>
+      <xs:enumeration value="MPNS"/>
+      <xs:enumeration value="RTGS"/>
+      <xs:enumeration value="RTNS"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="ClearingSystemIdentification2Choice">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="Cd" type="ExternalClearingSystemIdentification1Code"/>
+        <xs:element name="Prtry" type="Max35Text"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemIdentification2Choice_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemIdentification2Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="ExternalClearingSystemIdentification1Code">
+              <xs:annotation>
+                <xs:documentation source="FE_en">Clearing System Identification (code)</xs:documentation>
+                <xs:documentation source="FE_de">Identification des Clearingsystems (Code)</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation source="FE_en">Clearing System Identification (proprietary)</xs:documentation>
+                <xs:documentation source="FE_de">Identification des Clearingsystems (propriet√§r)</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemIdentification2Choice_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemIdentification2Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="ExternalClearingSystemIdentification1Code">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification (code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems (Code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">Zul√§ssiger ISO-Codewert: CHSIC (SIC-IID (=6n)).</xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">Permitted ISO code value: CHSIC (SIC-IID (=6n)).</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification (proprietary)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems (propriet√§r)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">Wird aktuell nicht unterst√ºtzt.</xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">Is currently not supported.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemIdentification2Choice_CH_pacs008_3">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemIdentification2Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="ExternalClearingSystemIdentification1Code"/>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2"/>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemIdentification2Choice_CH_pacs008_4">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemIdentification2Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="ExternalClearingSystemIdentification1Code">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification (code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems (Code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">Zul√§ssige ISO-Codewerte gem√§ss External Code List.</xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">Permitted ISO code values according to the External Code List.</xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification (proprietary)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems (propriet√§r)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition"/>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemIdentification3Choice">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="Cd" type="ExternalCashClearingSystem1Code"/>
+        <xs:element name="Prtry" type="Max35Text"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemIdentification3Choice_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemIdentification3Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="ExternalCashClearingSystem1Code">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification (code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems (Code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition"/>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification (proprietary)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems (propriet√§r)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition"/>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemMemberIdentification2">
+    <xs:sequence>
+      <xs:element name="ClrSysId" type="ClearingSystemIdentification2Choice" minOccurs="0"/>
+      <xs:element name="MmbId" type="Max35Text"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemMemberIdentification2_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemMemberIdentification2">
+        <xs:sequence>
+          <xs:element name="ClrSysId" type="ClearingSystemIdentification2Choice_CH_pacs008">
+            <xs:annotation>
+              <xs:documentation source="FE_en">Clearing System Identification</xs:documentation>
+              <xs:documentation source="FE_de">Identifikation des Clearingsystems</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="MmbId" type="Max35Text_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation source="FE_en">Member Identification</xs:documentation>
+              <xs:documentation source="FE_de">Identifikation des Teilnehmers</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemMemberIdentification2_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemMemberIdentification2">
+        <xs:sequence>
+          <xs:element name="ClrSysId" type="ClearingSystemIdentification2Choice_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Muss verwendet werden zwecks eindeutiger Identifizierung der verwendeten Adressierungsart.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">Must be used to unambiguously identify the address type.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="MmbId" type="Max35Text_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Member Identification</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Teilnehmers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">SIC-IID (=6n), muss im Bankenstamm vorhanden und aktiv sein, darf nicht verkettet sein.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">SIC IID (=6n), must be contained in the bank master data, active, and not concatenated.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemMemberIdentification2_CH_pacs008_3">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemMemberIdentification2">
+        <xs:sequence>
+          <xs:element name="ClrSysId" type="ClearingSystemIdentification2Choice_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Muss verwendet werden zwecks eindeutiger Identifizierung der verwendeten Adressierungsart.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">Must be used to unambiguously identify the address type.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="MmbId" type="Max35Text_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Member Identification</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Teilnehmers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">SIC-IID (=6n), muss im Bankenstamm vorhanden und aktiv sein.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">SIC IID (=6n), must be contained in the bank master data and active.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemMemberIdentification2_CH_pacs008_4">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemMemberIdentification2">
+        <xs:sequence>
+          <xs:element name="ClrSysId" type="ClearingSystemIdentification2Choice_CH_pacs008_3"/>
+          <xs:element name="MmbId" type="Max35Text_CH_pacs008_2"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ClearingSystemMemberIdentification2_CH_pacs008_5">
+    <xs:complexContent>
+      <xs:restriction base="ClearingSystemMemberIdentification2">
+        <xs:sequence>
+          <xs:element name="ClrSysId" type="ClearingSystemIdentification2Choice_CH_pacs008_4">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Clearing System Identification</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Clearingsystems</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Muss verwendet werden zwecks eindeutiger Identifizierung der verwendeten Adressierungsart.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">Must be used to unambiguously identify the address type.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="MmbId" type="Max35Text_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Member Identification</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Identifikation des Teilnehmers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="ContactDetails2">
+    <xs:sequence>
+      <xs:element name="NmPrfx" type="NamePrefix1Code" minOccurs="0"/>
+      <xs:element name="Nm" type="Max140Text" minOccurs="0"/>
+      <xs:element name="PhneNb" type="PhoneNumber" minOccurs="0"/>
+      <xs:element name="MobNb" type="PhoneNumber" minOccurs="0"/>
+      <xs:element name="FaxNb" type="PhoneNumber" minOccurs="0"/>
+      <xs:element name="EmailAdr" type="Max2048Text" minOccurs="0"/>
+      <xs:element name="Othr" type="Max35Text" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="ContactDetails2_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="ContactDetails2">
+        <xs:sequence>
+          <xs:element name="NmPrfx" type="NamePrefix1Code" minOccurs="0"/>
+          <xs:element name="Nm" type="Max140Text_CH_pacs008" minOccurs="0"/>
+          <xs:element name="PhneNb" type="PhoneNumber" minOccurs="0"/>
+          <xs:element name="MobNb" type="PhoneNumber" minOccurs="0"/>
+          <xs:element name="FaxNb" type="PhoneNumber" minOccurs="0"/>
+          <xs:element name="EmailAdr" type="Max2048Text_CH_pacs008" minOccurs="0"/>
+          <xs:element name="Othr" type="Max35Text_CH_pacs008_3" minOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="CountryCode">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{2,2}"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="CreditDebitCode">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="CRDT"/>
+      <xs:enumeration value="DBIT"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="CreditorReferenceInformation2">
+    <xs:sequence>
+      <xs:element name="Tp" type="CreditorReferenceType2" minOccurs="0"/>
+      <xs:element name="Ref" type="Max35Text" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="CreditorReferenceInformation2_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="CreditorReferenceInformation2">
+        <xs:sequence>
+          <xs:element name="Tp" type="CreditorReferenceType2_CH_pacs008">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Reference Type</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Referenztyp</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Ref" type="Max35Text_CH_pacs008_3">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Creditor Reference</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Zahlungsreferenz des Empf√§ngers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Die Zahlungsreferenz des Empf√§ngers wird aufgrund Code-Angabe der Art unter &lt;Tp&gt;&lt;CdOrPrtry&gt;&lt;Cd&gt; bzw. &lt;Prtry&gt; individuell gepr√ºft:
+
+QRR (&lt;Prtry&gt;) = QR-Referenz gem√§ss folgenden Vorgaben:
+- Zwingend 27-stelliger numerischer Wert, keine Leerzeichen zugelassen.
+- Muss &gt;0 sein.
+- Pr√ºfziffer an letzter Stelle gem√§ss Modulo 10, rekursiv.
+
+ESR (&lt;Prtry&gt;) = ESR-Referenz gem√§ss folgenden Vorgaben:
+- Zwingend 27-stelliger numerischer Wert, keine Leerzeichen zugelassen.
+- Bei Referenznummer &lt; 27-stellig muss diese links mit Nullen erg√§nzt werden.
+- Muss &gt;0 sein.
+- Pr√ºfziffer an letzter Stelle gem√§ss Modulo 10, rekursiv.
+
+IPI (&lt;Prtry&gt;) = Strukturierter Verwendungszweck aus IPI gem√§ss folgenden Vorgaben:
+- Zwingend 20-stelliger Wert.
+- Muss auf Pos. 1 ‚Äì 2 ein korrektes Pr√ºfziffer-Paar enthalten.
+
+SCOR (&lt;Cd&gt;) = Strukturierte Kundenreferenz des Zahlungsempf√§ngers. ISO Creditor Reference gem√§ss ISO 11649 kann verwendet werden. Diese muss auf Pos. 1-2 den Wert RF und auf Pos. 3-4 ein korrektes Pr√ºfziffernpaar enthalten. Die Referenz darf max. 25 Stellen lang sein. 
+Es wird empfohlen, die Referenz nicht linksb√ºndig aufzunullen.
+Die ISO Creditor Reference wird durch die RTGS-Plattform nicht gepr√ºft.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+The creditor reference will individually be checked on the basis of the code provided in &lt;Tp&gt;&lt;CdOrPrtry&gt;&lt;Cd&gt; or &lt;Prtry&gt;:
+
+QRR (&lt;Prtry&gt;) = QR reference complying with the following requirements:
+- Mandatory 27-digit numerical value, no spaces permitted.
+- Must be &gt;0.
+- Check digit in the last position according to Modulo 10, recursive.
+
+ESR (&lt;Prtry&gt;) = ISR reference number complying with the following requirements:
+- Mandatory 27-digit numerical value, no spaces permitted. 
+- If the reference number is &lt; 27 digits, it must be left-padded with zeros.
+- Must be &gt;0.
+- Check digit in the last position according to Modulo 10, recursive.
+
+IPI (&lt;Prtry&gt;) = structured details of payment from the IPI complying with the following requirements:
+- Mandatory 20-digit value.
+- Must contain a correct check digit pair in positions 1 ‚Äì 2.
+
+SCOR (&lt;Cd&gt;) = Structured customer reference for the creditor. An ISO Creditor Reference according to ISO 11649 may be used. This reference must contain the value RF in pos. 1-2 and a correct check digit pair in pos. 3-4 and the total length must not exceed 25 characters. 
+It is advised to not left-pad the the reference with zeros.
+The ISO Creditor Reference will not be validated by the RTGS-Platform.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="CreditorReferenceType1Choice">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="Cd" type="DocumentType3Code"/>
+        <xs:element name="Prtry" type="Max35Text"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="CreditorReferenceType1Choice_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="CreditorReferenceType1Choice">
+        <xs:sequence>
+          <xs:choice>
+            <xs:element name="Cd" type="DocumentType3Code">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Reference Type (code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Referenztyp (Code)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">
+Folgender ISO-Codewert ist zugelassen:
+SCOR = Strukturierte Kundenreferenz des Zahlungsempf√§ngers.
+                </xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">
+The following ISO code value is permitted:
+SCOR = Structured customer reference for the creditor.
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="Prtry" type="Max35Text_CH_pacs008_2">
+              <xs:annotation>
+                <xs:documentation xml:lang="DE" source="FE_en">Reference Type (proprietary)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="FE_de">Referenztyp (propriet√§r)</xs:documentation>
+                <xs:documentation xml:lang="DE" source="CH-Definition">
+Folgende Codewerte sind zugelassen:
+ESR = ESR-Referenz
+QRR = QR-Referenz
+IPI = Strukturierter Verwendungszweck aus IPI
+                </xs:documentation>
+                <xs:documentation xml:lang="EN" source="CH-Definition">
+The following ISO code values are permitted:
+ESR = ISR reference
+QRR = QR reference
+IPI = Structured details of payment from the IPI
+                </xs:documentation>
+              </xs:annotation>
+            </xs:element>
+          </xs:choice>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="CreditorReferenceType2">
+    <xs:sequence>
+      <xs:element name="CdOrPrtry" type="CreditorReferenceType1Choice"/>
+      <xs:element name="Issr" type="Max35Text" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="CreditorReferenceType2_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="CreditorReferenceType2">
+        <xs:sequence>
+          <xs:element name="CdOrPrtry" type="CreditorReferenceType1Choice_CH_pacs008"/>
+          <xs:element name="Issr" type="Max35Text_CH_pacs008_2" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Issuer of the Creditor Reference</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Herausgeber der Referenz</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="CreditTransferTransactionInformation11">
+    <xs:sequence>
+      <xs:element name="PmtId" type="PaymentIdentification3"/>
+      <xs:element name="PmtTpInf" type="PaymentTypeInformation21" minOccurs="0"/>
+      <xs:element name="IntrBkSttlmAmt" type="ActiveCurrencyAndAmount"/>
+      <xs:element name="IntrBkSttlmDt" type="ISODate" minOccurs="0"/>
+      <xs:element name="SttlmPrty" type="Priority3Code" minOccurs="0"/>
+      <xs:element name="SttlmTmIndctn" type="SettlementDateTimeIndication1" minOccurs="0"/>
+      <xs:element name="SttlmTmReq" type="SettlementTimeRequest2" minOccurs="0"/>
+      <xs:element name="AccptncDtTm" type="ISODateTime" minOccurs="0"/>
+      <xs:element name="PoolgAdjstmntDt" type="ISODate" minOccurs="0"/>
+      <xs:element name="InstdAmt" type="ActiveOrHistoricCurrencyAndAmount" minOccurs="0"/>
+      <xs:element name="XchgRate" type="BaseOneRate" minOccurs="0"/>
+      <xs:element name="ChrgBr" type="ChargeBearerType1Code"/>
+      <xs:element name="ChrgsInf" type="ChargesInformation5" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="PrvsInstgAgt" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0"/>
+      <xs:element name="PrvsInstgAgtAcct" type="CashAccount16" minOccurs="0"/>
+      <xs:element name="InstgAgt" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0"/>
+      <xs:element name="InstdAgt" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0"/>
+      <xs:element name="IntrmyAgt1" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0"/>
+      <xs:element name="IntrmyAgt1Acct" type="CashAccount16" minOccurs="0"/>
+      <xs:element name="IntrmyAgt2" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0"/>
+      <xs:element name="IntrmyAgt2Acct" type="CashAccount16" minOccurs="0"/>
+      <xs:element name="IntrmyAgt3" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0"/>
+      <xs:element name="IntrmyAgt3Acct" type="CashAccount16" minOccurs="0"/>
+      <xs:element name="UltmtDbtr" type="PartyIdentification32" minOccurs="0"/>
+      <xs:element name="InitgPty" type="PartyIdentification32" minOccurs="0"/>
+      <xs:element name="Dbtr" type="PartyIdentification32"/>
+      <xs:element name="DbtrAcct" type="CashAccount16" minOccurs="0"/>
+      <xs:element name="DbtrAgt" type="BranchAndFinancialInstitutionIdentification4"/>
+      <xs:element name="DbtrAgtAcct" type="CashAccount16" minOccurs="0"/>
+      <xs:element name="CdtrAgt" type="BranchAndFinancialInstitutionIdentification4"/>
+      <xs:element name="CdtrAgtAcct" type="CashAccount16" minOccurs="0"/>
+      <xs:element name="Cdtr" type="PartyIdentification32"/>
+      <xs:element name="CdtrAcct" type="CashAccount16" minOccurs="0"/>
+      <xs:element name="UltmtCdtr" type="PartyIdentification32" minOccurs="0"/>
+      <xs:element name="InstrForCdtrAgt" type="InstructionForCreditorAgent1" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="InstrForNxtAgt" type="InstructionForNextAgent1" minOccurs="0" maxOccurs="unbounded"/>
+      <xs:element name="Purp" type="Purpose2Choice" minOccurs="0"/>
+      <xs:element name="RgltryRptg" type="RegulatoryReporting3" minOccurs="0" maxOccurs="10"/>
+      <xs:element name="RltdRmtInf" type="RemittanceLocation2" minOccurs="0" maxOccurs="10"/>
+      <xs:element name="RmtInf" type="RemittanceInformation5" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="CreditTransferTransactionInformation11_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="CreditTransferTransactionInformation11">
+        <xs:sequence>
+          <xs:element name="PmtId" type="PaymentIdentification3_CH_pacs008">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Payment Reference</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Zahlungsreferenz</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="PmtTpInf" type="PaymentTypeInformation21_CH_pacs008">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Payment Type Information</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Informationen zur Zahlungsart</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Muss verwendet werden.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">Must be used.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="IntrBkSttlmAmt" type="ActiveCurrencyAndAmount_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Settlement Amount</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Verrechnungsbetrag</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Darf maximal 13 Stellen enthalten (exkl. Dezimaltrennzeichen), davon maximal 2 Dezimalstellen. 
+Betrag muss &gt;0 sein, maximal akzeptierter Betrag ist 99'999'999'999.99.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Must contain no more than 13 digits (excl. decimal separator), including a maximum of 2 fractional digits. 
+Amount must be &gt;0, the maximum accepted amount is 99,999,999,999.99.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="IntrBkSttlmDt" type="ISODate" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="SttlmPrty" type="Priority3Code" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Settlement Priority</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Verrechnungspriorit√§t</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Folgende 3 Priorit√§tsstufen stehen zur Verf√ºgung:
+NORM = Normale Priorit√§t, tiefste Stufe
+HIGH = Hohe Priorit√§t, mittlere Stufe
+URGT = Dringende Priorit√§t, h√∂chste Stufe.
+Wird keine Priorit√§t vorgegeben, gilt normale Priorit√§t.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+The following 3 levels of priority may be used:
+NORM = Normal priority, lowest level 
+HIGH = High priority, medium level 
+URGT = Urgent priority, highest level.
+If no priority is specified, normal priority applies.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="SttlmTmIndctn" type="SettlementDateTimeIndication1_CH_pacs008" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Settlement Indication</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Verrechnungsangabe</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Wird in der Meldung vom RTGS-System an den Teilnehmer verwendet, um effektiven Verrechnungszeitpunkt und Valuta auszugeben, mit dem die Zahlung auf dem Verrechnungskonto verbucht wurde.
+Wird in der Meldung vom Teilnehmer an das RTGS-System verwendet, um optional den fr√ºhesten Verrechnungszeitpunkt anzugeben.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Used in messages from the RTGS system to the participant to state the effective settlement time and the value date when the payment was booked on the settlement account.
+May optionally be used in the message from the participant to the RTGS system to specify the earliest settlement time.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="SttlmTmReq" type="SettlementTimeRequest2" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="AccptncDtTm" type="ISODateTime" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="PoolgAdjstmntDt" type="ISODate" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="InstdAmt" type="ActiveOrHistoricCurrencyAndAmount_CH_pacs008" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Instructed Amount and Currency</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Beauftragter Zahlungsbetrag und W√§hrung</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Beauftragter Betrag, vor Abzug von Spesen und/oder Umrechnung aus Fremdw√§hrung inkl. W√§hrung.
+Darf maximal 14 Stellen enthalten (exkl. Dezimaltrennzeichen), davon maximal 5 Dezimalstellen.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Instructed amount before the deduction of charges and/or conversion from a foreign currency incl. currency.
+Must contain no more than 14 digits (excl. decimal separator), including a maximum of 5 fractional digits.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="XchgRate" type="BaseOneRate" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Exchange Rate</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Umrechnungskurs</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Umrechnungskurs (Fremdw√§hrung zu CHF oder EUR) des beauftragten Zahlungsbetrags im Element &lt;InstdAmt&gt;.
+Zwingend, wenn &lt;InstdAmt&gt; vorhanden ist und W√§hrung in &lt;InstdAmt/@Ccy&gt; unterschiedlich ist zu &lt;IntrBkSttlmAmt/@Ccy&gt;."
+Nicht erlaubt, wenn &lt;InstdAmt&gt; nicht vorhanden ist.
+Nicht erlaubt, wenn &lt;InstdAmt&gt; vorhanden ist und W√§hrung in &lt;InstdAmt/@Ccy&gt; identisch ist zu &lt;IntrBkSttlmAmt/@Ccy &gt;.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Exchange rate (foreign currency to CHF or EUR) of the instructed amount in the &lt;InstdAmt&gt; element.
+Mandatory if &lt;InstdAmt&gt; is present and the currency in &lt;InstdAmt/@Ccy&gt; is different from that in &lt;IntrBkSttlmAmt/@Ccy&gt;.
+Not permitted if &lt;InstdAmt&gt; is not present.
+Not permitted if &lt;InstdAmt&gt; is present and the currency in &lt;InstdAmt/@Ccy&gt; is the same as that in &lt;IntrBkSttlmAmt/@Ccy&gt;.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="ChrgBr" type="ChargeBearerType1Code">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Charge Bearer</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Spesenoption</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+CRED = Alle Spesen gehen zulasten des Zahlungsempf√§ngers (= BEN)
+DEBT = Alle Spesen gehen zulasten des Zahlers; der Zahlungsempf√§nger erh√§lt den vollen Auftragsbetrag (= OUR)
+SHAR = Spesen beim Institut des Zahlers gehen zulasten des Zahlers; alle anderen Spesen gehen zulasten des Zahlungsempf√§ngers (= SHA)
+SLEV = Service Level Agreement, zwingend f√ºr SEPA-Zahlungen (SEPPMT) und optional bei ESR-Zahlungen (ESRPMT) und Kundenzahlungen (CSTPMT). Bei √ºbrigen Zahlungsarten nicht zugelassen.
+
+Hinweis: Ist keine explizite Spesenoption notwendig, gilt der Code SHAR als Defaultwert.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+CRED = All charges are charged to the creditor (= BEN)
+DEBT = All charges are charged to the debtor; the creditor receives the full instructed amount (= OUR)
+SHAR = Charges of the debtor agent are charged to the debtor; all other charges are charged to the creditor (= SHA)
+SLEV = Service Level Agreement, mandatory for SEPA payments and optional for ISR payments (ESRPMT) and customer payments (CSTPMT). Not permitted for other payment types.
+
+Note: If no explicit charge bearer is required, the code SHAR is regarded as the default value.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="ChrgsInf" type="ChargesInformation5_CH_pacs008" minOccurs="0" maxOccurs="4">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Charges Information</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Speseninformation</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Wenn &lt;ChrgBr&gt; = CRED: Muss mindestens 1 x verwendet werden, kann maximal 4 x verwendet werden.
+Wenn &lt;ChrgBr&gt; = DEBT: Kann maximal 1 x verwendet werden.
+Wenn &lt;ChrgBr&gt; = SHAR: Kann maximal 4 x verwendet werden.
+Wenn &lt;ChrgBr&gt; = SLEV: Kann maximal 4 x verwendet werden.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+If &lt;ChrgBr&gt; = CRED: Must be used at least once, may be used max. 4 times.
+If &lt;ChrgBr&gt; = DEBT: May be used max. once.
+If &lt;ChrgBr&gt; = SHAR: May be used max. 4 times.
+If &lt;ChrgBr&gt; = SLEV: May be used max. 4 times.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="PrvsInstgAgt" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="PrvsInstgAgtAcct" type="CashAccount16" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="InstgAgt" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="InstdAgt" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="IntrmyAgt1" type="BranchAndFinancialInstitutionIdentification4_CH_pacs008_5" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Intermediary Agent</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Intermedi√§res Institut</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Adressierung kann grunds√§tzlich √ºber jede Art von Identifikation erfolgen.
+Die Subelemente &lt;BIC&gt; und &lt;ClrSysMmbId&gt; d√ºrfen nicht gleichzeitig verwendet werden.
+Ebenfalls zul√§ssig ist die Angabe einer Volladresse mit den Elementen &lt;Nm&gt; und &lt;PstlAdr&gt;. 
+Folgende Regeln sind zu ber√ºcksichtigen:
+a) Bei Verwendung &lt;BIC&gt; ist die Angabe von &lt;Nm&gt; / &lt;PstlAdr&gt; nicht zul√§ssig.
+b) &lt;PstlAdr&gt; ist nur in Kombination mit &lt;Nm&gt; zul√§ssig.
+c) &lt;Nm&gt; kann auch ohne &lt;PstlAdr&gt; verwendet werden.
+Wenn geliefert, darf &lt;CdtrAgt&gt; nicht identisch sein mit &lt;InstdAgt&gt;.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Can generally be addressed using any kind of identification.
+The sub-elements &lt;BIC&gt; and &lt;ClrSysMmbId&gt; must not be used at the same time.
+A full address including the &lt;Nm&gt; and &lt;PstlAdr&gt; elements may also be provided.
+The following rules must be taken into account:
+a) If &lt;BIC&gt; is used, the indication of &lt;Nm&gt; / &lt;PstlAdr&gt; is not permitted.
+b) &lt;PstlAdr&gt; is only permitted together with &lt;Nm&gt;.
+c) &lt;Nm&gt; may also be used without &lt;PstlAdr&gt;.
+If present, &lt;CdtrAgt&gt; must not be identical with &lt;InstdAgt&gt;.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="IntrmyAgt1Acct" type="CashAccount16_CH_pacs008_2" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Intermediary Agent Account</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Konto des intermedi√§ren Instituts</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Darf nur verwendet werden, wenn &lt;IntrmyAgt1&gt; vorhanden ist.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">May only be used if &lt;IntrmyAgt1&gt; is present.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="IntrmyAgt2" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="IntrmyAgt2Acct" type="CashAccount16" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="IntrmyAgt3" type="BranchAndFinancialInstitutionIdentification4" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="IntrmyAgt3Acct" type="CashAccount16" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="UltmtDbtr" type="PartyIdentification32_CH_pacs008" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Ultimate Debtor</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Urspr√ºnglicher Zahler</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="InitgPty" type="PartyIdentification32" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="Dbtr" type="PartyIdentification32_CH_pacs008_2">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Debtor</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Zahler</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Ist Kunde des Instituts des Zahlers.
+Es muss entweder das Subelement &lt;Nm&gt; oder &lt;Id&gt;&lt;OrgId&gt;&lt;BICOrBEI&gt; verwendet werden.
+Ausnahme: Bei SEPA-Zahlungen muss das Subelement &lt;Nm&gt; verwendet werden und kann optional zusammen mit den Subelementen &lt;PstlAdr&gt; und &lt;Id&gt; verwendet werden.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Is a customer of the debtor agent.
+Either the sub-element &lt;Nm&gt; or &lt;Id&gt;&lt;OrgId&gt;&lt;BICOrBEI&gt; must be used.
+Exception: For SEPA payments, the sub-element &lt;Nm&gt;must be used and it may optionally be used together with the sub-elements &lt;PstlAdr&gt; and &lt;Id&gt;.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="DbtrAcct" type="CashAccount16_CH_pacs008_3" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Debtor Account</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Konto des Zahlers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="DbtrAgt" type="BranchAndFinancialInstitutionIdentification4_CH_pacs008_6">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Debtor Agent</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Institut des Zahlers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Adressierung kann grunds√§tzlich √ºber jede Art von Identifikationen erfolgen.
+Die Subelemente &lt;BIC&gt; und &lt;ClrSysMmbId&gt; d√ºrfen nicht gleichzeitig verwendet werden.
+Ebenfalls zul√§ssig ist die Angabe einer Volladresse mit den Elementen &lt;Nm&gt; und &lt;PstlAdr&gt;. 
+Folgende Regeln sind zu ber√ºcksichtigen:
+a) Bei Verwendung &lt;BIC&gt; ist die Angabe von &lt;Nm&gt; / &lt;PstlAdr&gt; nicht zul√§ssig.
+b) &lt;PstlAdr&gt; ist nur in Kombination mit &lt;Nm&gt; zul√§ssig.
+c) &lt;Nm&gt; kann auch ohne &lt;PstlAdr&gt; verwendet werden.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Can generally be addressed using any kind of identification.
+The sub-elements &lt;BIC&gt; and &lt;ClrSysMmbId&gt; must not be used at the same time.
+A full address including the &lt;Nm&gt; and &lt;PstlAdr&gt; elements may also be provided.
+The following rules must be taken into account:
+a) If &lt;BIC&gt; is used, &lt;Nm&gt; / &lt;PstlAdr&gt; must not be provided.
+b) &lt;PstlAdr&gt; is only permitted together with &lt;Nm&gt;.
+c) &lt;Nm&gt; may also be used without &lt;PstlAdr&gt;.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="DbtrAgtAcct" type="CashAccount16_CH_pacs008_4" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Debtor Agent Account</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Konto des Instituts des Zahlers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Darf nur verwendet werden, wenn der zahlende Teilnehmer im Element &lt;InstgAgt&gt; nicht dem Institut des Zahlers im Element &lt;DbtrAgt&gt; entspricht.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">May only be used if the instructing participant in the &lt;InstgAgt&gt; element does not correspond to the debtor agent in the &lt;DbtrAgt&gt; element.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="CdtrAgt" type="BranchAndFinancialInstitutionIdentification4_CH_pacs008_7">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Creditor Agent</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Institut des Zahlungsempf√§ngers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Adressierung kann grunds√§tzlich √ºber jede Art von Identifikationen erfolgen.
+Die Subelemente &lt;BIC&gt; und &lt;ClrSysMmbId&gt; d√ºrfen nicht gleichzeitig verwendet werden.
+Ebenfalls zul√§ssig ist die Angabe einer Volladresse mit den Elementen &lt;Nm&gt; und &lt;PstlAdr&gt;. 
+Folgende Regeln sind zu ber√ºcksichtigen:
+a) Bei Verwendung &lt;BIC&gt; ist die Angabe von &lt;Nm&gt; / &lt;PstlAdr&gt; nicht zul√§ssig.
+b) &lt;PstlAdr&gt; ist nur in Kombination mit &lt;Nm&gt; zul√§ssig.
+c) &lt;Nm&gt; kann auch ohne &lt;PstlAdr&gt; verwendet werden.
+Darf nicht identisch sein mit &lt;InstdAgt&gt;, wenn &lt;IntrmyAgt1&gt; geliefert wurde.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Can generally be addressed using any kind of identification.
+The sub-elements &lt;BIC&gt; and &lt;ClrSysMmbId&gt; must not be used at the same time.
+Alternatively, the full address including the &lt;Nm&gt; and &lt;PstlAdr&gt; elements may also be provided.
+The following rules must be taken into account:
+a) If &lt;BIC&gt; is used, &lt;Nm&gt; / &lt;PstlAdr&gt; must not be provided.
+b) &lt;PstlAdr&gt; is only permitted together with &lt;Nm&gt;.
+c) &lt;Nm&gt; may also be used without &lt;PstlAdr&gt;.
+Must not be identical with &lt;InstdAgt&gt;, if &lt;IntrmyAgt1&gt; is present.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="CdtrAgtAcct" type="CashAccount16_CH_pacs008_4" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Creditor Agent Account</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Konto des Instituts des Zahlungsempf√§ngers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Darf nur verwendet werden, wenn der gutzuschreibende Teilnehmer im Element &lt;InstdAgt&gt; nicht dem Institut des Zahlungsempf√§ngers im Element &lt;CdtrAgt&gt; entspricht.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">May only be used if the instructed participant in the &lt;InstdAgt&gt; element does not correspond to the creditor agent in the &lt;CdtrAgt&gt; element.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Cdtr" type="PartyIdentification32_CH_pacs008_3">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Creditor</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Zahlungsempf√§nger</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Ist Kunde des Instituts des Zahlungsempf√§ngers.
+Es muss mindestens &lt;Nm&gt; oder &lt;Id&gt;&lt;OrgId&gt;&lt;BICOrBEI&gt; verwendet werden. Beide Elemente k√∂nnen gleichzeitig verwendet werden.
+Bei SEPA-Zahlungen ist die Verwendung des Subelements &lt;Nm&gt; zwingend und kann optional zusammen mit den Subelementen &lt;PstlAdr&gt;, &lt;Ctry&gt; und &lt;Id&gt; verwendet werden.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Is a customer of the creditor agent.
+At least &lt;Nm&gt; or &lt;Id&gt;&lt;OrgId&gt;&lt;BICOrBEI&gt; must be used. Both elements can be used at the same time.
+For SEPA payments, the use of the sub-element &lt;Nm&gt; is mandatory and it may optionally be used together with the sub-elements &lt;PstlAdr&gt;, &lt;Ctry&gt; and &lt;Id&gt;.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="CdtrAcct" type="CashAccount16_CH_pacs008_5" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Creditor Account</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Konto des Zahlungsempf√§ngers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="UltmtCdtr" type="PartyIdentification32_CH_pacs008_4" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Ultimate Creditor</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Endg√ºltiger Zahlungsempf√§nger</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="InstrForCdtrAgt" type="InstructionForCreditorAgent1_CH_pacs008" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Instruction For Creditor Agent/Instruction Code</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Instruktion f√ºr das Institut des Zahlungsempf√§ngers/Instruction Code</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Element dient der Angabe von Instruktionen an das Institut des Zahlungsempf√§ngers bzw. den gutzuschreibenden Teilnehmer, entweder in strukturierter Form als SWIFT Instruction Code oder unstrukturiert.
+
+Lieferung von SWIFT Instruction Code (Abbildung SWIFT Feld 23E):
+- Das Element kann maximal f√ºnfmal verwendet werden.
+- Variante a): SWIFT Instruction Code im Subelement &lt;Cd&gt; (CHQB, HOLD, PHOB, TELB) sowie Additional Information im Subelement &lt;InstrInf&gt;.
+- Variante b) f√ºr Codewerte, die unter &lt;Cd&gt; nicht erlaubt sind (SDVA, INTC, REPA, CORT, PHON, TELE, PHOI, TELI): Subelement &lt;Cd&gt; darf nicht verwendet werden, Lieferung SWIFT Instruction Code und SWIFT Additional Information im Subelement &lt;InstrInf&gt;, Darstellung gem√§ss SWIFT Format Specifications 23E.
+- Bei Verwendung folgender SWIFT Instruction Codes sind zudem Abh√§ngigkeiten zu anderen Elementen zu ber√ºcksichtigen:
+CHQB: &lt;CdtrAcct&gt; darf nicht verwendet werden.
+TELE/PHON: &lt;CdtrAgt&gt;muss ungleich &lt;InstdAgt&gt; sein.
+TELI/PHOI: Darf nur verwendet werden, wenn &lt;IntrmyAgt1&gt; vorhanden ist.
+- Die Validierung zul√§ssiger Code-Kombinationen erfolgt gem√§ss SWIFT Field Specifications 23E.
+
+Verwendung von Instruktion f√ºr das Institut des Zahlungsempf√§ngers (unstrukturiert, Abbildung SWIFT Feld 72):
+- Das Element kann maximal zweimal verwendet werden.
+- Subelement &lt;Cd&gt; darf nicht verwendet werden.
+- Im Subelement &lt;InstrInf&gt; darf auf den ersten Stellen kein SWIFT Instruction Code verwendet werden.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Element is used for giving instructions to the creditor agent or instructed participant, either in structured form as a SWIFT Instruction Code or unstructured.
+
+Sending a SWIFT Instruction Code (reflecting SWIFT Field 23E):
+- This element cannot be used more than five times.
+- Version a): SWIFT Instruction Code in the sub-element &lt;Cd&gt; (CHQB, HOLD, PHOB, TELB) with Additional Information in the sub-element &lt;InstrInf&gt;.
+- Version b) for code values that are not permitted under &lt;Cd&gt; (SDVA, INTC, REPA, CORT, PHON, TELE, PHOI, TELI): Sub-element &lt;Cd&gt; must not be used, delivery of SWIFT Instruction Code and SWIFT Additional Information in sub-element &lt;InstrInf&gt;, format in accordance with SWIFT Format Specifications 23E.
+- If the following SWIFT Instruction Codes are used, dependencies with other elements must also be taken into account:
+CHQB: &lt;CdtrAcct&gt; must not be used.
+TELE/PHON: &lt;CdtrAgt&gt; must be different from &lt;InstdAgt&gt;.
+TELI/PHOI: May only be used if &lt;IntrmyAgt1&gt; is present.
+- Validation of permitted code combinations is done in accordance with SWIFT Field Specifications 23E.
+
+Use of an instruction for the creditor agent (unstructured, reflects SWIFT Field 72):
+- The element must not be used more than twice.
+- Sub-element &lt;Cd&gt; must not be used.
+- Sub-element &lt;InstrInf&gt; must not start with a SWIFT Instruction Code.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="InstrForNxtAgt" type="InstructionForNextAgent1_CH_pacs008" minOccurs="0" maxOccurs="unbounded">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Processing Instruction</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Verarbeitungsinstruktionen</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+Element dient der Angabe von systemspezifischen Instruktionen des zahlenden Teilnehmers an das RTGS-System.
+Das Element kann maximal zweimal verwendet werden.
+Pro Auspr√§gung darf nur eine Instruktion geliefert werden.
+Gleiche Instruktionen d√ºrfen nicht mehrmals geliefert werden.
+              </xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">
+Element is used for sending system-specific instructions from the instructing participant to the RTGS system.
+The element must not be used more than twice.
+Only one instruction may be present in each variation.
+The same instructions must not be provided more than once.
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Purp" type="Purpose2Choice_CH_pacs008" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Transaction Purpose</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Zweck der Transaktion</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Kann als zus√§tzliche Information √ºber den Zweck der Transaktion verwendet werden.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">May be used to provide additional information about the purpose of the transaction.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="RgltryRptg" type="RegulatoryReporting3_CH_pacs008" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Regulatory Reporting</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Regulatory Reporting</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="RltdRmtInf" type="RemittanceLocation2" minOccurs="0" maxOccurs="0"/>
+          <xs:element name="RmtInf" type="RemittanceInformation5_CH_pacs008" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Remittance Information</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Mitteilung an den Zahlungsempf√§nger</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Diese Informationen m√ºssen dem Zahlungsempf√§nger weitergegeben werden und k√∂nnen entweder in unstrukturierter (&lt;Ustrd&gt;) oder strukturierter (&lt;Strd&gt;) Form vorliegen.</xs:documentation>
+              <xs:documentation xml:lang="EN" source="CH-Definition">This information must be forwarded to the creditor and may be present in either unstructured (&lt;Ustrd&gt;) or structured (&lt;Strd&gt;) format.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="DateAndPlaceOfBirth">
+    <xs:sequence>
+      <xs:element name="BirthDt" type="ISODate"/>
+      <xs:element name="PrvcOfBirth" type="Max35Text" minOccurs="0"/>
+      <xs:element name="CityOfBirth" type="Max35Text"/>
+      <xs:element name="CtryOfBirth" type="CountryCode"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="DateAndPlaceOfBirth_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="DateAndPlaceOfBirth">
+        <xs:sequence>
+          <xs:element name="BirthDt" type="ISODate"/>
+          <xs:element name="PrvcOfBirth" type="Max35Text_CH_pacs008_3" minOccurs="0"/>
+          <xs:element name="CityOfBirth" type="Max35Text_CH_pacs008_3"/>
+          <xs:element name="CtryOfBirth" type="CountryCode"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="DateAndPlaceOfBirth_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restriction base="DateAndPlaceOfBirth">
+        <xs:sequence>
+          <xs:element name="BirthDt" type="ISODate">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Birth Date</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Geburtsdatum</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="PrvcOfBirth" type="Max35Text_CH_pacs008_3" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Province of Birth</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Geburtsprovinz</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="CityOfBirth" type="Max35Text_CH_pacs008_3">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">City of Birth</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Geburtsort</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="CtryOfBirth" type="CountryCode">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Country of Birth</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Geburtsland</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="DecimalNumber">
+    <xs:restriction base="xs:decimal">
+      <xs:totalDigits value="18"/>
+      <xs:fractionDigits value="17"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="Document">
+    <xs:sequence>
+      <xs:element name="FIToFICstmrCdtTrf" type="FIToFICustomerCreditTransferV02"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="DocumentAdjustment1">
+    <xs:sequence>
+      <xs:element name="Amt" type="ActiveOrHistoricCurrencyAndAmount"/>
+      <xs:element name="CdtDbtInd" type="CreditDebitCode" minOccurs="0"/>
+      <xs:element name="Rsn" type="Max4Text" minOccurs="0"/>
+      <xs:element name="AddtlInf" type="Max140Text" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="DocumentAdjustment1_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="DocumentAdjustment1">
+        <xs:sequence>
+          <xs:element name="Amt" type="ActiveOrHistoricCurrencyAndAmount"/>
+          <xs:element name="CdtDbtInd" type="CreditDebitCode" minOccurs="0"/>
+          <xs:element name="Rsn" type="Max4Text_CH_pacs008" minOccurs="0"/>
+          <xs:element name="AddtlInf" type="Max140Text_CH_pacs008" minOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="DocumentType3Code">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="DISP"/>
+      <xs:enumeration value="FXDR"/>
+      <xs:enumeration value="PUOR"/>
+      <xs:enumeration value="RADM"/>
+      <xs:enumeration value="RPIN"/>
+      <xs:enumeration value="SCOR"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="DocumentType5Code">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="AROI"/>
+      <xs:enumeration value="BOLD"/>
+      <xs:enumeration value="CINV"/>
+      <xs:enumeration value="CMCN"/>
+      <xs:enumeration value="CNFA"/>
+      <xs:enumeration value="CREN"/>
+      <xs:enumeration value="DEBN"/>
+      <xs:enumeration value="DISP"/>
+      <xs:enumeration value="DNFA"/>
+      <xs:enumeration value="HIRI"/>
+      <xs:enumeration value="MSIN"/>
+      <xs:enumeration value="SBIN"/>
+      <xs:enumeration value="SOAC"/>
+      <xs:enumeration value="TSUT"/>
+      <xs:enumeration value="VCHR"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="Document_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="Document">
+        <xs:sequence>
+          <xs:element name="FIToFICstmrCdtTrf" type="FIToFICustomerCreditTransferV02_CH_pacs008"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleType name="ExternalAccountIdentification1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalCashClearingSystem1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="3"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalCategoryPurpose1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalClearingSystemIdentification1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="5"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalFinancialInstitutionIdentification1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalLocalInstrument1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="35"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalOrganisationIdentification1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalPersonIdentification1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalPurpose1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalServiceLevel1Code">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="FinancialIdentificationSchemeName1Choice">
+    <xs:sequence>
+      <xs:choice>
+        <xs:element name="Cd" type="ExternalFinancialInstitutionIdentification1Code"/>
+        <xs:element name="Prtry" type="Max35Text"/>
+      </xs:choice>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="FinancialInstitutionIdentification7">
+    <xs:sequence>
+      <xs:element name="BIC" type="BICIdentifier" minOccurs="0"/>
+      <xs:element name="ClrSysMmbId" type="ClearingSystemMemberIdentification2" minOccurs="0"/>
+      <xs:element name="Nm" type="Max140Text" minOccurs="0"/>
+      <xs:element name="PstlAdr" type="PostalAddress6" minOccurs="0"/>
+      <xs:element name="Othr" type="GenericFinancialIdentification1" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="FinancialInstitutionIdentification7_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="FinancialInstitutionIdentification7">
+        <xs:sequence>
+          <xs:element name="BIC" type="BICIdentifier" minOccurs="0"/>
+          <xs:element name="ClrSysMmbId" type="ClearingSystemMemberIdentification2_CH_pacs008">
+            <xs:annotation>
+              <xs:documentation source="FE_en">
+Instructing Reimbursement Participant Identification
+(proprietary)
+              </xs:documentation>
+              <xs:documentation source="FE_de">
+Identifikation des Teilnehmers f√ºr Weiterverrechnung
+(propriet√§r)
+              </xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="Nm" type="Max140Text_CH_pacs008" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation source="FE_en">Agent Name</xs:documentation>
+              <xs:documentation source="FE_de">Name des Instituts</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="PstlAdr" type="PostalAddress6" minOccurs="0"/>
+          <xs:element name="Othr" type="GenericFinancialIdentification1" minOccurs="0"/>
+        </xs:sequence>
+      </xs:restriction>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="FinancialInstitutionIdentification7_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restriction base="FinancialInstitutionIdentification7">
+        <xs:sequence>
+          <xs:element name="BIC" type="BICIdentifier" minOccurs="0">
+            <xs:annotation>
+              <xs:documentation xml:lang="DE" source="FE_en">Identification of Instructing Participant (BIC)</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Identifikation des zahlenden Teilnehmers (BIC)</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+SWIFT-Adresse mit 8 oder 11 alphanumerischen Zeichen.
+Element darf nicht ement name="Con value="SBIN"/>
+      <xs:enumeration value="SOAC"/>
+      <xs:enumeration value="TSUT"/>
+      <xs:enumeration value="VCHR"/>nTUn>
+  r&gt;, &lt;Ctry&gt; und &lt;Id&gi <xs:enumeation>
+              <xs:documentation xml:lang="DE" source="FE_ey)
+ l="AROlt;Id&girestric    </xs:complexContent>
+  </xs:complexType>
+  <xs:simpleTuutionoications 2Ne,>
+         <xs:documentation xml:lang="DE" source="CH-Definition">
+SWIFT-Adresse mit 8 oder 11 alphanumerisceTuutionoI.ubel" source
+√ang="DtioCtl tructing ReimalphanumerisceTuuh,    <xs:lendcumentanEº
+uon xml:lang="DE" source="FE_de">IdenticT all ot element does n0h</xs:documentati§io- nTUn>
+ truC;        <xs:annotation>
+              <xs:documentation xm>nTRmit 8 oder 11 aing">
+      <x  </xs:s on      <xs:annotation>
+  te">Idfor giving instructions to the creditor agent or instructed participant, either in structured form as a SWIFT Instruction Code or unstructured.comng="DE"d form as a SWIFT Instruction Code or unstructured.comng="DE"d form as a SWIFT Instruction Code or unstructured.com/xs:complexTsher in structura\<xs:d ="4"/>aoylannt &ltbhce="CH-Definition">
+SWIFT-Adresse mit 8 oder 11 alphanumerischen Zeichenh:element>
+          <xs:element name="PstlAdr" type="PostalAddreLaumentation source="FEaon"="PostalAddrSnt>
+  </xs:ant, ei<xs:co type="RegulatoryReporlulo:simpleType>
+  <xs:comng="DE" source="FE_de">Konto des Zahlers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:elats:complexContent>lang="DE" source=">
+    <xs:restriction base="xs:decimal">
+      <xs:totalDigits value="18"/>
+      <xdocumentation xm>nTRmit 8 oder 11 aing">
+      <x  </xs:s on      <xs:annotation>
+  te">Idfor giving instructions to the creditor agent or instructed participant, eiATypee participanTRmit 8mal">
+      <xs:totalDigits value="18"str</xsT werden.
+              </xs:documentation>
+      :dol     <xs:iction bmpleType>C"/>
+Ze>
+      <xse name="FinancialInstitutionIdentification7_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="Financialsvr" typ:enumeration value="SOAC"/>
+      <xs:enumeration value="TSUT"/>
+      <xs:enumeration value="VCHR"/>
+  08">
+ acs008">
+    <xs:complexContent>
+       11 alphanumerischen Zeichenh:element>
+   √ntifier" minOccurs="0"/>
+      <xsee <xs:coitor ase mit 8 oder 11 alphanunxs:restrictiementnumberiscgu name="ke="F,s="0"/>Vg rictiementnumberiscgu name="ke="F,s="0"/>Vg rictiementnumberiscgu nameccurs="0"/inane must not be used more than twice.
+Only one f√ºr Weiterverrechnung
+(propriet√§r)
+          ntation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">
+SWIFT-Adresse mit 8 oder 11 alphanumerischen Zeichen.
+Element darf nicht ement name="Con value="SBIN"/>
+      <xs:enumeration value="SOAC"/>
+      <xs:enumeration value="TSUT"/>
+ ru<xs:totalDigits value="18"/>
+      <xdocumentation wicerischen ZeichenmBDigits value="18"/>
+      <xdocumentation wicerischen ZeichenmBDigits value="1ice.
+Only one f√ºr Weiterverrechnung
+(propriet√§r)
+          ntation>
+              <)Raon>
+              <)Raon>
+              <)Raon>
+              <)Raon>
+              <)Raon>
+              <)Raon>
+   alue="18"str</xsT werden.
+              </xs:documentation>
+      :dol     <xs:icte§§<xs:simpn vanformatn base="xs:tion>
+      :doon xml:lang="DE" soh="PostalAddreLaum,</xs:iesimpleType>
+  fternab-element &lt;Cd&gt; must not be used.
+- SuxExterna>
+              <)Raon>
+              <)Raon>
+              <)Raon>
+   gsempf√§nger">
+               </xs:documentation>
+      :dol     <xs:icte§§<xs:simpn vanformatn base="xs:tio>
+              <xs:documentn
+   aype>
+  fternab-element &lt;Cd&gt; must not be "/>
+      <xs:enumeration value="TSUT"/>
+      <xs:enumeration value="VCHR"/>nTUn>
+  r&gt;, &lt;Ctry&gt; und &lt;Id&gi <xs:enumeationes must be taken into account:
+a) If &lt;BIC&gt; is used, &lt;Nm&gt; / &lt;PstlAdr&gt; must not be providedeiten zu anderen Elementen zu ber√ºcksichtigen:
+CHQB: &lt;CdtrAcct&gt; darf be providedeiten zu andmGD:th_CHumeationes must be taken into account:
+a) If &lt;BIC&gt; is used, &lt;Nm&gt; / &lt;PstlAdr&gt; must not be providedeiten zu anderen Elementen zu ber√ºcksichtigenpe="Max140Text_CH_pacs008" minOccurs="0">
+            <xs:annoESBIN"/>
+      <xsolu aiction>t_CH_pacs008" minOccurs="0">
+            <xs:annoESBIN"/>
+      <xsolu aiction>ust not be "/>
+      <xs:enumed3it 8mal">
+      <xs:totalDigits udocum"/>
+      <xsa gutzs:element na <xBIN"/>
+      <xsolu aicec         <)Raon>
+ xs:documentaured tV xml:lang="DE" source="FE_de">Ixs:annotation>
+N s:elemest     s:complexType name="FinancialIdentificationSchemeName1Choice">
+   alIden     :doon xml:lang="DE" soh="PostalAddreLaum,</xs:iesimpleType>
+  fternab-element &lt;Cd&gt; must not be used.
+- SuxExterna>
+              <)Raon>
+              <)Raon>
+              <)Raon>
+   gsempf√§nger">
+               </xs:documentation>
+     Ni&gt;) Foxml:langion>
+ >
+       minOs must not be used.
+- SuxExterna>
+              <)Raon>
+              <)Raon>
+              <)Raon>
+   gsempf√§nger">
+               </xs:documentation>
+     NName</xs:documentation>
+              <xs:documentation source="FE_de">Name des Instituts</xs:documentatirlexType name="Document_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="Document">
+        <xs:sequence>
+          <xs:element name="FIToFICstmrCdtTrf" type="FIToICsrrestricde="FIT,eDocumentava="FE_dmes Institi lmpf√§nger">
+        uence>
+  Lon>
+ >
+   "IntrmyAgsolu aiction>ustH        <)Raon>
+              <)Raon>
+       chenh:o,ctioontent>
+      <xs:restriction base="Document">
+        <xs:sequence>
+          <xs:element name="FIToFICstmrCdtTrf" type="FIToICsrrestricde="FIT,eDocumentava="FE_dmes Institi lmpf√§nger">
+        uence>
+  Lon>
+ >
+   "IntrmyAgsolu aiction>ustH        <)Raon>
+CH-Defit name="FIToFICstmrCdtTrf" type="FIToICsrrestricde="FIT,eDocumentava="FE_dmes Institi lmpf√§nger">
+        uence>
+  Lon>
+ s value     APxType>
+  <xs:complexTng="bh√§ngigkeit="OteCtAdjust
+    titi lmCstmrCdtTrf" type="FIToICsrrestricde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccent dient der Angabe von Instruktionen an das Institut des Zahlungsempf√§ngers bzw. den gutzuschreibenden Teilnehmer, entweder in strukturierter Form als., gutzusreLaumentation source="FEaon"="PostalAddrSnt>Bas Institut des fc  <xs:doa4mestricde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccde="FInce>
+          <xs:element n name="CityOfBirth" type="MaDocut">
+rkccde="FIbDgge="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccent dient der Angabe von Instruktionen an das Institut des Zahlungsempf√§ngers bzw. den gutzuschreibenden Teilnehmer, entweder in strukturierter Fo        <)Raon>
+CH-Defit namers Fuuence>
+  Lon>
+ >
+   "IntrmyAgsolu aiction>ust_en">Agent Name</xs:documentation>
+              <xs:documentation source="FE_de">Name des Instituts</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="
+0al9 des Instituts</xs:documentatgaeDCaumentation sourmentation source="FE_de">Name des InstitutrALontitutrAlt;Insrceni9 dvityOfBi4lang=csrceni9 fBi4l(        <xs:documentation xml:lang="DE" ancialInstitutionIdentification7">
+        <xs:sequence>
+          <xs:element name="BIC" type="BICIdentifier" mineADmDCme namePa<xs:complexType name="FinancialInstitutionIdentification7_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restricee
+    Pa uIiust not be used.
+- SuxExterna>
+              <)Raon>
+              <)Raon>
+              <)Raon>
+   gsempf√§nger not be used.
+- SuxExterna>
+       entatnt-es ZahleiertºglAddrSnt>
+  </xs:ant, ei<xs:co type="Regul not bt>
+     <xst">
+rkccde="FIbDgge="FIT,eDocut">
+rkccde="FIT,eDocut">
+rkccent dient de </xs:complexType>
+  <xs:complexType name="FinancialInstitutionIdentification7_CH_pacs008_2">
+  ttedresnt>
+  <rOccurs="0">
+      entation xm>nTRmit 8 oder 11 aing">
+      <x  </xs:s on   edg r    <xType en">I " typeuumentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Geburtsort</xs:documen <xs:dopermitted under &lt;Cd&gt; uction may be present in each variati<xTy
+/>
+      <xk providH_pacotalDigits value="18"/>
+      <xdocumentation wiceriscDexT,s:elelt;Cd&gt; uction may be Fuuence>
+  Lon>
+ >
+   "IntrmyAgsolu aictpe>
+ tSc</xs:annotationictpe>
+ tSc</xs:annotationictpe>
+ tSc</xs:annotatelelt;Cd&goi n    >
+ >
+ eame=ementIion xml:lang="DE" source="FE_en">Debtor Agent Account</xs:documentation>
+              <xs:documentation xml:lang="DE" source="FE_de">Konto des Instituts des Zahlers</xs:documentation>
+              <xs:documentation xml:lang="DE" source="CH-Definition">Darfl3KIGr      <xk providH_pacotalDigits value="18"/>
+      <xdocumentation wiceriscDexT,s:elk providH_pacotalDigits valuE baubtInoagits valueEee=emen(gub0Cement." source="t der Angabe von Instruk        ufbtor Agktatelelt;entation wic<xs:restriction base="xs:string">
+      <xs:minLengte">K ment>
+   √ntifier" minOccurs="0"/>
+      <xsee <xs:coitor ase mit 8 oder 11 alphanunxs:restrictiementnumberiscgu name="ke="F,s="0"/>Vg rictiementnumberiscgu name="ke="F,s="0"/>Vg rictiementnumberiscgu nameccurs="0"/inane must not be used more than twice.
+Onl2txs:compst="F)s valueEee=emen(gub0Cement." soDarfxs:ant,abe Eee=emen(gub0Cement." source=sed ,i9e6008_2 not be used.
+- SuxExterna>
+              <)Raon>
+              <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+              <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+              <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+              <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+              <)Raon>
+    <xs:eor agent or insilbCstrusit 8√e, en    <s:documenta&lt)Raon>
+    <xs:eor agent or instruct       <)Raon>
+              <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-i <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; / &ltree>
+  </xs:complexType>
+  <  <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; / &lengte">K ment>
+   √ntifier" 
+rceptg">
+√e-i <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; / &ltree>
+  </xs:complexType>
+  <  <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-iRrb   gsempf√§nger"t       <)Raon>
+ pleifl3KIjraon>,uence>
+  Lon>
+ >
+   "IVcom <xs:complexType name="FinancialInstitutionIdentification7_CH_pacs008_2">
+  ttedresnt>
+  <xTy
+/>
+r="Ex   </xs:documentation>
+      :dol     <xn>
+      :dol     <xn>
+      :do√nstruct       <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-iRrTRw          <)Raon>
+  uF        <)Raon>
+  uF        <)Raon>
+  uF     or instruct       <)Raon>
+              <) name="ke="F,s="0"/>Vg rictiementnumberiscgu nameccurs="0"/inane must not be used more than twice.
+Onl2txs:cs:documo5s IIoions to tcomplexTy   presnt   <)tInoagits valueEee=emen(gub0Cement." source="t der Angabe von Instruk        ufbtor Agktatelelt;entation wic<xs:restriction base="xs:string">
+      <xs:minLenmbomplexTy   presnt   <)tInoagits valueEee=emen(gub0Cement." source="t der Angabe von Instruk        ufbtor Agktatelelt;entation  k d9equemen(gub0Cement." source="t der Angabe von Instruk        ufbtor Agktatelelt;entation  k d9equemen(gub0Cement." source="t der Angabe von Instruk        ufbtor Agktatelelt;entation  k d9equemen(gub0Cement." source="t)Bs on>
+   gsempf√§nger">
+Stot be used.
+- SuxExterna>Ihg<)tIgen.t der AngaFE_imal">
+      <xs:totalDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerischen Zeichenh:element>
+          <xs:element name="PstlAdr" type="PostalAddreLaumentation source="FEaon"="PostalAddrSnt>
+  </xs:ant, ei<xs:co type="RegulatoryReporlulo:simpleType>
+  <xs:comng="DE" source="FE_de">Konto des Zahlers</xent>
+  <t;entation  k d9equemen(gub0Cement." source="t)Bs on>
+   gsempf√§nger">
+Stot be used.
+- SuxExterna>Ihg<)tIgen.t der AngaFE_imals are used, depend gount</xs:don>
+              <)Raon>
+     rictxd k√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+              <)Raon>
+     rictxd k√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+              <)Raon>
+     rictxd k√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+              <)Raon>
+     rictxd k√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+              <)Raon>
+  aonsestionen an d2 <xs:totalDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerischen Zeichenh:element>
+          <xs:eleD)RaonentDictiementnumberiscgu nameccursmource="FE_de">Name des Instituts</xs:documentation>
+      aSH
+               <n>
+    s</xs:d    <)Raonurce="t der
+ lm 6
+   ntDp√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+              <)Raon>
+     rictxd k√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+         sion b) for code values that are not permitted under &lt;Cd&gt; (SDVA, INTC, REPA, CORT, PHON,ion b) for code values that aion xml:lang="DE" source="FE_de">Geburtsort</xs:documen <xs:dopermitted Iaonburtsort</xs:docurMboCirn<)R used aton>
+              <)Raon>
+xs:docurMboCirn<)R u.iLjng="DE" source="FE_de">Geburtsort</xs:documen <xs:dopeUey)
+ lm 6
+   :don>
+         sion b) for code values that are not permitted under &lt;Cd&gt; (SDVA, INTC, REPA, CORT, PHON,ion b) for code values that aion xml:lang="DE" source="FE_de">Geburtsort</xs:documen <xsvon :Nentation source="FE_en">Agenttn1" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="FinancialInstitutionIdentification7_CH_pacs008">
+    <xs:complexContent>
+      <xs:restriction base="Financia>KontTIdentifier" mineADmDCme namePa<xs:complexType name="FinancialInstitutionIdentification7_CH_pacs008_2">
+    <xs:complexContent>
+      <xs:restricee
+    Pa uIiust not be sde rise="Financia>gkeides Insder 11 aingt</g="D source="hirn<langlptg" type="RegulatoryReporting3_CH_pacs008" minOccurs="0">
+            <xs:annotation>
+      6
+   :don>SDVA08_2">
+  ttedresnt>
+  <xTy
+/>
+r="Ex   </xs:documentation>
+      :dol     <xn>
+      :dol     <xn>
+      :do√nsrs="0">
+          5(   Zahlungsempf√§nger weitergegeben w:string">
+      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xs:restriction>
+  </xs:simpleTyO iction::compcti     ocumenuopeCCi6  </xi(    g <xs:it>
+         sion b) foCi6  </xi(    g <   <xs:restcia>nato      <xs:minLength value="1"/>
+      <xs:maxLength value="4"/>
+    </xeelement>
+             efio    <xs:comvidedeiten zu anderen Elementen zu ber√ºcksichtige;Ctry&gt; und &lt;Id&gi <xs:enumeation>
+              <xs:documentation xml:lang="DE" sotalefiestder An]eexs:comvidedeiten zu anderen Elementen zu ber√ºcksichtige;Ctry&gt; und &lt;Id&gi <xs:enumeation>
+              <xs:docume <xs:res">
+  ttedresnt>
+  <rOccurs="0" <xstn  <irCdaccooame="<xs:r+r
+      h    <n>
+    s</xs:d    <)Raonurce="t der
+ lm 6
+   ntDp√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+           TA) 5(   Zahlungsempf√§nger weitergegeben E_ey)
+ lm 6
+   :don>
+  lm 6
+  2)Raonurce="t der
+ lm 6
+  
+i;Id&g <xs_par="Ex  <:don>
+  lm 6
+  2)Raonurce="t der
+ lm 6
+  
+i;Id&g <xs_par="Ex  <:don>
+  rt;IAulon>
+CH-</xs:ge;Ctry&  &lt;Cd&gt; mus        Ts:elemen si 6
+s;Id&g7 Ts:elemen si    <xsmust not  <xs:doa4mest&gt; is             <)Raon>
+     rictxd k√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+              <)Raon>
+  aonsestionen an d2 <xs:totalDminOc>
+    <      </xs:sequence>
+      </xs:restriction>
+    e="t der
+ lm 6
+  
+i;Id&ei<xs:co type="RegulatoryReporlulo:simpleType>
+  <xs:comng="DE" sourc:don>
+  rt;IAulon>
+CH-</xs:ge;Ctry&  &lt;Cd&gt; mus        Ts:elemen si 6
+s;Id&g7 Ts:elemen si    <xsmust not  <xs:doa4mest&gt; is             <)Raon>
+     rictxd k√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+              <)Raon>
+  aonsestionen an d2 <xs:total</xsD">
+  ype="tt nce>
+      </xs:restriction>
+    e="t der
+ lm 6
+s:restrictio
+ ZplexType>
+  <  <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-iRrb   gsempf√§nger"t       <)Raon>
+ pleifl3KIjraon>,uence>
+
+  aonsestio  <ype="Regulatoryonen aw
+CH-</xs:ge;Ctry&  &lt;lt;Cd&Dn,ase-iRrb   gsempf√§nger"t       <)Raon>
+ pleifl3KIjraon>,uence>
+
+  aonsestio  <ype="Regulatoryonen aw
+CH-</        </xs:annotaoryonen aw
+CH-</ Sia>nan       </xs:annotaoryonen aw       ufbT6UD>
+  <xotalefiesumberiscgu nameccurs="0"/ino type="RegulatoryReporlulo:simpleType>
+  <xs:comng="DE" sourc:don>
+  rt;IAulon>
+CH-</xs:ge;Ctry&  &lt;CaauencepLn<)R used aton,e>
+
+  aonsestio  <ype="Regulatoryonen aw
+CH-</        </xs:annotaoryonen aw
+CH-</ Sia>nan       </xs:annt und &lt;Id&gi <xs:enumeation>
+              <xs:d        <)R, o aonsestioocumen <xs:dopermitted Iaonburtsort</xs:docurMboCirn<)Rt
+eeriscgu nameccurs="0"/ino  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xiorlulo:simpleType>
+  entauej" source="FEb,t;Id&gi <xs:>
+√kcnane />
+            </xs:annotatej" sourc1 alpi 6
+s;Id&gOand apuenRuT<xsatoryonen aw
+CH-</xs:geôRplexTLuD
+CH-</xs:geôRplexTLuD
+CH-</xs:geôRplexTLuD
+CH-</xs:geôRplexTLumest&gt; is             <)Raon>
+     rictx    Ts:elemen si 6§nger">
+        uence>
+  Lon/xs:annotatej" sourc1 alpi 6
+s;Id&gOand apuenRuT<xsatoryonen aw
+CH-</xs:geôRplexTLuD
+CH-</xs:geôRplexTLuD
+CH-</xs:geôRplexTLuD
+CH-</xs:geôRplexT
+   
+rs="0"/ino  Sia>Tturs="0"/ino  Si"18"/>
+      <xSysMmbId" type=srreennotrn<)Rt
+eeriscgu nameccurs="0"/ino  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xiorlulo:simpleType>lv1tion source="FE_de">stumberiscgu nameccu Zahler    <d/xs:complexType>
+  <  <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; / &lengte">K lemenbe sde ri/ino&g <xs_par="Ex  <:don>
+  lm 6
+  2)Raonurce="t der
+ lm 6
+  
+i;Id&g <xs_par="Ex  <:don>
+  rt;IAulon>
+CH-<,Pa uIiust notxType name="FinancialInstitutionIdentification7_CH_pacs008_2">
+    <xs:compRcu Zahler    < Ir        <)R, o aonsestioocumen <xs:dopermitted Iaonburtsort</xs:docurMboCirn<)Rt
+eeriscgu nameccurs="0"/ino  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xiorlulo:simpleType>t." s </s Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  Sia>Ttur.  <x/xs:docurMFE_ey)
+Cr.  <x/xs:docurMFE_ey)
+Cr.  <x/xs:docurMFE_eyrna>
+  e="D:viscgino  Sia>Tturslptrictio  <o  Sia>Tturslptrictio  <o  Sia>Tturslptrictio  <a nurcesourc1 alpi 6ctgnnotatecurMe/ino  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xiorlult1008_2:rs="0">
+ u   Ts:UNIgt; /tum/ino klo  Sia>Ttu  <o  ptrictio  <o:compRcu Zahler    < Ir        <)R, o aonsestioocumen <xs:dopermitted Iaonburtsort</xs:docurMboCirn<)Rt
+eeriscgu nameccurs="0"/ino  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xiorlulo:simpleType>t." s </s Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  Sia>Ttur.  p1008_2:rs="0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"00NemenheeType>lv:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"00Nemenh</xs"00Nemep
+ Ts:UNIgTl√egi <xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonsestie="§ciurMFE_ey)
+Cr.  <x/xTs:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"0">
+UNIgTlx   </xs:documentaj  <)R,RrTRw2Igt;   l5"0">
+ u   Ts:UNIgTl√:dog"0">
+ u ce="IgTl√:dog"0"rIdog"0  neType>lv:d  Ts:UNIg>Ucxter     w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  Sia>Ttur.  <x/xs:docurMFE_ey)
+Cr.  <x/xs:docurMFE_ey)
+Cr.  <x/xs:docurMFE_eyrna>
+  e="D:viscgino  Sia>Tturslptrictio  <ing</xs:docum=; /tum/ino w     <a>T
+  <xtie   uti-iRrT:eor agent or instruct       <)Raon>
+              <)Raon>
+    <xs:eor agent or insilbCstrusit 8√e,BocutitutionIdentification7">
+        <xs:sequence>
+          <xs:element name="BIC" type="BICIdentifier" minOccurs="0"/>
+          <xs:element n u henh:" ocurMbaype nangabe von Instruk        ufbtor Agktatelelt;
+icipaed aton,e√ <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-i <)Raon>
+    <alIbnt name="BIC" type="  Tsaonurce="t der
+ lm 6
+  
+i;Id&g <xs_l2:rse="BIC" typeit 8√e,BocutitutionIdentification7">
+        <xs:sequence>
+          <xs:element name="BIC" type="BICIdeybe 6
+  m 6
+  
+i;Id&g <xs_l2:rse="BIC" typeit 8√e,BocutitutionIdentification7">
+        <xs:sequence>
+          <xs:element name="BIC" type="BICIdeybe 6
+  mfustoor <xs:element name="BIC" type=:UNIgTl√:doh uu </s Zahlers<w6UDCstructg u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"0">
+UNIgTlx   </xs:documentaj  <)R,RrTRw2Igt;   l5"0">
+ uumen <xs:doumentation>
+              <xl::compRcu Zahler  nType>eType>lv:s:simpleType>
+on>
+ pe="BICIde">
+ t<ing</xs:docum=; /tum/ino w     <a>T
+  <xtiexl::cobrn
+    <xs:eor agent or insilbCstrusit C√:dmler  nTyPo  ptrictio  rtrictio  rtrictio  rtrictio  rtrictio  rtr   urce="FE_de">Konto des Instituts:sequence>
+      </xs:restriction>
+    e="t der
+ e="FE_um/ino w     <a>T
+  <xtiexl::c 6
+  meS  <tnt>
+"t der
+ lm 6
+  o  esi s8 odo</xs:T2:rse="BIC" ty   urce="FE_de">Konto des Instia bn urce="t der
+ lm 6
+  
+         <)Raon>
+     r   <)R, o aonsuenRuT<xsatroocum <a>T
+  <xtie   uti-iRrT:eor agent or instruct       <)Raon>
+      on>
+ToFICstm bn u/ &lengricto"t or instruct       <)Raoor ing instructions to the creditor agent or instructed participant, eiATypee participanTRmit 8mal">
+      <bdlAdr&gt; must not be providedeiten zu anderen Elementen zu ber√ºcksichtigenpe="Max140Texs.agent or instruct       C;   or instruct       <)Raoor ing instructions to the cEstrp>lv:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"00NemenheeType>lv:dog"0">
+ u   Ts:UNItion1Code">
+    <xs:restrictioahl <xs:restrictioahl <xs:restrictioahl <xs:restrictioahl <xs:restrictiDce="CH-Definition">Diese Informationen m√ºssen dem ZahlungsempfSiaanen m√ºssen dem ZahlungsempfSiaanen m√ºssen dem ZahlungsempfSiaanen m√ºssen dem ZahlungsempfSiaanen m√ºssen dem ZahlungsempfSiaanen m√ºssen dem ZahlungsempfSiaanen m√ºssen dem ZahlungsempfSiaanen m√ºssen dem ZahlungsempfSiaanen m√ºssen dem ZahlungsempfSiaane m ZahlueôRplexTLuD
+CH-</xs:geôRplexTLuD
+CH-</xs:geôRn agent or instruct       <)Raon>
+              <)Raon>
+    <xs:eor agent on>
+ pleifl3KIjetursexs:comvided <tnt>
+"t der
+ lm 6
+  o  esi s8 odo</xs:T2:rse="BIC" ty   urce="FE_de">Konto des Instia bn urce="t der
+ lm 6
+  
+         <)Raon>
+     r   <)R, o aonsuenRuT<xsatroocum <a>T
+  <xtinot      <)Raors="0<xs_l2:"00Nemenh</xs"00Nemep
+ Ts:UNIgTl√egi <xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonsestie="§ciurMFE_ey)
+   <xs:element n u henh:" ocurMbaype nangabe von Instruk        ufbtor Agktatelelt;
+icipaed aton,e√ <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-i <)Raon>
+s valnangabe von Instruk        ufbtor Agktatelelt;
+icipaed aton,e√ <)Raon>
+    source="FE_de">i s8 odo</xs:T2:rse="BIC" ty   urce="FE_de">Konto des In&g <xs_par="Ex  <:don>
+  rt;IAulon>
+CH-<,Pa uIiust notxType name="Finype e4 to the cEstrp>lv:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"00NemenheeType>lv:dog"0">
+ u   Ts:UNItion1Code"euh>Diese Infotation xmlCleadog"0">
+ u   Ts:UNIgTl√:dcalInstitxs_ce=  <xs:element naR/>
+      <xs:maxLength value="4"/>
+    </x<)Raon>
+s valnangabe von Instruk        ufbtor Agktatelelt;
+icipaed aton,e√ <)Raon>
+    source="n m√ºssen desstructg">cumentation>
+     Ni&gt;) Foxml:langion>
+ >
+  ltatel"4"/>
+    </xLsgB2 L,e/Is:comvig"0"erliti&gt;) FAFomng="DE"Max140 1norlDmng="00NiH_pac
+TlB Pfier" 
+rceptg">
+√e-i <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+   uuu
+   :erlDmng="00NiH_pac
+TlB Pfier" 
+rceptg">
+√e-i <)Raonn>
+  </xs:simpleType>
+  <xs:simpleType name="ExternalPersonIdentificiSNExternaNreLaum,</xs:iesimp
+√e-i <)Raon>
+    <xs:eor agent or instruct       <)Raon>
+   uuu
+   :erlDmng="00NiH_pac
+TlB Pfier" 
+rceptg">
+√e-i <)s:annotation>
+N s:elemest     s:come   ion::compcti     ocumenuopeCCi6  </xi(    g <xs:it>
+         si </xs:conderen ElNreLa√</xs:tigenpe="Max140Texs.agent or instruct       C;   or instruct       <)Raoor ing instrucct       <)Raon>
+   uuu
+   :erlDmng="00NinWeccu    Ce       <UT Infos:anoCirn<)R used aton>
+             l ing inon,</xs:documentaj  <)R,RrTRw2Igt;   l5"0">
+ u   Ts:UNIgTl√:dog"0">
+ u ce="IgTl√:dog"0"rIdog"0  neType>lv:d  Ts:UNIg>Ucxter     w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  Sia>Ttur.  <x/xs:docurMFE_ey)
+Cr.  <
+TlB Pfier" 
+rceptg">
+√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)RaonnANemenh</xs"00Nemep
+ Ts:UNIgTl√egi <xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonseso  Sia>Ttur.  <x/xs:docurMFE_ey)
+Cr.  <
+TlB Pfier" 
+rceptg">
+√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i"0"rIdog"0  neType>lv:d  Ts:UNIg>Ucxter     w6UDCstruct
+  < Pfier" 
+2Type"0"/ino  Sia:dog"t       <)Raoor ing instrucct       <)Raon>
+   uuu
+   :erlDmng="00NinWecTlB Pfier" 
+rceptg">
+√e-i <)s:annotation>
+N s:elemest     s:come   ion::compcti     ocumenuopeCl:UNIgTl√:dogu tg="00NinWecTlB enRuT<xsauct0">
+ u   Ts:UNIgTl√:dog"0">
+ u ce="IgTl√:dog"0"rIdoi"0">r instruct       <)Type>t." s </s Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  Sia>Tturtg="00NinWecTlB enRuT<xsauct0">
+ u   Ts:UNIgTltions tnrt;   <)R, o aonseso  Sia>Ttur.  <x/xs:docurMFE_ey)
+Cr.  <
+TlB Pfier" 
+rceptg">
+√e-i √
+ngsempbu>
+√e-i <)Raon>
+s valnangabe von Instruk        ufbtor Agktatelelt;
+icipaed aton,e√ <)Raon>
+    source="FE_de">="IgTls:sequence>
+          <xs:ele  s  <)Raon>
+   uuu
+   :erlDmng="00NiH_pac
+TlB Pfiertb Aeeatelelt;
+icipaeds:docurMF istrucct       <)Raon>
+   uuu
+   :erlDmng="00NinWec  <)Raon>
+   uuu
+   :erlDmng="00NiH_pac
+TlB Pfiertb Aeeatelelt;
+icipaeds:docurMF istrucct       <)Raon>
+   u    <)Bntowc  <)Raon>
+   u
+   uuu
+   :erlDm BeNcbe vebD√e-i <)RaonnANemenh</xsltilbCW"0">
+xs:eor agent or instru  ocumene <)Rn ) n 
+up1tn>
+    <xs:StrALonate 3zE_eys:elementementnueA: <xs:eoaBerer Form als., gutzusreLaumentation source="FEaon"="PostalAddrSnt>Bas Institut des fc  <xs:doa4mestricde="FIT "00NiH_g">
+√estrICIderereC2:relt;
+icipaed2emeu
+   :eyl√:doh uu </s Zahlers<w6UDCstructg u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"0">
+UNIgTlx   </xs:documentaj  <)R,RrTRw2Igt;   l5"0">
+ uumen <xs:doumentation>
+              <xl::compRcu Zahler  nType>eType>lv:s:simpleType>
+on>
+ pe="BICIde">
+ t<ing</xs:docum=; vZ>lv:d  Ts:UNIg>U§   <)Raon>
+   u    <)Bntowc  <)Raon>
+   u
+   uuu
+   :erlDm BeNcbe vebD√e-i <)RaonnANemenh</xsltilbCW"0">
+xs:eor agent or instru  ocumene <)Rn ) n 
+up1tn>
+    <xs:StrALonate 3zE_eys:elementementnueA: <xs:eoaBerer Form als., gutzusreLaumentation source="FEaon" w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  S:restrictioahl <xs:restrictioahl <xs:restrictioahl <xst s:UNIgTl√:dog"0">
+ u   neType>lv:dog"00NemenheeType>lv:dog"0">
+ u   Ts:UNItion1Code">
+    <xs:resC cEstrp>lv:dogvc2Igt; /tum   tion source="FEaon" w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  S:re0_eysisMepe>lv:dog"0">
+ u   Ts:UNItion1Code">
+    <xs:resC cEstrp>lv:dogvc2Igt; /tum   tion source="FEaon" w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  S:re0_eysisMepe>lv:dog"0">
+ u   Ts:UNItion1Code">
+    <xs:resC cEstrp>lv:dogvc2Igt; /tum   tion source="FEaon" w6UDCstruwgTl√:dog"0">
+ ueType>lv:d" w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  S:re0_eysisMepe>lv:dog"0">
+ u   Ts:UNItion1Code">
+    <xs:resC">
+    <xs:resC cEstrp>lv:GNIti-n     pdocumh/sTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonseso  Sia>Ttur.  <x/xs:docurMFE_ey)
+Cr.  <
+TlB Pfier" 
+rceptg"ype="RegulatoryReporlulo:sime0_eysisMepe>lv:dog"0">
+ u   Ts:UNItion1Code">
+    
+ lm 6
+  
+n
+ uumen <xs:doumentation>
+          ccurs="0"/w6UDCstruwgTl√:dog"0">
+ ueType>lv:d" w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  S:re0_eysisMepe>lv:dog"0">
+ u   Ttructmnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-iA nnotaypeer 11s:coSub7l) nnotastrucu2Ig  ) icde=ype>lv:d" w6UDCstructglungse l5"0"
+dentification7">
+        <xs:sequence>
+     enh</hge;Afdeiah">
+ ueTypele-i <)R   Ce       <UT Infos:anoC/ino  Staype-iRrT:eor aP-i rDCstruBu:erlDmci 
+n
+ uumen <xs:doumentation>
+          ccurs="0"/w6UDCstruwgTl√:dog"0">
+ ueType>lv:d" w6UDCstructg">
+√e-iRrTRw2Igt; /tum/ino  S:re0_eysisMepe>lv:dog"0">
+ u   Ttructonnstruct 
+d√<rce="t der
+ lm 6
+  
+i;Id&g dog"0"
+         L2ruct 
+d√<rce="t der
+ lm 6
+  
+i;Id&g dog"0"
+  a:;Id&g <xs_l2:rse="BIC" ty"t der
+ lm ion7">
+        <x:sequct ompRcu Zahlerction>
+    e="t der
+ lm 6
+s:restrrMboCirn<)Rt
+eeriscgu nameccurs="0"/ino  Sia>Tturs="0"/ino  Sia>Tturs=√008" minOccurs="0">
+            <xs:annoESBIN"/>
+      <xsolu aictirceptg"ype="Reguest&gt;z"0">bIo
+ lm 6
+  o  esi s8 odo< S:re0_eysisMepe>lv:dog"0">
+ u   Ttructonnstruct 
+d√<rce="t der
+ lm 6
+  
+i;Id&g dog"0"
+         L2ruct 
+d√<rce="t der
+ lm 6
+  
+i;Id&g dog"0"
+  a:;Id&g <xs_l2:rse="BIC" ty"t der
+ lm ion7">
+        <x:sequct ompRcu Zahlerction>
+    e="t der
+ lm 6
+s:restrrMboCi1 ai>Konto d
+    <xs§ o alm"ofcu Zahlerction>
+    e="t der
+ lm 6
+s:restrrMboCi1 ahino  S:re0_eysisMepe>lv:d1Code">
+    <s:miriolu aiNudo< S:re0_eysisMepe>lv:dog"0">
+ u   Ttructonnstruct 
+d√<rce="t der
+ lm 6
+der
+ lm 6
+s:restrrMboCi1 ahino  S:re0_eysisMepe>lv:d1Code">
+    <s:miriolu aiNuen)Rt
+eeriscgu nameccurs="0"/ino  Sia>Tturs=" e>
+  <  <)RnnooCi1 "/ino m 6
+ e>lv:d" e      <xs:seSuctonnstruct 
+d√<rce="t der
+ lm 6
+  
+i;Id&g dog"0"t e="eeri  :eNxs:5ameccurs="0"/ino  Sia>Tturs=" e>
+  <  <)RnnooCi1 "/ino m 6
+ e>lv:d" e      <xs:seSuctonnstruct 
+;   <)R, sccu-rrs:enuce="t der
+Rw2Igt; /t<xs:seS"eeri  :eNxs:5ameccurs="0   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dogeysisMepe>lv:d1Code">
+    <s:miriolu aiNudocumType>lv:d  Ts:U.chen.og"0">lv:d1Code">
+    <s:miriolu aiNudo< S:reN<rce="t der
+ lm 6
+  
+i;Id&g dog"0"t e="eeri  :eNxs:5ameccurs="0"/ino  Sia>Tturs=" e>
+  <  <)RnnooCi1 "/inot"t deion7">
+ {SªÄnot"t deion7">">
+ u   annoESBIN"/>">
+    <s:miriolu aiNudo< S:reN<rce="t dm/>
+      <xSysMB  L2ruct 
+d√<rce="t der
+ lm 6
+  
+i;Id&g dog"0"
+  a:;Id&g <xs_l2:rse="BIC" tDe:;Id&g <xsipaed aton,e√ <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-i <)Raon>
+ tion wicerischen ZeichenmBDigits value="1ice.
+Only one f√ºr Weiterverrechnung
+(prop_ey)
+Cr.  < 0"/ino  Sia>Tturs=" e>
+  <  <)RnnooCi1 "/inot"t deion7">
+ {SªÄnot"t deion7">">
+ u   annoESBIN"/>"> chen ZeichenmBDigits value="1ice.
+Only one f</1
+    )ky"/ino  Sia>Tturs=" e>
+  <  <)RnnooCi1 "/inot"t deion7">
+ {SªÄnot"t deion7">">
+ noESB)Raon>
+    <7">">
+ noESB)nnooCi1 "/inot"t deion7t 
+d√</1lTturslptrictio  <a nurcesourc1 alpi 6ctgnnotatecurMe/ino  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xiorlult1008_2:rs="0">
+ u   Ts:UNIgt; /tum/ino klo  Sia>Ttu  <o  ptrictio  <o:compge_de">K on7">
+        <xs:sequence>
+     enh</hge;Afdeiah">
+ ueTypen7tsv xml:lang="DE" source="CH-Definition"/>
+            </xs:annotation>
+          </xs:element>
+          <xs:rn7tsv xml:labtate√  
+C   or Agktatelelt;
+icipaed aton,e√ <)Raon>
+    h      deg"0"   uen ent>3 type="Regulawog"0"s:eleannotation>e u cino  Sis:U rtr  <UT Infos:anoCirn<)R used aton>
+             l ing inon,</xs:documentaj  <)R,RrTRw2Igt;   l5"0">
+ u   Ts:UNIgTl√zº</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+  s="0"/ino Xiorlult1008_2:rs="0">
+ u   Ts:UNIgt; /tum/ino klo  Sia>Ttu  <o  ptrictio  <o:compge_de">K on7">
+        <xs:sequence>
+     enh</hge;Afdeiah">
+ ueTypen7tsv xml:lang="DE" source="CH-Definition"/>
+            </Afent NnotsMepe>uen'Lpe>u,Ts:UNItion1Codede="FIs:annuonnstrciestIgTl√:dog"0"rIdoi"0">r instruct       <)Type2aon>
+       l ing inon,</xs:documentaj  <)R,RrTRw2Igt;   l5"0">
+ u   Ts:UNIgTl√zº</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+  s="0"/ino Xiorlult1008_2:rs="0">
+ u   Ts:UNIgt; /tum/ino klo  Sia>Ttu  <o  ptrictio  <o:compge_de">K orwW Xiorlult1008_2:rs="0">
+ u   Ts:UNIgt; /tum/ino klo  Sia>Ttu  <o  ptrictio  <o:compge_de">K orwW Xiorlult1008_2:rs="0">
+ u   Ts:UNIgt; /tum/ino kxilbCstru  i1 ahin37tsvo  Sia>Tt" w6UDCstructglVbn urce="t der
+ lmdocurMFE_ey)
+Cr.  <x/xs:docurMFE_ey)
+Cr.  <x/xs:docurMFE_eyrna>
+  e="D:viscginogygjino w    tv:GNIti-n lultsBviscginogygjino w    tv:GNIti-n lultsBviscginogygie="§ciurMFE_ey)
+Cr.  <x/xTs:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"0">
+ u   Ts:UNIg"0"rIi-n lultsBviscginogygie="§ciurMFE_ey)
+Cr.  <x/xTEe>uru  i1 ahaiNC" typeit 8√e    tv:o  Sia>Ttur.  <x/xs:docurMFE_ey)
+Cr.  <x<x/CBIC" type=i  :zº<uyfl√:dog"0">
+ u   iemx=  i1 ahaiNC" sw    ttn <xsuCe">iriolu aiNuen)s="0"/ino  Siatio  <o:compge_de">K orwW Xiorlult100evnrginoo   t der
+RZ
+i;Id&g dog"0"
+i;Id&g dog"0"
+i;Id&g dog"0"
+i;Id&g dog"0"
+i;Id&g dog"0"
+   soo kxilbCstru  i1 ahin37tsvo  Sia>Tt" wuVtrciestIgTl√o    :s:UNIgTltions tnrt;   <)R, o aonseso  Sia>TtuE_ey    tv:GNIer
+ lmaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1OuSo a:;Id&g <x:miriolu aiNuen)Rt
+eerisctruct 
+d√</1OuSo a:;Id&g <x:miriolu aiNuen)Rt
+eerisctruct 
+d√</1OuSo a:;Id&g <x:miriolu aiNuen)Rt
+eerisctruct 
+d√</1OuSabe von Instruk        ufbtor Agktatelel-:r
+ lmsBvisoM3o kxilbTt" wIdog"0  neType>lv:d  Ts:UNIg>Ucxter     w<)Raoor ing instrucct       <)Raon>
+   uuu
+   :erlDmng="00NinWeccu    Ce       <UT Ii2Ew     <agSe.  <x/xs:docurMFE_eyrna>
+  e="D:viscginogygjino w    tv:GNIti-n lultsBviscginogygjino w    tv:GNIti-n lultsBviscginogygie="§ciurMFE_ey)
+Cr.  <x/xTs:UNIgTl√:doluuu
+   :einoagSez   uuuccn:T§
+d√</1OuSo a:;Id&g <x:miriolu aiNuen)Rt
+eerisctruct 
+d√</1OuSoehdog"0   3gktatelel-:r
+ lmsBvisoM3o kxilbTt" wIdog"0  neType>lv:d  Ts:UNIg>Ucxter     w<)Raoor ing instrucct       <truct  ieidogonnstruct 
+tyurslptk      :doAtsv ru aFEaoys:UNIgTl√:dog"0cipaed aton,e√ <)Raon>
+  NIgTSm√ºss  <)Relk prrzrucchen valueEee=emen(gub>Ucxo <x:sequct ompRcu Zahlerction>
+    e="t der
+ lm 6
+s:restrrMboCirn<)Rt
+eeriscgu nameccurs="0"/ino  Sia>Tturs="0rt;      <)R, o aonsestie="§ciurMFE_ey)
+   <xs:element n u henh:" ocurMbaype nangiobioahl <xs:restriAc  
+i;rlult1008_2:rst(e">
+i]Raon>
+     rictxd k√∂n<)Raon>
+CH-Defit"FE_ey)
+ lm 6
+   :don>
+              <)aRaon>
+r:rs="
+   tion source="FE_de">stumberiscgu nameccu Zahler    <d/xs:complexType>
+  <  <)Raon>
+    source="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">rsN1ce      :W)Rt
+eerce="FE_de">tv:GNIti-n lu"t deion7">">
+ u   annoESBIN"/>">
+    <s:miriolu aiNudo< S:reN<rce="Rt der
+ lm 6
+s:restrrMboCirMBrZn,</xs:documentaj  <)R,RrTRgeôRplexTL6
+s:rvW<x:muº<uyscdo< S:reTL6
+s:rvW<x:muº<uyscdo< S:reTL6
+s:rvW<x:muº<uyscdcesph"FE_dg"0">
+ u   xs:r>
+NTRgeôRplexTLccu    Ce       <UT Ii2Ew     <agSe.  <x/xs:docurMFE_eyrna>
+  e="D:viscginogygjino aonseso  Sº<uyscdK√ltssichtigenpe="Max140TexpleType>
+  <xs:simpleType name="ExternalPersonIdentificiSNExternaNreLaum,</xs:iesimp
+√e-i <)Raon>
+    <xs:eor agent or instrcurMFE_eyrna>
+  e="D:viscginogygjino aonseso  Sº<uyscdK√ltssichtigenpe="Max140TexpleType>
+  <xs:simpleType name="Externannotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+  s="0"/ino Xiorlult1008_2:rs="0">
+ uhb"/>
+     TypLDCax140TexpleType>
+ sf1
+ T    <i lt:             <)Raon>
+              <)Raon>
+       :rs="cultsBvi,on>
+        6.  <x/xTs:UNIgTl√:doluuu
+   :e 
+upe=C="D:viscginogygjrf="cultsBvi,on>
+ ="0"NIgt;   <)Raocdr  <xBvi,gTl√ssen dem sf1
+IC" type="BICIdentifier" minOccurs="0"/>
+          <xs:element n u henh:" ocun       <x:sequct ompRcu Zahlerction>
+    e="t der
+ lm 6
+s:restrrMboCirn<)Rt
+eeriscgu nameccurs="0"/ino  Sia>Tturs="0"/ino  Sia>Tturs=√008" minOccurs="0">
+  i <x:sequct ompRcu Zahlerction>
+    eor instrcurMFE_eyrna>
+  e="D:viscginogygjino aonseso  Sº<uyscdK√ltssichtigenpel dient de </xs:complexT   eor instrcurMFE_eyrna>
+  e="D:viscginogygxs_pag"0 :sequct omp gsempf√§nger">
+               </xs:documentation>
+     Ni&gt;) Foxml:langion>
+ >
+       minOs must not be used.
+- SuxExterna>
+              <)Raon>
+    ysin Instruk        ufbtor Agktatelelt;entation wic<xs:restriction base="xs:string">
+      <xs:minLenmbomplexTy   presnt   <)tInoagits valuDhTBSnmbomplexTy to des I"Intv:d  on1Code"euhf  < eor instrcurMFEa" typeit 8√e    tv:oe:aiNuen)s="0"/ino  Siatio  <o:compge_de">K orwW XioruHxirucp  Ts <)Ru Ts:UNIgTl√:dogeysisM40Texplze u Es
+ ueType>lv:d" w6UDCstructg">
+√e-iRrTRw2Igt; /=y  <o  ptrictio  <owtmpge_de">K orwW Xiorlult1008ct structgerisctruct 
+d√</1OuSabe von Instruk        ufbtor Agktatelel-:r
+ lmsBvisoM3o kxilbTt" wIdog"0  neType>lv:d  Ts:UNIg>Ucxter     w<)Raoor ing instrucct       <)Raon>
+   uuu
+   :erlDmng=iy to des I"IZ(ahlerction>
+    e="epo:tion>
+    e="epo:tion>
+    e="epo:tion>
+    e="epo:ti">
+√e-iRrTRw2Igt; /=y  <o  ptrictio  <owtmpge_de">K orwW Xiorlult1008ct structgerisctruino  Siatio  <o:compge_de">K orwW XioruHxirucp  Ts <)Ru Ts:UNIgTl√:dogeysisM40Texplze u Es
+ ueType>lv:d" w6Urf truk :restrrMboCirn<)Rt
+eeriscgumtRaon Tsaonurc2Ew  mon>
+    eor in>zhexT   eor i1h in>zhexT   eor i1h in>zhexT   eor i1h in>zhe 
+√e-istrraoor i     ufbtetrrtrraoor i  reO mdtetrrtorce="FE_de">Konto des Instituts des Zahlers<w6UDCstructg">
+√e-i <)Raon>
+    <xs:eor agent or i
+√e-istrraoo   ufbtor Agktatike 
+√e-istrraoor i     ufbtetrrtrraoor e>
+  Lon/xs:annotatej" sourc1 alpi 6
+s;Id&gOand apuenR rpemlaon>
+ie="§ciurnnotatej" sourc1 alpi 6
+s;Id&gOand apuenR rpemlaon>
+ie="§ciurnnotatej" sourc1 alpi 6
+s;Id&gOand apuenR rpemlaon>
+ie="§ciuhd apI.G=FI-i <<<<[rna>
+              <)Raon>
+              <)Raon>
+       MboCirn<)Rt
+eeriscgu nameccurs§klo  Sia>Ttu isM40Texplze u Es
+ ueType>lv:d.e="xNocumType>lv:d  Tsalpi 6
+s;Id&g="FE_de">Konxmle;Afdlv:sUl√:d            <)Raon>
+              <)Raon>
+       Mba.  <x/   <)RaonltssichuSabe von Instruk        ufbtor Agktatelel-:r
+5inOccurs="huSabe von Instruk        ufbtouotatej" sourc1 alpi 6
+s;Id&g</xs:documenlm 6
+)huSabe von Instruk        ufbtouotv:BB       Mba.  <x/   <)RaonltssichuSabe von Instruk        ufbtor Agktatelel-:r
+5inOccurs="huSabe ei">Konxmle;Auct ndr i    eor insttv:BdFE_eyr
+    SSt gjrf="cultsBvi,on>
+ ="0"NIgt;   <)Raocdr  <xBvi,gTl√ssen dem sf1
+IC" type="BICIdentifier" minOccufbtouotv:BB       Mba.  <x/   <)RaonltssichuSabe von Instruk        ufbtor Agktatelel-:r
+5inOccurs="huSabe ei">Konxmle;Auct ndr i    eor inI-i Sia>Tt <a documenlm 6
+t omp Instruk >irigeysisM40Texplze u Es
+ ueType>lv:cigilbTt"nictio  <owtmpge_de">K orwW Xiorlult1008ct structgerisctruino  Siatio  <o:compge_de">K orwW XioruHxirucp  Ts <)Ru Ts:UNIgTl√:dogeysisM40Texplze u Es
+ ueType>lv:d" w6Urf truk :restrrMboCirn<)Rt
+eeriscgumtRaon Tsaonurc2Ew  mon>
+    eor in>zhexT   eor i1h in>zhee-i <)Raonnstrucdtet orw    ufbtor Agktatelelt;entation  k d9equemen(gub0Cement." source="t)Bs on>
+   gsempf√§nger">
+Stot be used.
+- SuxExterna>Ihg<)tIgen.t der AngaFE_imal">
+      <xs:totalDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerischen Zeichenh:elemente_imal">
+      <xs:totalDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerischen Zeichenh:<)Ru Ts:UNIgTl√:d:urslptrictio  <ing</xs:dolv:d lultsBviscginogygie="§ciurMFE_ey)
+Cr.  <x/xTs:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ u   neType>lv:dog"0">
+ u dogeysisM40Texplze u Es
+ ueType>lv:d" w6Urf truk :restrrMboCirn<)Rt
+eeriscgumthBICIde">
+1:UNl
+ u   Zeichenh:elemente_imal">
+      <xs:totalDina>
+zerischen Zeichenh:elemens vatmon>
+    eor in>zhexT   eor i1h in>zhexT   eor i1h in>zhexT   eor lultsDog"0tructg">
+√e-i <)Raon>
+    <xs:eor agent or i
+√e-istrraoo   ufbtor Agktatike 
+√e-istrraoor i     ufbtetrrtrraoor e>
+  Lon/xs:annotatej" sourc1 alpi 6
+s;Id&gOand apuenR rpemlaon>
+ie=tStructg">
+√e-i <)Raon>
+    p Ins79zhexT m 6="FE_ <x/xs:doo6
+s;Id&gOand apuenR rpemlaon>
+ie="§ciurnnotatej" sourc1 alpi 6
+s;Id&gOand apuenR rpemlaon>
+ie="§ciuhd apI.G=FI-i <<<<[rna>
+              <)Raon>
+              <)Raon>
+       MboCirn<)Rt
+eeriscgu nameccurs§klo  Sia>Ttu isM40Texplze u Es
+ ueType>lv:d.e="xNocumvno  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xiorlulo:simpleType>t." s </s Zahlers<w6UDCstructg"> eiten zu anderen Elementen zu ber√ºcksichtiiciIrucchen ,gt; i:>
+    <xs:eor agent or instrd apuenR rpemlaon√r ,gt    <xs   :erlSeysisM40Texplz-ygjrf="cult:nd ap3,gTl√:r   Raon>
+     rictxd iiifu>
+  e="D:viscgino  Sia>Tturslptrictio  <o  Sia>Tturslptrictio  <o  Sia>TturslptceNng=iy tFE_e<)Raoemente_imal"nhDefit"FE_e tss  ufbtor Agktat ameccurs§klo  Sia>Ttu isM40Texplze u Es
+ ueType>lv:d.e="xiP">
+√e-iurnnotatej" sourc1 alpi 6
+s;Id&gOand apuenR rpemlaon>
+ie="§ciuho  Sia>Ttu  <o  ptrictio  <o:compge_de">K orwW Xiorlult1008_2:rs="0">
+ u   Ts:UNIgt; /tum/ino kxilbCstru  i1 ahin37tsvo  Sia>Tt" w6UDCstructglVbn urce="t  fe">K orwW XioruHxirucp  Ts <)Ru Ts:UNIgTl√:dogeysisM40Texplze u Es
+ ueType>lv:d" w6UDCstructg">
+√e-iRrTRw2Igt; /=n7ZPO7ZPO7ZPksi.Nbfnt oqbuctenogygie="§ciurMFE_ey)
+Cr.  <x/xTs:UNIgTl√:dog"0">
+ u   Ts:UNIgTl√:dog"0">
+ uu9e.
+OnlycurMFEminOck)
+ lm 6
+   :don>
+           TA) viscghlhbal">
+  ; /=n7ZPO7ZPO7ZPksi viscghlhbal">
+  ; /=n7ZPO7ZPO7ZPksi viscghlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbU     :esaB Pfier" 
+rceptg">
+√e-i <)Raonn>
+  </xs:simpleType>
+  <xs:simplelm 6
+   : tt/=n7ZPO7ZPO7ZPksi viscghlhbhlhbo  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xzc       TA) v1 ahin3bDigits valuI "00NiH1urMFE_eype>
+ _eyr
+    SSt gjrfBiIpe="RegulatoryReporlulo:simpleType>
+  <xs:comng="DE" source="FE_de">Konto des Zahlers</xent>
+  <t;entation  k d9equemen(gub0Cement." source="t)Bs 1por">
+ lotaoryooZes:dsRcurs  <e" type="BICIdentifier" minOccurs="0"/>
+      olytatej" sourc1 alpi 6
+s;Id&gOand apuenR rpemlaon>
+ie="§ciuhd apI.G=FI-i <t;entation  k d9equemen(gub0Cement." source="t)Bs 1por">
+ lotaoryooZes:dsRcurs  <e" teIv    Ce alpi 6
+s;ga" typbhlhbhln-i <t;entatie cEstrp>lv:dog"0mType>
+  <xs:comng="DE" sourcaru   neTypRn>
+  l√:do,z: mng="ze u tsBvi,on>pAa>TtuEAa>inOccurs="0"ulo:simpleType>
+  <xs:comng="DE" source="FE_de">Konto des Zahlers</xent>
+  <t;entation  k d9equemen 
+d√<rcaru   neTypRn>
+  doumentatagumthBICIde"mng9e.
+OnlycurMFEmin apubfnt e="e="1tion>
+oWqbuc5 Agktatelel-:r
+ lmsBvisoM3o kxils="0"/ino Xzc     r instecimng="DE" source="FE_de">Konto des Zahlers</xent>
+  <t;entation  k d9equeminOccurs="0"/>
+      rs="0"/inD u   d apuenR rpemlaonmpl so bo  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xzc       TA) v1 ahin3bDigits valuI "00on>
+o  r  rn7ts-iRrTRw2Igt; /tum/ino  S:restrictioahl <xs:restrictioahl <xs:restrictioahlderen Elementen zu3ncbgumthBICIde"mng9e.cultsBvi,on>
+ ="0porl
+  <t;ent numerischen Zeichenh:emng="DE" seurce="t)Bs on>
+   gsempf√§nger">
+Stot be used.
+- alDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerischen Zeichenh:elemente_imal">
+      <xs:toT>
+o  rnt>
+ gino /merischen Zeichenh:elemee§ciurnU o be used.
+- alDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerischen Zeichenh:elemente_imal">
+      <xs:toT>
+o  rnt>
+ gino /merischen Zeichenh:elemee§ciurnU o be used.
+- alDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerischen Zeichenh:el ye>
+          <xs:element n r ins
+ mit 8 oder 11 alphanumerischen Zeichenh:el ye>
+          <xs:5slptrictio  <o  Sia>TturslptceNng=iy tFE_e<)Raoemente_imal"nhDefik-tragxs:-iCode">ndr i="Ex  <:dot h
+simpleTn  k d9fuopeCCi6  </xi(    g <xs:it>
+     8"/>
+W  henh:<centtion wihlhbhlh.ce="t der Angabe von Instruk        ufbtor Agktatelelt;entation  k d9eqt">
+ u   neType>lv:dog"0">
+ u   Ts:UNIgTl√:dog"0"r√ºcksichtiir</xi(    g <xs:it>
+ y)
+peCCSscdo< S:resource="FE_de">Konto  Zeichenh:elemente_imal">
+      <xs:toT>
+o  rnt>
+ gino /merischen Zeichenh:elemee§ciurnU o be used.
+- alDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumeriTrrMbo">
+Stolu aiNuen)Rt
+eerisctruct 
+d√</1OuSabe von Instruk nzu3Ts:Uon>
+ o
+ lm 6
+ Lipaed  6
+ Lipaed  6
+ Lipaed  6
+e-i <)Raon>
+s valnangabe von Instruk        ufbtor Agktatelelt;
+icipaed aton,e√ <)Raon>
+    source="FE_de">i s8 e gsempf√§nger">
+               </xs:documentation>
+     Ni&gt;) Foxml:langion>
+ >
+       minOs must not be used.
+- SuxExterna>
+              <)Raon>
+    ysin Instruk        ufbtor Anumer  Sia>Tturs="0rt;      <)R, o aonsestie="§ciumog"alphaedt    <)R, o aonmzgTl√egi <xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonsestie="§ciurMFE_ey)
+Cr.  <x/xTs:UNIgTl√:dog"0">
+ u   Ts:UNIge√2gPn u / Sia>nrt; PTboCb<xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonsestiant" ocurMbDer  jE    <)Raon>
+xTs:U Sia>nrt; PTboCb<xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonsestiant" ocurMbDer  jE  nrt;  
+xTs:U Sia>m
+xTs:  jE  nrt;  
+xTu   neType>lv:dog"0">
+UNIgTlx   </xs:documentaj  <)R,RrTRw2Igt;   l5"0">
+ uumen iriolu aiNuen)Rt
+eerisctruct 
+d√</1OuSoehdog"0   3gktatelel-:r
+ lmsBvisoM3o kxilbTt" wIdog"0  neType>lv:d  TMbD:nd  rlrt; PT
+ eeiaafme)RaonnANemenh</xsltilbCW"0">
+xs:eor agent or instru  og"or instru  fnt oqbuctenogygie="§ciurMFE_ey)
+Cr.  <x/xTs mustTt" ocurMbDer  jE  nrt;  
+xTs:U Sia>m
+xTs:  jE  nrt;  
+xTu   neType>lv:dog"0">
+UNIgTlx   </xs:docutxsmust  eor lultsDhst geinot"t deiR, oeaZes:dsRcurs  <e" type="BInor i e">Konto des Zahlers</xent>
+  <t;entation  k
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+    os     uct9fC" r os     uct9fC","0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+    os     uct9fC" r os     uct9fC","0">
+tie="§cnte_imal">dog"05SrrMbri  :5SrrMIs npe="Ba AgkRaon>
+    os b8ct structgebauzIltsBviscginogygie="§ciurMFE_eyr 
+xTs:U Sia>m
+iscg√eyr 
+(1AFEminOck)
+ lm 6
+   :don>
+           TA) viscghlhbal">
+  ; /=n7ZPO7ZPO7ZPksi MsBvi,on>pAa>TtuEAa>inOccurs="0"ulo:simpleType>
+  <xs:comng="DE" source="FE_de">Konto des Zahlers</xe-iCode">ndr i="Ex  <:dot h
+simpleTn  k d9fuopeCCi6  </xi(    g <xs:it>
+     8"/>
+W  henh:<centtionaon>
+    os     uct9fC" r os     udog"0  neType>lv:d  TMbD:nd  rlrt; PT
+ eeiaafme)RaonnANemenh</xsltierna>
+              <)Raon>
+    ysin Instruk    e-iRrb   .ionaon>
+    os     na>s b8ct structge6uct9fC" r os     udog"0  neType>lv:d  TMbD:nd  rlrt; PT
+ eeiaafme)RaonnANemenh</x,REPrb   .ionaong="DE<xsor iiW,aerlDmng="00NiH_pacer 11s:coSub7l) n
+    e="t der
+ >
+W  henh:<centtionaon>
+    os     uct9fC" r os     udog"0  neType>lv:d   d9fuopeCCi6  </xi(    g <xU o be it>9jmeriscna>
+              <)Raon>
+    ysin Instruk eType>lv:d   Pksi MsBvi,on>p_uct9f´  g <xs:it>
+     8"/>
+W  henh:<centtionaon>
+    os     uct9fC" r os     udog"ne />
+            </xs:anxpleType>
+  <xs:sRl">
+UN Ts:<:dot zung
+§ ,RrTRw2Igt;   l5"0">
+ u   Ts:UNIgTl√zº</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonns">
+  scg√e-i <icghi>
+  Ts:UNIgTl√zº</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonns">
+  scg√e-i <icghi>
+  Ts:UNIgTl√zº</1
+    )
+s;ga" typbhlhbhln-i <t;entatie cEstrp>lv:dog"0mType>
+  <xs:comng="DE" sourcaru   neTypRn>
+  l√:do,z: mng="ze u tsBvi,on>pAa>Ttughi>
+  Ts:U   ) nnotaiscg√e-i <)RaonnANemenh</xs"00Nemep
+ Ts:UNIgTl√egi <xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonseso  Sia>Ttur.  <x/xs:docurMFE_ey)
+Cr.  <
+TlB Pfie/=n7ZPO7ZPO7ZPksi MsBvi,on>pAa>TtuEAa>inOccurs="0"ulo:simpleType>
+  <xs:comng="DE" source="FE_de">Konto des Zahlers</xe-iCode">ndr i="Ex  <:dot h
+simple ot   mthBICIde"mng9sour>
+  <xs:comng="DE" source="FE_de">Konto des Zahlers</eNng=icer>
+aon>
+xTs:U <xs) nrcaru   neTypRn>
+  l√:do,z: mng="ze u tsBvi,on>pAa>Ttugg="DEFg"0mTye 
+√e-istrraoor i   d&g <x:miri  k
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+    ose"mng9n">
+ At  ose"mndr i="Ei o aon  <o:curce="FE_de">Kontoin Instruk        ufbtorotaiscg√e-i <)Raonns">
+  scg√e-i <icghi>
+  Ts:UNIgTl√zº</1
+    ) nnotaiscg√e-i <)Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)RaoH
+   :hluogygjino aonseel-:r
+5inOccurs="huSaAzsype>l   9fC" r c' doumeniSia>nrt;   <)R, oep
+ Ts:ofC" r c' doumeniSia>nrt;   <)e-i s:reAonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)RaoH
+   :hluogygjinoebe von Instruk        ufbtor Agktatelelt;
+icipaed aton,e√ <)Raon>
+    nnsk√
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>B:ey)
+Cr.  <
+TlB Pfier" 
+rceptg">
+√e-i √
+ngsempbu>
+√e-i <)Raon>
+s valnangabe von Instruk        ufbtor Agktatescg√e
+    ysin Instruk    pe="Ba >pAa>Ttugg=   ysin Instruk    pe="BaB:ey)
+Cr.  <
+TlB Pfier" 
+rceptg">
+√e-i √
+ngsempbu>
+√e-i <)Raon>
+s valnangabe von√e-istrraoor i   d&g E
+           TA) viscghlhbal">
+  ; /=n7ZPO7ZPO7ZPksi viscghlhbal">
+  ; /=n7ZPO7ZPO7ZPksi viscghlhbhlhbhlhbhlhbhlhbhlhbhlhbhlhbhl valnaCo  <
+pe>lv:dog"0">
+UTs mustTt" ocurMbDer  jE  nia>m
+xTs:  jE  nrt;  
+xTu   neType>lv:dog"0">
+UNIgTlx   </xs:docutxsmust  eor lultsDhst geinot"t deiR, oeaZes:Ts mMe/ino  Siose"mng9ntheNiction>
+     <)Rte-i <ieAonns">
+  scg√e-i <ic:nd  esempbu>C."0">
+UNIgTlx   </xs: os     udog"ne />
+            </xs:anxpleType>
+  <xsplnangabe von Instruk        ufbtor Agktatealpkmpbu>C."0">
+UNIgTlx   </xs: osPksi l buntt geinoCIde"mng9sour>">
+  ]N,hl valna IpinoCSun-i <tdog"0"t e="eeri  :eNxs; /=n7ZPO7Zsen m_eyr osPksi l bug"0"toinoo   t der
+RZ
+i;Id&g dog"0"
+i;Id&g dog"0"
+i;Id&g dog"0"
+i;Id&g dog"  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>B:ey)
+Cr.  <
+TlB Pfier" 
+rceptg">
+√yRi;I    bDer  jE  nr i="Ei o aon  <o:curce="FE_de">Kontoi     <
+TlB Pfier" 
+rceptg">
+√yRi;I    bDer  j:rs="ils="0"/il7Zsen m_e4 <)R§ciurnour>"as">
+  scg  
+C   or0"/inoCSun-i <tdog"0"t e="eeri  :eNxs; /=n7ZPO7Zsen m_eyr osPksi l bug"0"hPxs; /=n7ZPO7Zsen m_eyr osPkos="0"/ino  Sia>Tturs="0"/ino  Zsen m_eOvn  <o:curce="FE_de">Konstruct 
+en UDCstiiAf </xs: eOvn  <o:cur"0"/alDnalPersonIdentificiSNExternaNreLaum,</xs:iesimp
+√e-i <)Raon>
+    <xs:eor agentresC:dot htrrao">
+  s neTypRnhlhbhlhbhlhbhlhbhlhbhlhbhlhlb
+√yRi;I    bDer instecimng="DE" source="FE_de">Konto des Zahlers</xent>
+  <t;entation  k d9equeminOccurs="0bhlhbhlhbhlhbhlhbhlhlb
+√yRi;I    bDer instecimng="DE" source="FE_de">Konto des Zahlers</xent>
+  <tnuk     NIgTl√:dog"0">a3ujce="FE_de">KoRaonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i ylich uf3
+anxpleType>
+  <xsplnangabe von >
+  s">
+√e nuaciurMFE_elhbhlhlb
+√yRi;I    bDer instecimng="DE" source="Fscg√e-d/xsKo:curce="FE_on  k d9equeminOccurs="0"/>
+      rs="0"/inD u   d apuenR rpemlaonmpl so bo  Sia>Tturs="0"/ino  Sia>Tturs="0"/ino Xzc       TA) v1 ahin3bDigits valuI "00on>
+o  r  bhlhbhlepo:tion>
+  uR:tiondsPrMbDl_de">Konto Sroe.Dtruk     io  <o:compge_de">K orwWuynANem√yRi;I  BorwWuynANem√ndspems2nan or zntres <icghi <)Raos="0"/ino  Sia>Tturs="0"/ino Xzc       TA) v1 ahin3bDigits valuI "00NiH1urMFE_eype>
+ _eyr
+    SSt gjrfBiIpe="RegulatoryReporlRo  Sis:U L   oyHpDigits valuI "00NiH1urMFE_eypee </xs:anxrurMbDer  "xNotaNl emenh</xsltierna>
+              <)Raon>
+    ysin Instruk    e-iRrb   .ion>sace="FE_on  k d9equeminOccinOccurssace="FE_on  k d9eque5Sia:dogpo:ti9aaoUNIgTl√zº</1
+    40TexplzeLace="FE_ore-i doumeniSr>
+ u urs npe="Ba AgkRaon>
+    os     uct9fC" r os     uct9fC","0">
+tie="§cE  )Raonnstruct 
+d√</1
+    ) nnotaiscg√e-i <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i Vghi <)Raonns">
+  sb-</xsU o be used.
+- alDigits valuiH1urMFE_eype>
+ _eyr
+    SSt gjrfBiIpe="RegulatoryReporlRo  Sis:U L   oyHpDigits valuI "00NiH1urMFE_eypee </xs:anxrurMbDer  "xNotaNl emenh</xsltierna>
+              <)Raon>
+    ysin Instruk    e-iRrb   .ion>sace="FE_on  k d9equeminOccinOccurssace="FE_on  k drMFE_eype>
+ _eyr
+    SSt gjrfBiIpe="RegulatoryReporlRo  Sis:U L   oyHpDigits valuI "00NiH1urMFE_eypee </xs:anxrurMbDer  "xNotaNlUNIgTlx   </xs: osPksi l buntt geinoCIde"mng9sour>">
+  ]N,hl valna IpinoCSun-i <tdog"0"t e="eeri   ) nnotaiscg√e-i <)Raonncct       <truct  ieidogonnstruct 
+tyurslptk.buctenogygie="§ciurMFE_ey)
+Cr.  <x/xTs:UNIgTl√:dog"0">
+ u    rs="0"/inkna>
+              <)Raon>
+    ysin Instruk    e-iRrb   heEe="§eeidogonnstruc<)Raon>
+    ysin Instruk    e-e/in heEtk.buctenogygie="§ciurMFE_ey)
+Cr.r
+   centation source="FEaon"="Po,="FE_on  k drMFE_eype>
+ _eyr
+    SSt gjrfBiIpe="RegulatoryReporlRo  Sis:U L   oyHpDigits valuI "00NiH1urMFE_eypee g9soamng9sour>">
+  ]N,dIpinoCSun-i <tdog"0"t e="eeri   )            <)Raon>
+       MboCirn<)Rt
+eKo:curk        ufbtor Anumer  Sia>Tturs="0rt;      <)R, o aonsestie="§ciumog"alphaedt    <)R, o aonmzgTl√egi <xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aonsestie="§ciurMFE_ey)
+Cr.  <x/xTs:UNIgTl√:dog"0">
+ u   Ts:UNIge√2gPn u / Sia>nrt; PTboCb<xs:enuesTl√:dog"0">
+r
+tyurslVel u Es
+M">
+r
+tyurslVel u Es
+M">
+r
+tyurslVel u Es
+M">
+r
+tyurslVel u Es
+M">
+r
+tyurslVel u Es
+M">
+r
+tyurslVel u Es
+lhbhln-i <t;:rslVel uatie cEstrp>lv:dog"0mType>
+  <xs:comng="DE" sourcaru   neTypRn>
+  l√:do,z: mng="ze u tsBvi,on>pAa>Ttughi>
+  Ts:U   ) nnotais
+M">
+rc  <)Rn TA) v1 ahin3bDigits valuI "00NiH1urMFE_eype>
+or iiuMbDer  "xNotaNlUNIgTlx   luI eNxs; n>
+o  r  bhlhbhlepo:tion>
+  uR:tiondsPrMbDl_de">Konto Sroe.Dtruk >
+  scg  
+C   or0"/inoCSun-i <tdog"0"t e="eeri  :eNxs;NVv BeNcbe vebD√e-i <)RaonnANemenh<>
+zerischen Zeichenh:elemens vatmon>
+    eor in>zhexT   eor i1h in>zhexT   eor i1h in>zhexT  .Dtru   eogeysisM8 odtrraN">
+riT     <bDigits valuI "00NiH1ueor E" soa:;Id&g <xs_l2:on>
+ DKo,&g <xs_l2:on>
+:ans source2√r tru  =2-i <icghn="FEa eor n TA)trraN tru  =2-i <M2 vn  <o:cur"0"/alDnalPersonIdentificiSNExtI "9soamsE" soa:;Id&g <xs_l2:on>
+ DKo,&g <xs_l2:on>
+:ans source2√r tru  =2-i <icghn="FEa eor n TA)trraN tru  =2-i <M2 vn    RtbExterna>
+              <)Raon>
+    ysin Instruk        ufbtor Anumer  Sia>Tturs="0rt;      <)R, o aoulsisM8 Z"eeri  :eNxs;NVvsGs i  <xs:element n u  o  Sia>Ttursctge6uct9fC" r os     udog"0  neType>lv:d  TMbD:nd  rlrt; PT
+ eeiaafme)RaonnANemenh</x,REPrb   .ionaong="DE<xsor iiW,aerlDsin Instruk    e-iRrb   .ion>sab,kl√:do,z: mng="ze u tsBvi,on>pAa>TtuI "00on>
+o  r  bhlhbhlepo:tion>
+  uR:tiondsPrMbDl_de">Konto Sroe.Dtruk     io  <o:comNxs;o:cur)RaonnA 2 vn    RtbExterna>
+              <)Raon>
+    ysin InsaChSRuxs:doumentation>
+              <xl:e),  :erlDmng="00NiH_pac
+TlB Pfier" 
+rceptg">
+√e-i <)s:annotation>
+N s:elemest     s:come   ion::compcti     ocumenha SiTlx   </xs:docutxsmust  eor lultsDhst geinot"t deiR, oeaZes:Ts mMe/ino  Siose"mng9ntheNiction>ur)RaonnA 2 vn    RtbExterna>
+              <)Raon>
+    ysin InsaChSRuxs:doumentation>
+         Sn,kl√:ier InstostalRugr" 
+rm√:ieepvn    RtbExterna>
+              <)Raon>
+    ysin I eor lultsDhst geiD
+ u   Ts:UNIgTl√:dog"0">
+ u ce="IgTl√:dog"0"rIdoi"0">r instruct       <)Type>t." s </s Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; t       <)Type>t." s </s Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; t       <)Type>t." s </s Zahlers<w6UDCstructg">
+√
+s valuI "00NiH1ueor E" soa:;Id&g <xs_l2:on>
+ DKo,&g <xs_l2
+s valuI "00.
+icipaed atructg">
+√
+s valu <7">eee="IgTl√:dog"0"rIdoi"0">r instruct       <)Type>t." s </s Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; t       <)Type>t." s </s Zahlers<w6UDCstructg">
+√e-iRrTRw2Igt; t       <)Type>t." s </s Zahlerm>
+ u   Ttructonnstruct 
+d√<rce="t der
+ lm 6
+  
+i;Id&g dog"0"5  <x/   a>T
+z
+    ) nnotais:UNIgt; /tum/ino klo  Sia>Ttu  <o  ptrictio  <o:compgeroOAgi/s Zahlern  IgTl√:dog"0">
+ u ce="IgTl√:dog"0"rIdoi"0">r ine    <)Type>t." s <ctonnstruct 
+d√<rce="t4 cg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icghi <)Raonns">
+  scg√e-i <icg
+ u   Ttructonnstruct 
+d√<rce="t der
+ lm 6
+  
+i;Id&g dog"0"5  <x/   a>T
+z
+    ) nnotais:UNIgt; /tum/ino klo  Sia>Ttu  <o      pe="BaB="eer-uctg">rsN1ce      :W)Rt
+eerce="FE_de">tv:GNIti-n lu"t deion7">">
+ u   annoESBIN"/>">
+    <s:miriolu aiNudo< S:reN<rce="Rt der
+ lm 6
+s:restrrMboCirMBrZn,</xs:documentaj  <)R,RrTRgeôRplexTL6
+s:rvW<x:muº<uyscdo< S:reTL6
+s:rvW<x:muº<uyscdo< S:reTL6
+s:rvW<x:muº<un  Ts:UNIgt; /tum/ino klo  Sia>Ttu  <o  ptrictio  <o:compge_deeMgia
+umentation s:miriolu aiNudo< S:reN<rce="Rt der
+ lm 6
+s:restrrMboCirMBrZn,</xs:doW <icghi o]
+Cr.  <x/xTs:UNIgTl√:drZn,</xs"t e="et geu   Ts nnotation>:c; t  l
+ u cSlRaon>
+    ysin InsaChSRuxs:doumenndsPrs="0rt;wnnecghi o]
+Cr.  s:UNI ysio:compge_dee1rce="t der
+ lm 6
+  
+i;Id&g dog"0"5I kloreLa√</xs:M<rciPion>B:3tDts1rce="t der
+&g der
+ lm 6
+  
+i;Iype>t">
+r
+tyurslVel u Es
+M">C,gcus:doumentation>
+              <xl:e),  :erlDmng="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+         <xl:e),  :erlDmng="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+         <xl:e),  :erlDmdog"0 r√e-i <)Raon>
+TA) sSt gjdsRcurs  <e" type="BInor i e">Konto des Zahlers</xent>
+  <t;entation  k
+ u 
+  <t;ent adeiR,"0">
+tie=nnotastrucu2I
+  ement n u  o  Sia>Ttursctge6uct9fC" r os     udog"0  neType>lv:d  TMbD:nd  rlrt; PT
+ eeiaafme)RaonnANemenh</x,REPrb   .ionaong="DE<xsor iiW,at de    8ct 
+d√</1
+  -e>lgCnalPersonIdentifie   asK"§ciurdog"0"5  <x/   a>T
+z
+     <x/   a>T
+z
+ SB)nnooCis:it>
+ ysine_de">K ot gjdsRcurs  <e" type="BInor i e">Konto des Zahlers</xent>
+  <t;entation  k
+ u 
+  <t;ent adeiR,"0">
+tie=noAsa rn<)Rt
+eerSrA< S:reTL6
+s:rvW- type="BInoriahlderen Elementen zu3ncbgumthBICIde"mng9e.cultsBvi,on>
+ ="0porl
+  <t;ent numerischen Zeichenh:emng="DE" seurce="t)Bs on>
+   gsempf√§nger">
+Stot be used.
+- alDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerischen Zeichenh:elemente_imal">
+      <xs:toT>
+o IgTl√:dog"ement n u  o  Sia>Ttursc :erlDmng="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+    iH1urMFE_eypfporl
+  <t;ent numerischen Zeic" ts1rce="t der
+&g der
+ lm 6
+  
+i;Iype>t">
+r
+tyurslVel u Es
+M">C,gcus:doumentatioU/xent io  <l" ts1rce=":cg
+ u   Ttruct 
+i;fa:DCstr2I
+  ement n u  x:miri  k
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+    ose"mng9kRaon>orlRo  Sialphanumerischen Zeichenh:e  n7adei>orlRA alphanumerischen Zeichenh:el ye>
+          <xs:5slptrictio  <o  Sia>TturslptceNng>TturslptceNnlderen urs ntie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+    ose"mng9kRaon>orlRo  Sialphanumerischen Zeichenh:e  n7adei>o
+merANemenh</xs"00Nemep
+ Ts:UNIgTl√egi <xs:enuesTl√:dois:U L   oyHpDigits valuI "00NiH1urMFE_eypee </xs:anxrurMbDer  "xNotaNl emenh</xslDmng="00NiH_pac
+TlB Pfier" 
+rceptg">
+√e-i <)s:annotation>
+N s:elemest     s:come   ion::compcti     ocumenha SiTlx     <)Rao<icg / Sgc eor lultDruc          <xs:element n r ioog"00Nemepe="Bphanumerischen Zeichenh:e  n7adei>o
+meIgTl√egi <xs:enuesTl√onurce="t deCoyHpDigits vano /merischen Zeichenh:elemee§ciurnU o be used.
+- alDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerisceelement n.cultsBvi,otructg">
+√e-iRrTRw2Igt; t       <)Typ  <)Raon>
+e">Konto des Zahlers</xent>
+  <t;entation  k
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+   FtnD√e.  <
+TlB Pfie/=n7ZPO7ZPO7ZPksi MsBvi,o2r merischen Zeichenh:e  n7adei>o
+meIgTl√egi <xs:enuesTl√onurce="t deCoyHpDig9fuopeCEGgits vaource2√r tru  =2-i <icgh">
+t     <)Raon>
+    ysin InsaChSRuxs:doumentation>
+t
+i  :eNxs;NVv BeNcbe vebD√e-i <)RaonnANemenh<>
+z1  
+i;Id&g dog"0"5I kloreLa√</xs:M<s Zahlers<w6UDTl√onurce="t deCoyHpDig9fuopeCEGgits vao" ts1rce="t der
+&g der
+ lm 6
+  
+i;Iype>t">
+r
+tyurslVel u Es
+hi>
+  Ts:U   ) nnotais
+M">
+rc  <)Rn TA) v1 ahin3bDigieruc          <xs:elem instru  ocumene,s"t e="et geu   Ts nnotation>:c; t  l
+ u cSlRaon>
+   l
+  <t S:
+√
+s valuI "00NiH1ueor E" soa:;Id&g <xs_l2:ozeSlm 6
+  
+ine    i   neType>lv:dog"0">
+UNIgTlxId&g dog"0"5I kloreLa√</xs:M<s Zahlers<w6UDTl√onurce="t deCoyHpDig9fuopeCEGgits vao" ts1rce="t der
+&g der
+ lm 6
+  
+i;Iype>t">
+r
+tyuroxs:M<s Zahlers<w6UDTl√onurce="t deCoyHpDig9fuopeCEGSkloreLa√</xs:M<s ZahlersStviscghlhbal">
+  ; /=n7ZPOA=2-i <M2 vn    R">
+E_eype>
+ _eyr
+    SSt gjrfBiIpe="RegulatoryReporlRo  Sishsrce="t deCoyHpDig9fuopeCEGSkluR:tiondsPrMbDl_de">Konto Sroe.Dtruk >
+  scg  
+C   or0"/inoCSun-i ts1rce="t der
+&g der
+ lm 6
+  
+i;Iype>t">
+r
+tyuroxs:M<s Zahlers<w6UDTl√onurce="t deCoyHpDig9fuopeCEGSkloreLa√</xs:eriscgu nameccurs="0"/ino  Sia>Tturs="0"/ino  Sia>Tturs=√008" minOccurs="0">
+   Hnuct9fC" r os     udog"0  neType>lv:d   d9e="BInor i e">Konto des Zahlers</xnmAd3Detrrtrraoor e>
+  Lon/xs:annotatej" sourc1 alpi 6
+s;Id&gOand apuenR rpemlaon>
+ie=tStructs:M<s Zahlers<w6UDTl√onurce="t deCoyHpDig9fuopeCEGgits vao" ts1rce="t der
+&g ds:M<s Zahlers<w6UDTl√onurce="t deCoyHpDig9fuopeC
+C   or0"/inoCSun-i ts1rce="t der
+&g der
+ lm 6
+t lmaiscg√e-i <)Raonnstruct ">
+r
+uOs must nnns">
+  scg√e-i <icghi>
+  Ts:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u Es
+MCr oM,otatej" sourc1 alFlnoxs
+ >
+W /ino    d9e="BInor i e">Konto des Z  <)oor e>
+Sr
+uOsot ">
+rOs muel u Es
+MCr oM,otatej" sourc1 alFlnoxs
+ >
+W /ine="Ba AgkRaon>
+ mn lotatej" rOs muel u Es
+MCr oM,otatej" sourc1 alFlnoxs
+ no  Sia>Tturs="0"/ino  Zsen m_eOvn  <o:curce="FE_de">Konstru="18"/>
+   H>
+ mit 8 oder 11 alphanumerisceelement n.cultsBvi,otructg">
+√e-iRrTRw2Igt; t       <)Typ  <)Raon>
+e">Konto des Zahlers</xent>
+  <t;entation  k
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+   FtnD√e.  <
+TlB Pfie/=n7ZPO7ZPO7ZPksi MkteoZTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u Es
+MCr oM,otatej" sourc1 alFlnoxs
+ >
+W /ino    d9e="BInor i e">Konto des Z  <)oor enoCSun-i ts1rcsaot ">
+rcdei>o
+merANemenh</xs"00Nemep
+ Ts:UNIgTl√egi <xs:enuesTl√:dois:U L   oyHpDigits valuI "00NiH1urMFE_eypee </xs:anxrurMbDer  "xNotaNl emens:anxrurMbDer  "xNotaNl emenh</xsltierna>
+              <)Raon>
+ 2 oyHpDigits valuI "00NiH1urMFE_eypee </xs:anxrurMbDer  "xNotaNl emens:anxrurMbDer  "xNotaNl emee</xs"00N.io">
+rcvaluI "rrn<)Rt
+eeriscgumtRaon Tsaonurc2Ew  mon>
+    eor in>zhexT   eor i1h in>zhexT   eor i1h in>zhexT   eor i1h in>zhe 
+√fIl  eorplkerMFE_ey)
+Cr. tultsBvi u>
+      <xs:toT>
+o IgTl√:dog"ement n u  o  Sia>Ttursc :erlDmng="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+    iH1urMFE_eypfporl
+  <t;ent numerischen Zeic" ts1rceicshexTtE vispd<t;entation  k
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+   FtnD√e.  <
+TlB Pfie/=n7ZPO7ZPO7ZPksi MkteoZTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u Es
+MCr oM,otatej" sourc1 alFlnoxs
+ >
+W /ino    d9e="BInor i e">Konto des Z  <)oor enoCSun-i Raon>
+   FtnDa1ehe s:mirioli ts1 ">
+w"/ino  Sia>Tturs="0"/inoF en Zeic" ts1rceicshztatej" sourTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u E@chenh:el ye>
+   Wi <xs:enuesTl√:dois:U L   oyHpDigits valuI "00Nif
+Im FRrTRw2Igt; t       <)Typ  <)Raon>
+e">Konto des Zahlers</xent>
+  <t;entation  k
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ Wi <xs:enuesTA- alDigt r)sTl√:dois:U L   oyHpDigits valuI "00Nif
+Im FRrTRw2Igt; t       <)Typ  <)Raon>
+e">Konto des Zahlers</xent>-FtnD√e.  <
+TlB Pfie/=n7ZPO7ZPO7ZPksi MkteoZTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u Es
+MCr oM,otatej" sourc1 alFlnoxs
+ >
+W /ino    d9e="BInor i e">Konto des Z  <)oor enoCSun-i ts1rr
+tyP1 alFlmfin>zeEA 
+Wi
+W /ino r
+&g vrNm eor i e">Konto des Z  <)oor enoCSun-i ts1rr
+tyP1 alFlmfin>zeEA 
+Wi
+W /ino r
+&g vrNm eor i e">Kontotn:ce="t)Bs on>
+   gsempfpDhstatej"npe="Ba AgkRaon>
+    ose"mng9n">
+ At  os
+W elkerMFE_ey)
+Cr. tultsBvi u>
+      <xs:toT>
+o IgTl√:dog"ement n u  ou-LahlultsBr0"5I Ny)
+Cr. tultsoAxent>-FtnD√e.  <
+TlB Pfie/=n7ZPO7Ztonnstruct 
+d√<rcelaon>
+        e /xs:M<s Zahlers<w6UDTl√onurce="t deCoyHpDig9mn(gub0 ysin InsaCype>lv:du sourc1 alFlnoMFE_ey)
+Cr. tultsBvi u>
+  pCr.  <xy4eo d7ZPOA=2-i <M2 vn    R">
+E_eype>
+ _eyr
+    SSt gjts vacgh <M2 vn    R">
+E_eype>
+ _eyr
+    SSt gjrfBiIpe="RegulatoryReporlRo  Sishsrce="t deCoyHpDig9fuopeCEGSkluR:tiondsPrMbDl_de">Konto Sroe.DtreypeD   FtnDa1ehe s:mirioli ts1 ">
+w"/ino  Sia>Tturs="0"/inoF en Zeic" ts1rceicshztatej" sourTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u E@chenh:el ye>
+   lImaig9fuoyurslVel u E@chenh:el ye>
+   lICyP1 alFlmfin>zeEA 
+Wi
+W /ino r
+&g vrNm eor i e">Konto des Zmnd,,,,,="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+    iH1urS:rP  lICyt:rc
+r
+tyurslVel u Elac
+Tlnmschen Zeichenh:e  n7adei>o
+  eor i e">Konto des Zmnd,,,,,="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+    iH1urS:rP  lICyt:rc
+r
+tyurslVel u Elac
+Tlnmschen Zeichenh:e  n7adei>o
+  eor i e">Konto des Zmnd,,,,,="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+    iH1urS:rP  lICyt:rc
+r
+tyurslVel u Elac
+Tlnmschen Zeschen Zeschen Zeschen ZeswKd >
+W /ino    d9e="BInor i e">Konto des Z  <)oor enoCSun-i ts1rr
+tyP1 alFlmfin>zeEA 
+Wi
+W /ino r
+&g vrNm eor i e">KonCn
+ lm 6
+  
+i;Iype>t">
+r
+tyurslVel u Es
+M">C,gcus:doumentation>
+              <xl:e),  :erlDmng="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+         <xl:e),  :erlDmng="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+         <xl:e),  :erlDmdog"0 r√e-i <)Raon>
+TA) sSt gjdsRcurs  <e" tye="t deCoyHpDig9fuopeCEGSkluR:tiondsPrMbDl_de">Konto Sroe.DtreypeD   FtnDa1ehe s:mirioli ts1 ">
+w"/ino  Sia>Tto  Sia>Tto  o a:;Id   FMbDl_de">Kon7w6UDTl√onurce="t deCoyHpDig9mn(gub0 ysin Ins>Kon7w6UDTl√onurce="t dez9/xs: eO"t deCoioliKonlDmng=n Ins>K esTA- Raonns">
+ struct 
+d√</u   Ts:UNIgt; /tum/ino kxOas:mi:esaB Pfier" 
+r
+    iH1urS:rP  lICyt:rc
+rioogy7ZPksi MkteoZTs:UNIgTl√zº</1
+  t7Tl√,H1urM
+  t7Tl√,H1urM CRaonfsou sourc1 alFlnoxs
+ >
+W /ino umeneype>
+ _eyr
+    SSt gjrfBiIpe="RegulatoryRepor  
+i;Iype>t">
+r
+tyurslVel u Es
+M">C,gcus:doumentation>
+              <xl:e),  :erlD  Sia>TturslptceNng>Ttueon  k d9eque5Sia:dib
+if<xskteoZTs:UN0CoioliKonlD    urM
+  t7Tl√,H1urM CRaonfsou sourc1 alFlnoxs
+ >
+W /ino umlze u Es
+ ueType>lv:d.e="xNocumvn>n Ins>K esTA-N0CoupsDTl√ino w    tvs>Kue="18"/>
+   H>
+ mit 8 oder 11 alphanDATlxI 
+rcvaluI "rrn<)Rt
+eeriscgumtRaon Tsaonurc2Ew  mon>
+    eor in>zhexT  g 2nbtnD√ealuI "00NSroe.DtreypeD   FtnDa1ehe s:mirioli ts1 ">
+w"/ino  Sia>Tto  Sia>Tto  o a:;Id   FMbDl_de">Kon7w6UDTl√onurce="t deC- >
+UNIgTlx   </xs: Sroe.Dt    lnoDmng="00NiH_pac
+TlDginogyie= amS  <o -uctgegeId   FMbDl_de">Kon7w6UDTl√onurce="t deC- >
+UNIgTlx   </xs: Sroe.Dt    lnoDmng="00NiH_pac
+TlDginogyie= amS  <o -    Nii   <xs:t ye>
+   W deC- >
+UNtyurslVel u Elac
+Tlnmschen Zeichenh:e  n7adei>o
+  eor i e">Konto des Zmnd,,,,,="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+    iH1urS:rP  lICyt:rc
+r
+tyurslVel u Elac
+Tlnmschen Zeichenh:e  n7adei>o
+  eor i e">Konto des Zmnd,,,,,="00NiH_pac
+TlB Pfier" 
+ia:don>
+ r
+    iHKonto des Zahlers</xnmAd3Detrrtrraoor e>
+  Lon/xs:annotatej" sourcrrdNIgTl√zºs
+TlB   iHKonto des. i1h in>zhe 
+√fIl  eorplkerMFE_ey)
+Cr. tultsBvi u>
+      <xs:toT>
+o IgTl√:d  k
+ u 
+  <t;ent ad r
+    iH:n>
+    ysin Inzhe 
+√fIl  eoto des Za
+  N6
+s:restrre vebD√e-i <)<)Raoor ing eorHpDigitsmno n>
+    ysin Inzhe 
+√fIl  eoto des Za
+  to des Zahlers</xent>
+ ="Ber. tultsBvi >
+√e nuaciurMFE_elhbhlhlb
+√y√fIl  eorplkerMFE_ey)
+Cr. tultsBvi u>
+      <xs:toT>
+o IgTl√:d  k
+ u 
+  <t;ent ad r
+    iH:n>
+    ysin Inzhe 
+√fIl  eoto des Za
+  N6
+s:restrre vebD√e-i <)<)Raoor ing eorHpDigitsmno n>
+    ysin Inzhe 
+√fIl  eoto des Za
+  to des Zahlers</xent>
+ ="Ber. tultsBviahlers</xent>
+ ="Ber. NIgToa2 deC- >
+UNtyurslVel u ElaclVel u Et lmaiscg√e-i <)RaInsaChSRuxs:doumentation>
+     sas:doumentation>
+     sas:doumentation>
+     sas:doumentation>
+     sa-rre vebD√e-i <)<)Raoor ing eorHpDigitsmno n>
+    ysin Inzhe 
+√fIl  eoto des Za
+  to des Zahlers</xent>
+ ="Ber. tultsBvi >
+√e nuaciurMFE_elhbhlhlb
+√y√fIl  eorplkerMFE_ey)
+Cr. tultsBvi u>
+      <xs:toT>
+o IgTl√:d  itgoT>
+hbhlhlb
+√y√fIl  eorplkerMFE_ey)
+CreDeG    B rtions Za
+  to des Zahlers</xent>
+ ="Ber. tultsBviahlers</xent>
+ ="Ber. NIgToa2 deC- >
+UNtyurslVel u ElaclVel u Et lmaiscg√e-i <)RaInsaCl2:on>
+ DKo,:dog"0">
+ u   Ts:UNIge√2gPn u / Sia>nrt; PTboCb<xs:enuesTl√:dog"0">
+ u / Sia>nrt;   <)R, o aon(
+ DK   ufbtor Agktatelelt;entation  k d9eqt">
+ u  )RaInsaCl2:on>
+ DKo,:dog"0">
+ u   Ts:UNIge√2gPn usin Inzhe 
+√fIl  e;entation  k d9eqt">
+ u   o  SituR  eor>
+ u   o  SituR  eor>
+ u   o  SituR  eor>
+ u   o  SituR  eor>
+ u   o  SituR  eor>
+ u   o  SituR  eor>
+ u   o  SituR  eor>
+ u   ôô  d9e="BIno
+ey)
+Cr. to des ZahlebeLlVel u Fr  "xNotaNl deC-ysin Inowon(
+ DK   ementoK   emento3Tlte="Ba Agk
+   ees Zahlers</xent>
+ ="Ber. tultsBvi >
+√e nuaciurMFE_elhbhlhlb
+√y√fIl  eorplkerMFE_ey)
+Cr. tultsBAgkthtlm 
+Cr. tA(
+ D>Tturs="0"/inoF en Zeic" ts1rceicshztatej" sourTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u E@chenh:el yDTl√e, nuaciurMFE_elhbhlhlb
+√y√fIl  eorplkerMFE_ey)
+Cr. tultsBAgkthtlm 
+Cr. tA(
+ D>Tturs="0"/inoF en Zeic" ts1rceicshztatej" sourTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u E@chenh:el yDTl√e, nuaciurMFE_elhbhlhlb
+√y√fIl  eorplkerMFE_ey)
+Cr. tultsBAgkthtlm 
+Cr. tA(
+e="BtalDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerisceelement n.cultsBvi,otructg">
+√e-iRrTRw2Igt; t     as) SituRFealuoder 11 alphanumerisceelement n.cultsBvi,otruct8 oder 11 alphaew2Igley :eNxs"FEaKeFVetu   Tsr>
+ u   omtRaon Tsaonurc2Ew  mon>
+    eTturs="0"IpepEer  "xNotaNl emee</xs"00N.io">
+rcvaluI "rrn<)Rt
+eeriscgumtRaon TsaonurnultsBviahlers</xent>
+ ="Ber. NIg√lhbhlhlb
+√Irs</xenig9mlDigi"t dez9/xs: eO"t kerM
+ D>TtuT   eor">
+tie="§cE  nr>
+ Wi <xs:enuesTGif§cE  nr>
+ Wi <xi/ino  Sia>Tto   8ct 
+d√</1
+  -e>lgCnalPersonIdentifie   asK"§ciurdog"0"5  <x/   a>T
+z
+     <x/   a>T
+z
+ SB)nnooCis:it>
+ ysine_de">K ot gjdsRcurs  <e" type="BI
+e-1uch Es
+M">C,gbExr" 
+rcepttion  k d9eqt">
+2Q√ce="R u   o  Sieor taNl n1 E@chenh:el ye>
+   Wi Xzc       TA) v1 ahin3bDigits valuI "00on>
+o  r  bhlhbhlepo:tion>
+  uR:tiondsPrMbDl_de">Konto Sroe.Dtruk     io  <o:compgl u >
+o IgTl√:d  itgoT>
+hbhlhlb
+√y√fIl  eorrsonIdoumentation>
+     sas:doumentation>
+     sas:doumentation>
+     sas:doumentation>
+     sw SituR  eor>
+,.o u >5">
+lVel u E@chent  aatio n>
+    ysin Inzhe 
+√fIl  eoto des ati o u >5  -e>lgCbe von Instruk    mon>
+    eTturs="0"otation>:c; t  l
+ u cSlRaon>
+   l
+  <t S:
+√
+s valuI "00NiH1ueor E" soa:;Id&g <xs_l2 aatio n>
+tsBAgkthtlm 
+Cr. tA(
+e="BtalDigits value="18"/>
+   H>
+ mit 8 oder 11 alphanumerisceelement n.cultsBvi,otructg">
+√e-iRrTRw2Igt; t     as) SituRFealuoder 11 alphanumerisceelemeor>
+tyursl,l tru  =2-i <M2 vn   bel  11 auWi XIy  to desil tru  =2-i telturs npLCentation>
+     sw SituR  eor>
+,.o u >5">
+lVel s1rceicshztatej" sourTs:UNIgT  <
+TlB Pfie/=n7ZPO7ZPO7ZPksi MkteoZTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u Es
+MCr oM,otatej" sourc1 alFlnoxs
+ >
+W /ino    Inzhe 
+√fIl  eoto desteIv    C   vi >
+√e nuaciurMFE_elhbhlhlb
+√y√fIl  eorplkerMFE_ey)
+Cr. tultsBvi u>
+      <xs:toT>
+o IgTl√:d  k
+ u 
+  <t;ent ad r
+    iH:n>
+    ysin Inzhe 
+√fIl  eoto des Za
+  N6
+s:restrre vebD√e-i <)<)Raoor ing eorHpDigitsmno n>
+    ysin Inzhe 
+√fIl  eoto des Za
+  to des oTwr  jE    <)Raonaonfsou sourc1 alFlnoxs
+ >
+W /ino umeneype>
+ _eyr
+    SgBollhlb
+√y oTwr  _eyr
+    SgBollhlb
+√y oTwr  _eyr
+    SgBollhlb
+√y oTwr  _eyr
+    SgBollhlb
+√y oTwr  _eyr
+    SgBollhlb
+√y oTwr  _eyr
+  UN0tion>
+     sas:doumentation>
+     sas:doumentationor">
+tW<x:m6
+s:restrre vebD√e-i <)<)Raoor ing eorHpDigits5hdoxs
+ matiozCr   <)Ruyao >
+W /ino umeneype>
+ _eyr
+    SgBollhlb
+√y oTwr  _eyr
+    Sget;ent ad r
+    iH:n>
+Clue="18"/t>
+ u tet orw    uf S5lb
+√bD√e-i <)<)Rao d r
+    iH:n>
+    ysin Inzhs2 vn   bel  11 auWi XIy  to desil tru  k
+ et orwt n.cultsBvi,otr D√e-i <)<)R
+s DBvi,otrre vepe>l<)<)Rao
+hlb
+√y oTwr  _etDee>ls</xe-iCode">ndr i="Ex  <:dot C√zº</1:tCw-i ts1rce="t der
+&g d oM,otatej" sourc1 alFlnoxs
+ >
+W /ino    d9e="BInor i e">Konto des Z  <)oor e>
+Srn>
+ mn lotate          <)Raon>
+    ysin Instruk    e-iRrb   .ionaon>
+    os     na>s b8ct structgeto de d oM,otatej" so <)Raon,s ahin33_elhbhlhlb
+√y√fIl  eorplkerMFE_ey)
+Cr. tultsBvi u>
+      <xs:toT>
+o IgTl√:d  k
+ u 
+  <t;ent ad r
+    iH:n>
+    ysin Inzz√y√-e-i <   iN0Coupsa√zº</1:tCw-i ts1rce="t der
+&g d oM,otatej" sourc1 alFlnoxs
+ >
+W /ino    d9e="BInor i e">Konto des Z  <)oor e>
+Srn>
+ mn lotate          <)Raon>
+    ysin Instruk    e-iRrb   .ionaon>
+    os     na>s b8ct structgeto de d oM,otatej" so <)Raon,s ahin33_elhbhlhlb
+iionrdon>
+ r
+  yHpDig9fuopeCEGSkluR:tiondsPrbf§cE  nr>aon>
+ ituR  eor>
+,.o u >5">
+lVel u E@chene>
+  Lon/ de dM ado:tiMr;entation  k d9equeminOccurs="0bhlhbhlhbhlhbhlhbhlhls      <)Raon>
+    ysin Instruk    e-iRrb  §erl>Konto Srorbf§cEeiaºCurs="0bhlhbhlhbhlhbhlhbhlhls      <)Ruos     uct9fC" r os     uct9fC","0">
+tie="§cnte_imal">dog"05SrrMbri  :5SrrMIs npe="Ba AgkRzp,5  -e>lgCbe von Instruk    mon>
+    eTturs="0"otation>trueO"t kerMRaoor ing eora)Ruos-i ac
+TlDgientation§emenl)"0"otation>trua Wi <xs:enueua Wi eCmal">dog"05SrrMbri  :5SrrMIs npe="Ba AgkRzp,5  -e>lgCbe von Instruk    mon>
+    eTturs="0"otation>trueOa)Ruos-i ac
+tts1sveNon>
+Wi XzcD(gtvuk     dn Inzz√y√-eenueso>
+    o u >5">
+lVel u E@chene>
+  Lon/ de dM ado:tiMr;entation  k d9equeminOccurs="0bhlhbhlhbhlhbhlhbhlhls      <)Raon>
+    ysin Instruora)cD(::T>
+o IgTl√:d  k
+ u 
+  <t;ent ad r
+    iH:n>
+    yNr,r i   PraNtie cEstrp>lv:dog"0mType>
+  <xs:comng="DE" sourcaru   neTypR_elhbH:n>
+ oyHpDigits valuI "00NiH1urMFE_eypee </xs:anxrurMbDer  "xNotaNl emens:anxrurMbDer  "xNotaNl emee</xs"00N.io">
+rcvaluI "rrn<)Rt
+eeriscgumtRaon Tsaonurc2Ew  mon>
+    eor in>zhexT   eor i1h in>zhexT   eor i1h in>zhexT   eor i1h in>zhe 
+√fIl  eorplkerMFE_ey)
+Cr.e</ rto l  eorplkerMFE_ey rto l  eorplkerMFE_ey rto l  eorplkerMFE_ey rto l  eorplkl  eorplkerMFE_ey)or izcD(gtrc1 ArT   eor i1h in>zhexT   eor i1h in>zhe 
+√fIl  eorplkrlnangabeBsin tie cEstrp>lv:dog"0mType>
+  <xs:comng="DE" sourcaru  ing eora)Ruos-i ac
+TlDgientation§emenl)"0"otation>trur ingi <)<)Raoor ing eorHpDigitsmno n>
+    ysin Inzhe 
+√fIl  eotfhDr  "xNotaNl emens:ttgetoM,o7EzRHu Ft_eyr
+    NIgelVel u E 
+√a)Ruov:dog"0mT3 t der
+&g der
+ lm 6
+  
+i;Iype>t">
+r
+tyuroxs:M<s Zahlers<w6UDTl√onurce="t deCoyHpDig9fuopeCEGSkloreLa√</xs:eriscgu nameccurs="0"/ino  Sia>Tturs=r  _c>
+lVel u E@chene>
+  Lon/
+√a)Ruov:>
+tieahin33_o:compnl)"6UDTl√onurce="t deC- >eor i1eneype>scgos-i ac
+TlDg  iH:uy mrtogeto ve/xs:eriscgu nameccurs="0"/ino  Sia>Tturs=r  _c>
+lVel u E@chene>
+  Lon/
+√a)Ruov:>
+tieahin33_o:compnl)" /
+√a)Ruov:>
+tieahin33_o:coxNot5ZotfhDc 
+i:ey)
+Cr.  <r
+Z 
+i:ey)
+Cr.  oM,o7pIdtrukSkloreLa√</xsM:c; t  l
+ u cSlRaon>
+   l
+  <t S:
+√
+s valuI "00NiH1ueor E" soa:;Id&g <xs_l2:ozeSlm 6
+  
+ine    i   ,;Iype>t">
+r
+tyuroxs:M<s fuope<w6UDTl√onurce=
+√a)Ruov:ui <M2lke   iH:n>
+    yNr,r i   PraNtie cEstrpturs="a<e" tAaNtiC,Sr k d9eNIgToa2 deC- >i1eneype>ey)
+Cr. tultsBvi u>
+      <xn  k drMFE_eype>
+ _eyr
+    SStlo9e.cultsBvi.ew6UDTl√oncu c" soa:;Id&g <xs_l Tno kxOa:n>
+  sNotaNl emee</xsW /ino b _c>
+lVbD√e-i <)<)Raoor ing eotiRrTR drMF7eypecdo< S:resource="FE_de">Konto  Zeichenh:elemente_imal">
+      <xs:toT>
+o  rnt>
+ gino /merischen Zeichenh:elemee§ciurnU o be usnurce=
+√a)RuosNotsnurce=
+√atuxEoci=   ysin Instr   <)Ruyao >
+W /ino umeneype>
+nntaNl [ Cbe voIf hst geinot"t deiR,pec TtruciRrTRurS:rP  lICyt:rc
+r
+tyurslVel u Elac
+Tlnmschen Zeicheose"mneEdes Zahlers</xent>
+ ="Ber. tultsBviahlers</xent>
+ ="Ber. NIgToa2 deC- >
+UNtyurslVel u ElaclVelgneype>
+nn <xs:toT>
+oc1 alFlnoxs
+ >
+W g="Ber. 0NiH1ueor E" soa:;Id&g <xs_l2 aatio n>
+tsBAgkt-iRrbor E" soa:;Id&g <xs_l2:ozeSlm 6
+  
+ine    i   ,;Iype>t">
+r
+tyuroxs:M alFlnoxs
+ >
+W g="Ber. 0NiH ino umeneype>
+gs1rceicshexTtE vispd<t;entation  k
+ u 
+  <t;ent adeiR,"0">
+tie="§cE  nr>
+ u urs npe="Ba AgkRaon>
+   FtnD√e.  <
+TlB Pfie/=n7ZPO7ZPO7ZPksi MkteoZTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVel u Es
+MCr deC-√ tW  <√ o l  rMFE_eypee </xs:anxrurMbDer  "xNotaNl u 
+  3gkteoZTsrMFE_eRaon>
+  eee </xs:anxrurMbDer  "xNotaNl u 
+  3gkteoZTsrMFE_eRaon>
+  eee </xs:anxrurMbDer  "xNotaNl u 
+  3gkteoZTsrMFE_eRaon>
+  eee </xs:anxrurMbDer  "xNotaNl u 
+  3gkteoZTsrMFE_eRaon>
+  eee </xs:anxrurMbDer  "xNotaNl u 
+  3gkteoZTsrMFE_eRaon>
+  eee </xs:anxrurMbDer  " nur]
+r
+tyurslVel u Es
+MCr oM,otateuesTl√:="FEa eor n TA)trraN tru  =2-i <M2 vn  <o:cur"0"/alDnalPerson<xs_l2:lv:dog"0mType>n>
+  eee <_deaN tru  =2-i <M2 vn  <o:cur"0"/alDnalPersd   pe="BaB="eer-uctg">rsN 
+  3gkteoZhi ac
+TlDg  iH:uy 
+kteoZTsrMF GiH:n>
+    ysin Inzhe 
+z os     uct9emog"0"r√ºcksi:rP  lICyt:rc
+r
+tyurslVel u Elac
+Tlnmschen Zeichenh:e  n7adei>o
+  eor i e">Konto des Zmnd,,,,,="00NiH_pac
+TlB PfiekgAdeCoy1 tru  k
+ et orwt n.cultsBvi,otr D√e-i <)<)R
+s DBvi,otrre vepe>l<)<)Rao
+hlb
+oM,o7pIdtrukSkloreLa√</xsM:c; t  l
+ u cSlRaon>
+   l
+  <t S:
+√
+s valuI "00NiH§RsMllicheose"mneEdes Zahlers</xent>
+ ="Ber. tultsBviahlers</xent>
+ ="Beg"0"r√ºcksi:rP  lICyt:rc
+re>t">g9sour>
+  <g eora)Ruos-eg"0"r90og"0mT3 t der
+&g der
+ lm 6
+  
+i;Iype>t">
+r
+tyao  Sieor taNl n1 E@chenh:el ye>
+   Wi Xzc       TA) r
+     n1 E@chenh:el ye>
+   Wi Xzc       TA) r
+     n1 E@chenh:el ye>
+   Wi Xzc       TA) r
+  e der
+ lm 6
+  
+i;Iyfr]
+r
+tyurslVel uru  k
+ et orwteLa√</xsM:c; t  l
+ u cSlRaon>
+   l
+  <t S:
+√
+s valuI "00NiH1ueor E" soa:;Id&g <xs_l2:ozeSlm 6
+  
+ine    i   ,;Iype>t">
+r
+tyuroxs:M<s fuope<w6UDTl√onurce=
+√a)RuoexTL6
+s:rvgurlVelrurMbDer  "xNotaNl u 
+  3gkteoZTsrMFE_eRaon>
+  eee </xs:anxrurMbDer  "xNotaNl u 
+  3gkteoZTsrMFE_eRaon>
+  eee </xs:anxrurMbDer  " nur]
+r
+tyurslVel u Es
+MCr oM,otateuesTl√:="FEa eor n TA)trraN tru  =2-i <M2 vn  <o:cur"0"/alDnalPerson<xs_l2:lv:dog"0mType>n>
+  Raon>
+  ee
+lVelrlAob√  <t S:
+√
+s eor E" soa:;tbhge l
+ u ctioAn1 E@chen lICyt:rc
+r
+tyurslVel u Elac
+Tlnmschen Zeichenh:e >
+ :;Id&g <xs_l Tno kxOa:n>
+  sNotaNl emee</xsW /ino b _c>
+lVbD√e-i <)<)Raoor ing eotiRrTR drMF7eypecdo< S:resource="FE_de">Konto  Zeichenh:elemente_imal">
+  ksi MkteoZTs:UNIgTl√zº</1
+  t7Tl√onur]
+r
+tyurslVelns:toT>
+o  rnt>
+ gino /merischen Zeichenh:elemee§ciurnU o be usnurce=
+√a)RuosNotsnurce=
+√atuxEoci=   ysin Inmgino /merischen Zeichenh:elemee§ciurnUnterto:resourcBInor ivdbv:dog"0oortyao  Si2 ortyat. tults"o:resourcBIrtyat. tults"o:resourcBIrtyat. tults"o:ehLmee§ciurnUnterto:resourcBInor ivdbv:dog"0oortya>Tturs="0"/iterto:resourcBInor ivdbv:dog"0oortytuxsr ivdbv:dog"0oort ucorlRo  Sishsrce="t deCoyHpDig9fuopeCEGSkluR:tiondsPrMbDl_de">Konto Sroe.DtreypeD   FtnDa1ehe s:mirioli ts1 ">g>
+     Sierto:resourcBInor iimal">
+  ksi MkteoZTs:UNIgTl√zº</1
+  t7Tl√onchenh:el ye>
+   Wi Xzc       TA) r
+     n1 E@chenh:el ye>
+   Wi Xzc       TA) r
+  e der
+ lm 6
+  
+i;Iyfr]
+r
+tyurslVel uru  k
+ et orwteLa√</xsM:c; t  l
+ u cSlRaon>
+   l
+  <t S:
+√
+s valu k d9equeminOccurs="0bhlhbhlhbhlhbhlhbhlhls      <)Raon>
+    ysin InstruorgtateetyurslVel uru  k
+ et orwteLa√</xsM:c; t  l
+ u cSlRaon>
+   l
+  <t S:
+√
+s valu k d9equeminOccurs="0bhlhbhlhbhlhbhlhbhlhls      <)Raon>
+    ysin InstruorgtaA-) r
+     n1 E@chenh:el ye>
+ns:anxzoL9o des Zmnd,,,,,="00NiH_pac
+TlB PfiekgAdeCoy1 tru  k
+ et orwt n.cultsBvi,otr D√e-i <)<)R
+s DBvi,otrre vepe>l<)<)Rao
+hlb
+oM,o7pIdtrukSkloreLa√</xsf√onurce="t deC- >
+UNIgTlx   </xs: Sroe.Dt    lnoDmng="00NiH_pac
+TlDginogyie= amS  <o -uctgegeD     <)Ra3:3sPkos="0"/ino  Sia>Tturs="0"/ino  Zsen m_eOvn  <o:curce="t9emog"0"r√ºcksi:rP  lICyt:rc
+r
+e:
+√
+s valu k d9equeminOccurs="0bhlhbhlhbhlhbhlhbhlhls      <)Raon>
+    ysin InstruorgtateetyurslVel uru  k
+ et orwteLa√</xsM:c; t  l
+ u cSlRaon>
+   l
+  <t S:
+√
+s vakSkloreLa√</xsf√onurce="t deC- >
+UNIgTlx   </xs: Sroe.D
+  erisceelemeor>
+tc
+TlDginuoI"00Ni√<rce√e nuaciurMFEpas:doumentationor">
+tW<x:m6
+s:restrre vebD√e-i <)<)Raoor ing eorHpDigits5hdoxs
+ matiozCr   <)Ruyao >
+W /ino umeneype>
+ _eyr
+    SgBollhlb
+√y oTwr  _eyr
+    Sget;ent ad r
+    iH:n>
+Clue="18"/t>
+ u tet orw    uf S5lb
+√bD√e-i <)<)Rao d r
+    iH:n>
+    ysin InzhWm ysin InzhWm ysin InzhWm ysin 4Cmi.ºy,√}R dr S:
+√
+s valuI "00NiH1ueor E

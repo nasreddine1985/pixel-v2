@@ -1,20 +1,27 @@
 package com.pixel.v2.transformation.processor;
 
-import org.apache.camel.Exchange;
-import org.apache.camel.Processor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-import javax.xml.transform.*;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+
+import org.apache.camel.Exchange;
+import org.apache.camel.Processor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 /**
  * Processor for XSL transformation of XML messages (single or collection).
@@ -84,10 +91,12 @@ public class XslTransformationProcessor implements Processor {
     private void processSingleMessage(Exchange exchange, Templates templates, String xmlContent, long startTime) 
             throws XslTransformationException {
         
-        logger.debug("[XSL-TRANSFORMATION] Processing single message");
+        logger.info("[XSL-TRANSFORMATION] Processing single message");
         
         try {
             String transformedXml = transformXml(xmlContent, templates);
+
+            logger.info("[XSL-TRANSFORMATION] Transformed XML: {}", transformedXml);
             
             // Set transformed content as body
             exchange.getIn().setBody(transformedXml);
@@ -95,7 +104,7 @@ public class XslTransformationProcessor implements Processor {
             // Set success headers
             setHeaders(exchange, "SUCCESS", "SINGLE", 1, 1, 0, null, startTime);
             
-            logger.debug("[XSL-TRANSFORMATION] ✅ Single message transformed successfully");
+            logger.info("[XSL-TRANSFORMATION] ✅ Single message transformed successfully");
             
         } catch (Exception e) {
             throw new XslTransformationException("XSL transformation failed: " + e.getMessage(), e);

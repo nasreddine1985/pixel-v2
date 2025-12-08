@@ -7,7 +7,120 @@ USERNAME="admin"
 PASSWORD="admin"
 
 # Sample PACS008 XML message
-MESSAGE_BODY='<?xml version="1.0" encoding="UTF-8"?><Document xmlns="http://www.six-interbank-clearing.com/de/pacs.008.001.08.ch.02"><FIToFICstmrCdtTrf><GrpHdr><MsgId>1717480887/1XXXX</MsgId><CreDtTm>2024-11-22T15:43:01+01:00</CreDtTm><NbOfTxs>1</NbOfTxs><TtlIntrBkSttlmAmt Ccy="CHF">1260</TtlIntrBkSttlmAmt><SttlmInf><SttlmMtd>CLRG</SttlmMtd><ClrSys><Cd>SIC</Cd></ClrSys></SttlmInf></GrpHdr><CdtTrfTxInf><PmtId><EndToEndId>cd53dafa016b451fa59574cc4ee65bd8</EndToEndId><TxId>1717480887/1XXXX</TxId><UETR>c8d513e9-d3e1-46ff-bc68-56fe389404d8</UETR></PmtId><PmtTpInf><LclInstrm><Prtry>CSTPMT</Prtry></LclInstrm></PmtTpInf><IntrBkSttlmAmt Ccy="CHF">1260</IntrBkSttlmAmt><IntrBkSttlmDt>2024-11-22</IntrBkSttlmDt><SttlmTmIndctn><CdtDtTm>2024-11-22T15:43:15</CdtDtTm></SttlmTmIndctn><ChrgBr>SHAR</ChrgBr><InstgAgt><FinInstnId><ClrSysMmbId><ClrSysId><Cd>CHSIC</Cd></ClrSysId><MmbId>007781</MmbId></ClrSysMmbId></FinInstnId></InstgAgt><InstdAgt><FinInstnId><ClrSysMmbId><ClrSysId><Cd>CHSIC</Cd></ClrSysId><MmbId>086866</MmbId></ClrSysMmbId></FinInstnId></InstdAgt><Dbtr><Nm>Verkehrsbetriebe Luzern AG</Nm><PstlAdr><Ctry>CH</Ctry><AdrLine>Tribschenstrasse 65</AdrLine><AdrLine>6002 Luzern</AdrLine></PstlAdr></Dbtr><DbtrAcct><Id><IBAN>CH3300778010055393210</IBAN></Id></DbtrAcct><DbtrAgt><FinInstnId><ClrSysMmbId><ClrSysId><Cd>CHSIC</Cd></ClrSysId><MmbId>007781</MmbId></ClrSysMmbId><Nm>Luzerner Kantonalbank AG</Nm><PstlAdr><Ctry>CH</Ctry><AdrLine>Pilatusstrasse 12</AdrLine><AdrLine>6003 Luzern</AdrLine></PstlAdr></FinInstnId></DbtrAgt><CdtrAgt><FinInstnId><ClrSysMmbId><ClrSysId><Cd>CHSIC</Cd></ClrSysId><MmbId>086866</MmbId></ClrSysMmbId></FinInstnId></CdtrAgt><Cdtr><Nm>Daimler Buses Schweiz AG</Nm><PstlAdr><StrtNm>Wieshofstrasse</StrtNm><PstCd>8404</PstCd><TwnNm>Winterthur</TwnNm><Ctry>CH</Ctry></PstlAdr></Cdtr><CdtrAcct><Id><IBAN>CH9830154001133992002</IBAN></Id></CdtrAcct><RmtInf><Strd><CdtrRefInf><Tp><CdOrPrtry><Prtry>QRR</Prtry></CdOrPrtry></Tp><Ref>000000000000000069000002806</Ref></CdtrRefInf><AddtlRmtInf>28.10.2024 38739388</AddtlRmtInf></Strd></RmtInf></CdtTrfTxInf></FIToFICstmrCdtTrf></Document>'
+MESSAGE_BODY='<?xml version="1.0" encoding="UTF-8"?>
+<Document xmlns="http://www.six-interbank-clearing.com/de/pacs.008.001.02.ch.02">
+	<FIToFICstmrCdtTrf>
+		<GrpHdr>
+			<MsgId>086866CHF20230823007053515</MsgId>
+			<CreDtTm>2023-08-23T06:02:20</CreDtTm>
+			<NbOfTxs>1</NbOfTxs>
+			<TtlIntrBkSttlmAmt Ccy="CHF">39189.23</TtlIntrBkSttlmAmt>
+			<IntrBkSttlmDt>2023-08-23</IntrBkSttlmDt>
+			<SttlmInf>
+				<SttlmMtd>CLRG</SttlmMtd>
+			</SttlmInf>
+			<InstgAgt>
+				<FinInstnId>
+					<ClrSysMmbId>
+						<ClrSysId>
+							<Cd>CHSIC</Cd>
+						</ClrSysId>
+						<MmbId>082524</MmbId>
+					</ClrSysMmbId>
+				</FinInstnId>
+			</InstgAgt>
+			<InstdAgt>
+				<FinInstnId>
+					<ClrSysMmbId>
+						<ClrSysId>
+							<Cd>CHSIC</Cd>
+						</ClrSysId>
+						<MmbId>086866</MmbId>
+					</ClrSysMmbId>
+				</FinInstnId>
+			</InstdAgt>
+		</GrpHdr>
+		<CdtTrfTxInf>
+			<PmtId>
+				<InstrId>UET2ffed5b151be4287b589e5392cb79e9f</InstrId>
+				<EndToEndId>NOTPROVIDED</EndToEndId>
+				<TxId>11100175502367OS</TxId>
+			</PmtId>
+			<PmtTpInf>
+				<LclInstrm>
+					<Prtry>IPIDEB</Prtry>
+				</LclInstrm>
+			</PmtTpInf>
+			<IntrBkSttlmAmt Ccy="CHF">39189.23</IntrBkSttlmAmt>
+			<SttlmPrty>NORM</SttlmPrty>
+			<SttlmTmIndctn>
+				<CdtDtTm>2023-08-23T06:05:37</CdtDtTm>
+			</SttlmTmIndctn>
+			<ChrgBr>SHAR</ChrgBr>
+			<Dbtr>
+				<Nm>DHL</Nm>
+				<PstlAdr>
+					<StrtNm>VIA SEBASTIANO BRIGHENTI 32</StrtNm>
+					<PstCd>10195</PstCd>
+					<TwnNm>GRUGLIASCO</TwnNm>
+					<Ctry>IT</Ctry>
+				</PstlAdr>
+			</Dbtr>
+			<DbtrAgt>
+				<FinInstnId>
+					<ClrSysMmbId>
+						<ClrSysId>
+							<Cd>CHSIC</Cd>
+						</ClrSysId>
+						<MmbId>082524</MmbId>
+					</ClrSysMmbId>
+				</FinInstnId>
+			</DbtrAgt>
+			<CdtrAgt>
+				<FinInstnId>
+					<ClrSysMmbId>
+						<ClrSysId>
+							<Cd>CHSIC</Cd>
+						</ClrSysId>
+						<MmbId>086866</MmbId>
+					</ClrSysMmbId>
+				</FinInstnId>
+			</CdtrAgt>
+			<Cdtr>
+				<Nm>ANCE</Nm>
+				<PstlAdr>
+					<AdrLine>VIA MORENA 8</AdrLine>
+				</PstlAdr>
+			</Cdtr>
+			<CdtrAcct>
+				<Id>
+					<IBAN>CH9408686001088236008</IBAN>
+				</Id>
+			</CdtrAcct>
+			<RmtInf>
+				<Strd>
+					<RfrdDocInf>
+						<Tp>
+							<CdOrPrtry>
+								<Prtry>LSVBDD</Prtry>
+							</CdOrPrtry>
+						</Tp>
+						<Nb>MAZDX</Nb>
+						<RltdDt>2023-08-23</RltdDt>
+					</RfrdDocInf>
+					<CdtrRefInf>
+						<Tp>
+							<CdOrPrtry>
+								<Prtry>IPI</Prtry>
+							</CdOrPrtry>
+						</Tp>
+						<Ref>53000006467CP0370638</Ref>
+					</CdtrRefInf>
+				</Strd>
+			</RmtInf>
+		</CdtTrfTxInf>
+	</FIToFICstmrCdtTrf>
+</Document>'
 
 echo "🚀 Injecting test PACS008 message to ActiveMQ queue: $QUEUE_NAME"
 
