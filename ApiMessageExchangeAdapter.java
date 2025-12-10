@@ -13,7 +13,7 @@ import fr.cat.tcc.sj.application.swift.service.MxCrudService;
 import fr.cat.tcc.sj.configs.PhenicsAPIConfigurationProperties;
 import fr.cat.tcc.sj.domain.shared.exception.TechnicalException;
 import io.vavr.control.Either;
-import io.vavr.control.Try;
+import io.vavr.control.Try;    
 import jakarta.annotation.Nonnull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
