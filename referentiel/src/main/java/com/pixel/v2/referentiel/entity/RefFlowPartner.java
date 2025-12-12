@@ -1,53 +1,60 @@
 package com.pixel.v2.referentiel.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 /**
  * JPA Entity for ref_flow_partner table in TIB_AUDIT_TEC schema
  */
 @Entity
-@Table(name = "ref_flow_partner", schema = "tib_audit_tec")
+@Table(name = "REF_FLOW_PARTNER", schema = "TIB_AUDIT_TEC")
 public class RefFlowPartner {
 
     @Id
-    @Column(name = "partner_id")
+    @Column(name = "PARTNER_ID")
     private Integer partnerId;
 
-    @Column(name = "flow_id")
+    @Column(name = "FLOW_ID")
     private Integer flowId;
 
-    @Column(name = "transport_id")
+    @Column(name = "TRANSPORT_ID")
     private Integer transportId;
 
-    @Column(name = "partner_direction")
+    @Column(name = "PARTNER_DIRECTION")
     private String partnerDirection;
 
-    @Column(name = "creation_dte")
+    @Column(name = "CREATION_DTE")
     private LocalDateTime creationDte;
 
-    @Column(name = "update_dte")
+    @Column(name = "UPDATE_DTE")
     private LocalDateTime updateDte;
 
-    @Column(name = "rule_id")
+    @Column(name = "RULE_ID")
     private Integer ruleId;
 
-    @Column(name = "charset_encoding_id")
+    @Column(name = "CHARSET_ENCODING_ID")
     private Integer charsetEncodingId;
 
-    @Column(name = "enable_out")
+    @Column(name = "ENABLE_OUT")
     private String enableOut;
 
-    @Column(name = "enable_bmsa")
+    @Column(name = "ENABLE_BMSA")
     private String enableBmsa;
 
     // Many-to-one relationships
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "flow_id", insertable = false, updatable = false)
+    @JoinColumn(name = "FLOW_ID", insertable = false, updatable = false)
     private RefFlow refFlow;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "charset_encoding_id", insertable = false, updatable = false)
+    @JoinColumn(name = "CHARSET_ENCODING_ID", insertable = false, updatable = false)
     private RefCharsetEncoding charsetEncoding;
 
     // Default constructor

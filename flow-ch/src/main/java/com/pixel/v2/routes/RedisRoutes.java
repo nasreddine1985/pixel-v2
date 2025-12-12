@@ -39,44 +39,51 @@ public class RedisRoutes extends RouteBuilder {
     @Override
     public void configure() throws Exception {
 
-        // Redis-specific exception handler for cache fallback
-        onException(Exception.class)
-                .onWhen(simple("${routeId} == 'fetch-reference-data-from-redis'"))
-                .to(FETCH_FROM_REFERENTIEL_ENDPOINT).handled(true);
-
         // Redis cache route for fetching reference data
         from(FETCH_REFERENCE_DATA_ENDPOINT).routeId("fetch-reference-data-from-redis")
                 .setHeader(ORIGINAL_MESSAGE_BODY_HEADER, simple(BODY_EXPRESSION))
                 .setHeader(CACHE_KEY_HEADER, simple(CACHE_KEY_TEMPLATE)).to(REDIS_GET_ENDPOINT)
                 .choice().when(simple("${body} == null"))
-                .log("Cache MISS: Fetching flow config for ${header.flowCode} from referentiel service")
+                .log("Cache MISS 1: Fetching flow config for ${header.flowCode} from referentiel service")
                 .to(FETCH_FROM_REFERENTIEL_ENDPOINT).endChoice().when(simple("${body} == ''"))
-                .log("Cache MISS: Fetching flow config for ${header.flowCode} from referentiel service (empty)")
+                .log("Cache MISS 2s: Fetching flow config for ${header.flowCode} from referentiel service (empty)")
                 .to(FETCH_FROM_REFERENTIEL_ENDPOINT).endChoice().otherwise()
                 .log("Cache HIT: Using cached flow config for ${header.flowCode}")
-                .setHeader(FLOW_CONFIGURATION_HEADER, simple(BODY_EXPRESSION)).endChoice().end()
-                .setBody(header(ORIGINAL_MESSAGE_BODY_HEADER))
-                .removeHeader(ORIGINAL_MESSAGE_BODY_HEADER);
+                .setHeader(FLOW_CONFIGURATION_HEADER, simple(BODY_EXPRESSION))
+                .setBody(simple("${header.OriginalMessageBody}"))
+                .removeHeader(ORIGINAL_MESSAGE_BODY_HEADER).endChoice().end();
 
         // Referentiel service route with cache population
         from(FETCH_FROM_REFERENTIEL_ENDPOINT).routeId("fetch-from-referentiel-service")
-                .setHeader(ORIGINAL_MESSAGE_BODY_HEADER, simple(BODY_EXPRESSION))
+                .onException(Exception.class)
+                .log("Failed to retrieve flow config for ${header.flowCode} from referentiel service: ${exception.message}")
+                .setBody(constant(
+                        "{\"error\":\"referentiel_service_unavailable\",\"flowCode\":\"${header.flowCode}\"}"))
+                .setHeader(FLOW_CONFIGURATION_HEADER, simple(BODY_EXPRESSION))
+                .setBody(simple("${header.OriginalMessageBody}")).handled(true).end()
+                .log("Original message body preserved: ${header.OriginalMessageBody}")
                 .setHeader("CamelHttpMethod", constant("GET"))
                 .setHeader("Content-Type", constant("application/json"))
                 .toD("{{referentiel.service.url}}/api/flows/${header.flowCode}/complete?bridgeEndpoint=true")
                 .convertBodyTo(String.class)
-                .log("Successfully retrieved flow config for ${header.flowCode} from referentiel service")
+                .log("REF-REF Successfully retrieved flow config for ${header.flowCode} from referentiel service")
                 .setHeader(FLOW_CONFIGURATION_HEADER, simple(BODY_EXPRESSION))
                 .setHeader(CACHE_KEY_HEADER, simple(CACHE_KEY_TEMPLATE))
-                .setHeader(CACHE_TTL_HEADER, constant(CACHE_TTL_VALUE)).to(REDIS_SET_ENDPOINT)
-                .setBody(header(ORIGINAL_MESSAGE_BODY_HEADER))
-                .removeHeader(ORIGINAL_MESSAGE_BODY_HEADER);
+                .setHeader(CACHE_TTL_HEADER, constant(CACHE_TTL_VALUE))
+                .setBody(simple("${header.OriginalMessageBody}"))
+                .log("Original message body restored before Redis SET: ${body}")
+                .to(REDIS_SET_ENDPOINT).removeHeader(ORIGINAL_MESSAGE_BODY_HEADER);
 
         // Redis cache refresh route triggered by Kafka events
         from("kafka:ch-refresh?brokers={{camel.component.kafka.brokers}}&groupId=ch-cache-refresh&autoOffsetReset=latest")
-                .routeId("redis-cache-refresh").unmarshal().json()
-                .setHeader("flowCode", jsonpath("$.flowCode"))
-                .setHeader(CACHE_KEY_HEADER, simple(CACHE_KEY_TEMPLATE)).to(REDIS_DELETE_ENDPOINT);
+                .routeId("redis-cache-refresh").log("Received cache refresh message: ${body}")
+                .convertBodyTo(String.class).choice().when(body().contains("\"flowCode\""))
+                .setHeader("flowCode",
+                        simple("${body.replaceAll('.*\"flowCode\":\\s*\"([^\"]+)\".*', '$1')}"))
+                .log("Processing cache refresh for flow: ${header.flowCode}")
+                .setHeader(CACHE_KEY_HEADER, simple(CACHE_KEY_TEMPLATE)).to(REDIS_DELETE_ENDPOINT)
+                .log("Cache cleared for flow: ${header.flowCode}").otherwise()
+                .log("Invalid or incomplete cache refresh message received: ${body}").end();
 
         // Redis GET operation route
         from(REDIS_GET_ENDPOINT).routeId("redis-get-operation").onException(Exception.class)

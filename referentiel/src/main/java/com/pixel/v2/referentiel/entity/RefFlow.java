@@ -14,44 +14,44 @@ import jakarta.persistence.Table;
  * JPA Entity for ref_flow table in TIB_AUDIT_TEC schema
  */
 @Entity
-@Table(name = "ref_flow", schema = "tib_audit_tec")
+@Table(name = "REF_FLOW", schema = "TIB_AUDIT_TEC")
 public class RefFlow {
 
     @Id
-    @Column(name = "flow_id")
+    @Column(name = "FLOW_ID")
     private Integer flowId;
 
-    @Column(name = "func_process_id")
+    @Column(name = "FUNC_PROCESS_ID")
     private Integer funcProcessId;
 
-    @Column(name = "flow_typ_id")
+    @Column(name = "FLOW_TYP_ID")
     private Integer flowTypId;
 
-    @Column(name = "tech_process_id")
+    @Column(name = "TECH_PROCESS_ID")
     private Integer techProcessId;
 
-    @Column(name = "flow_name")
+    @Column(name = "FLOW_NAME")
     private String flowName;
 
-    @Column(name = "flow_direction")
+    @Column(name = "FLOW_DIRECTION")
     private String flowDirection;
 
-    @Column(name = "flow_code")
+    @Column(name = "FLOW_CODE")
     private String flowCode;
 
-    @Column(name = "enable_flg")
+    @Column(name = "ENABLE_FLG")
     private String enableFlg;
 
-    @Column(name = "creation_dte")
+    @Column(name = "CREATION_DTE")
     private LocalDateTime creationDte;
 
-    @Column(name = "update_dte")
+    @Column(name = "UPDATE_DTE")
     private LocalDateTime updateDte;
 
-    @Column(name = "application_id")
+    @Column(name = "APPLICATION_ID")
     private Integer applicationId;
 
-    @Column(name = "max_file_size")
+    @Column(name = "MAX_FILE_SIZE")
     private Long maxFileSize;
 
     // One-to-many relationships

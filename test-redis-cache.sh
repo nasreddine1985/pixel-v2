@@ -22,22 +22,14 @@ send_refresh_event() {
     
     echo -e "${YELLOW}📤 Sending $action event for flow: $flow_code${NC}"
     
-    # Create refresh message JSON
-    local refresh_message=$(cat <<EOF
-{
-    "action": "$action",
-    "flowCode": "$flow_code",
-    "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
-    "source": "cache-refresh-test"
-}
-EOF
-)
+    # Create refresh message JSON as single line
+    local refresh_message="{\"action\":\"$action\",\"flowCode\":\"$flow_code\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)\",\"source\":\"cache-refresh-test\"}"
 
     echo "Message: $refresh_message"
     
     # Send to Kafka ch-refresh topic
-    echo "$refresh_message" | docker exec -i pixel-v2-kafka kafka-console-producer.sh \
-        --bootstrap-server localhost:9092 \
+    echo "$refresh_message" | docker exec -i pixel-v2-kafka kafka-console-producer \
+        --bootstrap-server kafka:29092 \
         --topic ch-refresh
         
     echo -e "${GREEN}✅ Refresh event sent successfully${NC}"
@@ -47,19 +39,13 @@ EOF
 clear_all_cache() {
     echo -e "${YELLOW}🧹 Clearing all cache entries${NC}"
     
-    local clear_message=$(cat <<EOF
-{
-    "action": "CLEAR_ALL_CACHE",
-    "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)",
-    "source": "cache-refresh-test"
-}
-EOF
-)
+    # Create clear cache message JSON as single line
+    local clear_message="{\"action\":\"CLEAR_ALL_CACHE\",\"timestamp\":\"$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)\",\"source\":\"cache-refresh-test\"}"
 
     echo "Message: $clear_message"
     
-    echo "$clear_message" | docker exec -i pixel-v2-kafka kafka-console-producer.sh \
-        --bootstrap-server localhost:9092 \
+    echo "$clear_message" | docker exec -i pixel-v2-kafka kafka-console-producer \
+        --bootstrap-server kafka:29092 \
         --topic ch-refresh
         
     echo -e "${GREEN}✅ Clear cache event sent successfully${NC}"

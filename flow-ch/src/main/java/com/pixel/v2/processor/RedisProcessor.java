@@ -44,12 +44,8 @@ public class RedisProcessor implements Processor {
     private void handleGet(Exchange exchange, String key) {
         try {
             String value = redisTemplate.opsForValue().get(key);
-            System.out.println("DEBUG RedisProcessor: key=" + key + ", value="
-                    + (value == null ? "NULL" : "'" + value + "'") + ", length="
-                    + (value == null ? 0 : value.length()));
             exchange.getIn().setBody(value);
         } catch (Exception e) {
-            System.out.println("DEBUG RedisProcessor: Exception occurred: " + e.getMessage());
             exchange.getIn().setBody(null);
             exchange.getIn().setHeader("RedisError", e.getMessage());
         }

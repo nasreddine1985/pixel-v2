@@ -48,13 +48,12 @@ public class FlowSummaryPersistenceProcessor {
     @Transactional
     public FlowSummary persistFlowSummaryFromJson(@Body String jsonBody) {
         try {
-            logger.info("K-DB-FLOW-SUMMARY: Converting JSON to FlowSummary entity - Body: {}",
-                    jsonBody);
+
 
             // Convert JSON to FlowSummary entity using our configured ObjectMapper
             FlowSummary flowSummary = objectMapper.readValue(jsonBody, FlowSummary.class);
 
-            logger.info("K-DB-FLOW-SUMMARY: FlowSummary entity created - ID: {}, Code: {}",
+            logger.debug("K-DB-FLOW-SUMMARY: FlowSummary entity created - ID: {}, Code: {}",
                     flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
 
             return persistFlowSummary(flowSummary);

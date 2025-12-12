@@ -63,6 +63,8 @@ public class ChProcessingRoute extends RouteBuilder {
 
                                 // Step 1: Fetch reference data from Redis cache
                                 .to(FETCH_REFERENCE_DATA_ENDPOINT)
+                                .log("Flow configuration retrieved: ${header.FlowConfiguration}")
+                                .log("Message Body retrieved: ${body}")
 
                                 // Step 2: XSD Validation using k-xsd-validation
                                 .to("kamelet:k-xsd-validation?xsdFileName=pacs.008.001.02.ch.02.xsd&validationMode=STRICT")

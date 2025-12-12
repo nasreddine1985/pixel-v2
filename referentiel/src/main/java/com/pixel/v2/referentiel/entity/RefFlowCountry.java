@@ -15,21 +15,21 @@ import jakarta.persistence.Table;
  * JPA Entity for ref_flow_country table in TIB_AUDIT_TEC schema
  */
 @Entity
-@Table(name = "ref_flow_country", schema = "tib_audit_tec")
+@Table(name = "REF_FLOW_COUNTRY", schema = "TIB_AUDIT_TEC")
 @IdClass(RefFlowCountry.RefFlowCountryId.class)
 public class RefFlowCountry {
 
     @Id
-    @Column(name = "flow_id")
+    @Column(name = "FLOW_ID")
     private Integer flowId;
 
     @Id
-    @Column(name = "country_id")
+    @Column(name = "COUNTRY_ID")
     private Integer countryId;
 
     // Many-to-one relationship
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "flow_id", insertable = false, updatable = false)
+    @JoinColumn(name = "FLOW_ID", insertable = false, updatable = false)
     private RefFlow refFlow;
 
     // Default constructor

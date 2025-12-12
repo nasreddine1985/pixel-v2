@@ -159,6 +159,49 @@ INSERT INTO TIB_AUDIT_TEC.REF_CHARSET_ENCODING (CHARSET_ENCODING_ID, CHARSET_COD
 (11, 'UTF-8', 'UTF-8 without a CRLF at the end of file')
 ON CONFLICT (CHARSET_ENCODING_ID) DO NOTHING;
 
+-- Insert sample flow data
+INSERT INTO TIB_AUDIT_TEC.REF_FLOW (FLOW_ID, FUNC_PROCESS_ID, FLOW_TYP_ID, TECH_PROCESS_ID, FLOW_NAME, FLOW_DIRECTION, FLOW_CODE, ENABLE_FLG, CREATION_DTE, UPDATE_DTE, APPLICATION_ID, MAX_FILE_SIZE) VALUES
+(1, 1, 1, 1, 'PACS008 Payment Initiation', 'IN', 'pacs008', 'Y', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 10485760),
+(2, 1, 1, 1, 'PACS009 Financial Institution Credit Transfer', 'IN', 'pacs009', 'Y', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 10485760),
+(3, 2, 2, 2, 'PAIN001 Customer Credit Transfer Initiation', 'IN', 'pain001', 'Y', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 52428800),
+(4, 3, 3, 3, 'CAMT053 Bank to Customer Statement', 'OUT', 'camt053', 'Y', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 20971520),
+(5, 1, 1, 1, 'ICHSIC Payment Processing', 'IN', 'ICHSIC', 'Y', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 10485760)
+ON CONFLICT (FLOW_ID) DO NOTHING;
+
+-- Insert flow rules
+INSERT INTO TIB_AUDIT_TEC.REF_FLOW_RULES (FLOWCODE, TRANSPORTTYPE, ISUNITARY, PRIORITY, URGENCY, FLOWCONTROLLEDENABLED, FLOWMAXIMUM, FLOWRETENTIONENABLED, RETENTIONCYCLEPERIOD, WRITE_FILE, MINREQUIREDFILESIZE, IGNOREOUTPUTDUPCHECK, LOGALL) VALUES
+('pacs008', 'MQ', 'true', 'High', 'Urgent', 'true', 1000, 'true', 'P30D', 'true', 1024, 'false', 'false'),
+('pacs009', 'MQ', 'true', 'High', 'Urgent', 'true', 1000, 'true', 'P30D', 'true', 1024, 'false', 'false'),
+('pain001', 'CFT', 'false', 'Medium', 'Medium', 'true', 5000, 'true', 'P90D', 'true', 2048, 'false', 'true'),
+('camt053', 'CFT', 'false', 'Low', 'Low', 'false', 10000, 'true', 'P365D', 'true', 1024, 'true', 'false'),
+('ICHSIC', 'MQ', 'true', 'High', 'Urgent', 'true', 2000, 'true', 'P30D', 'true', 1024, 'false', 'false')
+ON CONFLICT (FLOWCODE) DO NOTHING;
+
+-- Insert sample country mappings (using standard ISO country codes)
+INSERT INTO TIB_AUDIT_TEC.REF_FLOW_COUNTRY (FLOW_ID, COUNTRY_ID) VALUES
+(1, 250), -- pacs008 - France
+(1, 276), -- pacs008 - Germany
+(2, 250), -- pacs009 - France
+(2, 276), -- pacs009 - Germany
+(3, 250), -- pain001 - France
+(3, 276), -- pain001 - Germany
+(3, 380), -- pain001 - Italy
+(4, 250), -- camt053 - France
+(5, 250), -- ICHSIC - France
+(5, 276)  -- ICHSIC - Germany
+ON CONFLICT (FLOW_ID, COUNTRY_ID) DO NOTHING;
+
+-- Insert sample partner configurations
+INSERT INTO TIB_AUDIT_TEC.REF_FLOW_PARTNER (PARTNER_ID, FLOW_ID, TRANSPORT_ID, PARTNER_DIRECTION, CREATION_DTE, UPDATE_DTE, RULE_ID, CHARSET_ENCODING_ID, ENABLE_OUT, ENABLE_BMSA) VALUES
+(1, 1, 1, 'IN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 1, 'Y', 'N'),
+(2, 1, 2, 'OUT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 1, 1, 'Y', 'N'),
+(3, 2, 1, 'IN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 2, 1, 'Y', 'N'),
+(4, 3, 3, 'IN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 3, 6, 'Y', 'Y'),
+(5, 4, 4, 'OUT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 4, 6, 'Y', 'N'),
+(6, 5, 1, 'IN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5, 1, 'Y', 'N'),
+(7, 5, 2, 'OUT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 5, 1, 'Y', 'N')
+ON CONFLICT (PARTNER_ID, FLOW_ID, TRANSPORT_ID) DO NOTHING;
+
 -- Note: For complete data import from FLOW.sql, run:
 -- psql -U pixelv2 -d pixelv2 -f /path/to/processed-flow-data.sql
 

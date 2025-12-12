@@ -48,12 +48,12 @@ public class LogEventPersistenceProcessor {
     @Transactional
     public LogEvent persistLogEventFromJson(@Body String jsonBody) {
         try {
-            logger.info("K-DB-LOG-EVENT: Converting JSON to LogEvent entity - Body: {}", jsonBody);
 
             // Convert JSON to LogEvent entity using our configured ObjectMapper
             LogEvent logEvent = objectMapper.readValue(jsonBody, LogEvent.class);
 
-            logger.info("K-DB-LOG-EVENT: LogEvent entity created - ID: {}, Code: {}, Component: {}",
+            logger.debug(
+                    "K-DB-LOG-EVENT: LogEvent entity created - ID: {}, Code: {}, Component: {}",
                     logEvent.getLogId(), logEvent.getCode(), logEvent.getComponent());
 
             return persistLogEvent(logEvent);

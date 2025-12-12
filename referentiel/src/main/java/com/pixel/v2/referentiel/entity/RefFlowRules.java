@@ -9,47 +9,47 @@ import jakarta.persistence.Table;
  * JPA Entity for ref_flow_rules table in TIB_AUDIT_TEC schema
  */
 @Entity
-@Table(name = "ref_flow_rules", schema = "tib_audit_tec")
+@Table(name = "REF_FLOW_RULES", schema = "TIB_AUDIT_TEC")
 public class RefFlowRules {
 
     @Id
-    @Column(name = "flowcode")
+    @Column(name = "FLOWCODE")
     private String flowCode;
 
-    @Column(name = "transporttype")
+    @Column(name = "TRANSPORTTYPE")
     private String transportType;
 
-    @Column(name = "isunitary")
+    @Column(name = "ISUNITARY")
     private Boolean isUnitary;
 
-    @Column(name = "priority")
+    @Column(name = "PRIORITY")
     private String priority;
 
-    @Column(name = "urgency")
+    @Column(name = "URGENCY")
     private String urgency;
 
-    @Column(name = "flowcontrolledenabled")
+    @Column(name = "FLOWCONTROLLEDENABLED")
     private Boolean flowControlledEnabled;
 
-    @Column(name = "flowmaximum")
+    @Column(name = "FLOWMAXIMUM")
     private Integer flowMaximum;
 
-    @Column(name = "flowretentionenabled")
+    @Column(name = "FLOWRETENTIONENABLED")
     private Boolean flowRetentionEnabled;
 
-    @Column(name = "retentioncycleperiod")
+    @Column(name = "RETENTIONCYCLEPERIOD")
     private String retentionCyclePeriod;
 
-    @Column(name = "write_file")
+    @Column(name = "WRITE_FILE")
     private Boolean writeFile;
 
-    @Column(name = "minrequiredfilesize")
+    @Column(name = "MINREQUIREDFILESIZE")
     private Integer minRequiredFileSize;
 
-    @Column(name = "ignoreoutputdupcheck")
+    @Column(name = "IGNOREOUTPUTDUPCHECK")
     private Boolean ignoreOutputDupCheck;
 
-    @Column(name = "logall")
+    @Column(name = "LOGALL")
     private Boolean logAll;
 
     // Default constructor

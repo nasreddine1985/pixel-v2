@@ -13,17 +13,17 @@ import jakarta.persistence.Table;
  * JPA Entity for ref_charset_encoding table in TIB_AUDIT_TEC schema
  */
 @Entity
-@Table(name = "ref_charset_encoding", schema = "tib_audit_tec")
+@Table(name = "REF_CHARSET_ENCODING", schema = "TIB_AUDIT_TEC")
 public class RefCharsetEncoding {
 
     @Id
-    @Column(name = "charset_encoding_id")
+    @Column(name = "CHARSET_ENCODING_ID")
     private Integer charsetEncodingId;
 
-    @Column(name = "charset_code")
+    @Column(name = "CHARSET_CODE")
     private String charsetCode;
 
-    @Column(name = "charset_desc")
+    @Column(name = "CHARSET_DESC")
     private String charsetDesc;
 
     // One-to-many relationship
