@@ -44,9 +44,9 @@ PIXEL-V2/
 │   └── integration-tests/                  # Test Automation Scripts
 └── 🔧 technical-framework/                 # Reusable Kamelets Library
     ├── k-mq-message-receiver/              # IBM MQ Integration
-    ├── k-http-message-receiver/            # REST API Integration
-    ├── k-kafka-starter/           # Kafka Integration
-    ├── k-cft-data-receiver/                # File System Integration
+    ├── k-http-starter/                     # REST API Integration
+    ├── k-kafka-starter/                    # Kafka Integration
+    ├── k-cft-starter/                      # File System Integration
     ├── k-db-tx/                            # Database Operations
     ├── k-log-tx/                           # Centralized Logging
     ├── k-pacs008-to-cdm-transformer/       # ISO 20022 PACS.008 Transformer

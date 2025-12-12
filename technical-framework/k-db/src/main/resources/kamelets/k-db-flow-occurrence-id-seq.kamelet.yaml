@@ -1,0 +1,48 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-db-flow-occurrence-id-seq
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "K-DB Flow Occurrence ID Sequence Generator"
+    description: "Generates unique flow occurrence ID from PostgreSQL sequence and sets it as header"
+    required: [dataSource]
+    type: object
+    properties:
+      dataSource:
+        title: Data Source
+        description: Database data source bean name for sequence generation
+        type: string
+        default: "dataSource"
+      sequenceName:
+        title: Sequence Name
+        description: Name of the PostgreSQL sequence to use
+        type: string
+        default: "pixel_v2.flow_occurence_id_seq"
+      headerName:
+        title: Header Name
+        description: Name of the header to set with the generated ID
+        type: string
+        default: "flowOccurId"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Execute SQL query to get next sequence value
+        - to:
+            uri: "sql:SELECT nextval('{{sequenceName}}') as flowOccurId?dataSource=#dataSource"
+        
+        # Set the generated ID as a header
+        - setHeader:
+            name: "{{headerName}}"
+            simple: "${body[0][flowOccurId]}"
+            
+        # Log the generated ID for debugging
+        - log:
+            message: "[K-DB-FLOW-OCCURRENCE-ID-SEQ] Generated flow occurrence ID: ${header.{{headerName}}}"
+            loggingLevel: DEBUG
+            
+        # Continue to sink
+        - to: "kamelet:sink"

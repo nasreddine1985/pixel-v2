@@ -24,7 +24,7 @@ COPY xsd/ ./xsd/
 COPY xsl/ ./xsl/
 
 # Setup directories, create entrypoint script, and set ownership
-RUN mkdir -p config logs && \
+RUN mkdir -p config logs /opt/in /opt/out && \
     echo '#!/bin/bash' > entrypoint.sh && \
     echo 'set -e' >> entrypoint.sh && \
     echo 'echo "Starting PIXEL-V2 Camel Application..."' >> entrypoint.sh && \
@@ -54,7 +54,8 @@ RUN mkdir -p config logs && \
     echo 'echo "Starting Spring Boot application..."' >> entrypoint.sh && \
     echo 'exec java $JAVA_OPTS -jar pixel-v2-app-spring-1.jar "$@"' >> entrypoint.sh && \
     chmod +x entrypoint.sh && \
-    chown -R pixel:pixel /opt/pixel-v2-app-spring-1
+    chown -R pixel:pixel /opt/pixel-v2-app-spring-1 && \
+    chown -R pixel:pixel /opt/in /opt/out
 
 # Expose ports
 EXPOSE 8080 8778

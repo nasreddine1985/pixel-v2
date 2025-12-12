@@ -57,7 +57,7 @@ spec:
           title: "Table Name"
           description: "Database table name for persistence"
           type: string
-          default: "pixel_v2.tb_logevents"
+          default: "pixel_v2.log_event"
         enableBatchProcessing:
           title: "Enable Batch Processing"
           description: "Enable batch processing for collections of logevents"
@@ -132,7 +132,7 @@ spec:
                           - doTry:
                               steps:
                                 - setBody:
-                                    simple: "INSERT INTO pixel_v2.tb_logevents (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.BatchMessageId}', '${header.BatchCorrelationId}', '${header.BatchMessageType}', '${header.BatchSource}', '${header.BatchPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                                    simple: "INSERT INTO pixel_v2.log_event (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.BatchMessageId}', '${header.BatchCorrelationId}', '${header.BatchMessageType}', '${header.BatchSource}', '${header.BatchPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
                                 - to:
                                     uri: "jdbc:dataSource"
                                 - log:
@@ -168,7 +168,7 @@ spec:
                   - doTry:
                       steps:
                         - setBody:
-                            simple: "INSERT INTO pixel_v2.tb_logevents (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.SqlMessageId}', '${header.SqlCorrelationId}', '${header.SqlMessageType}', '${header.SqlSource}', '${header.SqlPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                            simple: "INSERT INTO pixel_v2.log_event (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.SqlMessageId}', '${header.SqlCorrelationId}', '${header.SqlMessageType}', '${header.SqlSource}', '${header.SqlPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
                         - to:
                             uri: "jdbc:dataSource"
                         

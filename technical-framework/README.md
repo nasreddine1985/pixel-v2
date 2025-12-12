@@ -10,10 +10,9 @@ The Technical Framework module contains all Apache Camel Kamelets used throughou
 technical-framework/
 ├── pom.xml                                    # Parent POM for all kamelets
 ├── k-mq-message-receiver/                    # MQ message consumption kamelet
-├── k-http-message-receiver/                  # HTTP message reception kamelet
-├── k-cft-data-receiver/                      # CFT file processing kamelet
+├── k-http-starter/                          # HTTP message reception kamelet
+├── k-cft-starter/                           # CFT file processing kamelet
 ├── k-db-tx/                                  # Database transaction kamelet
-├── k-referentiel-data-loader/                # Reference data loading kamelet
 ├── k-log-tx/                                 # Centralized logging kamelet
 ├── k-log-events/                             # Detailed log events kamelet
 ├── k-kafka-starter/                 # Kafka message consumption kamelet
@@ -28,13 +27,11 @@ technical-framework/
 ### 🔄 Message Receivers
 
 - **k-mq-message-receiver**: Consumes messages from IBM MQ queues with JMS integration
-- **k-http-message-receiver**: Receives messages via HTTP REST endpoints
+- **k-http-starter**: Receives messages via HTTP REST endpoints
 - **k-kafka-starter**: Starts Kafka message consumption from topics with metadata enrichment
-- **k-cft-data-receiver**: Processes CFT file-based messages with batch optimization
+- **k-cft-starter**: Processes CFT file-based messages with batch optimization
 
 ### 🔧 Processing & Validation
-
-- **k-referentiel-data-loader**: Loads and enriches messages with reference data
 
 ### 🏗️ Infrastructure
 

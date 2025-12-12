@@ -33,10 +33,10 @@ spec:
         - setHeader:
             name: "logMessage"
             simple: |
-              {"flowOccurId":"${header.MessageId}","flowCode":"${header.flowCode}","flowStatusCode":"${header.step}","flowCountryCode":"${header.flowCountryCode}","flowCountryId":"${header.flowCountryId}","flowTypeId":1,"flowComment":"${header.flowCode} payment processing ${header.step}","nbOutExpected":1,"nbOutCompleted":0,"nbError":0,"nbRemitance":0,"nbTransaction":1,"nbReplay":0,"issuingPartnerCode":"MQ_ACTIVEMQ","issuingPartnerLink":"tcp://pixel-v2-activemq:61616","recipientPartnerCode":"KAFKA_CLUSTER","recipientPartnerLink":"kafka:29092","lastLogId":"LOG-${date:now:yyyyMMddHHmmssSSS}","lastLogComponent":"pacs008-processing-flow","lastLogDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","lastLogStatusCode":"SUCCESS","lastUpdateDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","lastUpdateUser":"system","inputFilePath":"pacs008.input.queue","inputFileSize":"${bodyAs(String).length()}B","beginFlowDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","currentClientDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","beginFlowDate":"${date:now:yyyy-MM-dd}","lastUpdateDate":"${date:now:yyyy-MM-dd}","region":"EU"}
+              {"flowOccurId":"${header.flowOccurId}","flowCode":"${header.flowCode}","flowStatusCode":"{{step}}","flowCountryCode":"${header.flowCountryCode}","flowCountryId":"${header.flowCountryId}","flowTypeId":1,"flowComment":"${header.flowCode} payment processing {{step}}","nbOutExpected":1,"nbOutCompleted":0,"nbError":0,"nbRemitance":0,"nbTransaction":1,"nbReplay":0,"issuingPartnerCode":"MQ_ACTIVEMQ","issuingPartnerLink":"tcp://pixel-v2-activemq:61616","recipientPartnerCode":"KAFKA_CLUSTER","recipientPartnerLink":"kafka:29092","lastLogId":"LOG-${date:now:yyyyMMddHHmmssSSS}","lastLogComponent":"pacs008-processing-flow","lastLogDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","lastLogStatusCode":"SUCCESS","lastUpdateDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","lastUpdateUser":"system","inputFilePath":"pacs008.input.queue","inputFileSize":"${bodyAs(String).length()}B","beginFlowDatetime":"${header.beginFlowDateTime}","currentClientDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","beginFlowDate":"${header.beginFlowDate}","lastUpdateDate":"${date:now:yyyy-MM-dd}","region":"EU"}
         - setHeader:
             name: "kafka.KEY"
-            simple: "${header.MessageId}"
+            simple: "${header.flowOccurId}"
         - setHeader:
             name: "originalBody"
             simple: "${body}"
@@ -45,7 +45,7 @@ spec:
         - removeHeader:
             name: "logMessage"
         - toD:
-            uri: "kamelet:k-kafka-publisher?topic={{kafkaTopicName}}&brokers={{brokers}}&key=${header.kafka.KEY}"
+            uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}"
         - setBody:
             simple: "${header.originalBody}"
         - removeHeader:

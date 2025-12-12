@@ -87,7 +87,7 @@
                   payload: "${header.payload}"
                   processingStatus: "${header.processingStatus}"
                   dataSource: "#dataSource"
-                  tableName: "pixel_v2.tb_logevents"
+                  tableName: "pixel_v2.log_event"
 
 - route:
         id: "pacs008-flow-summary-processing-route"

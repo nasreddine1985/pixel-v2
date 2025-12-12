@@ -71,6 +71,11 @@ spec:
         title: Flow Country ID
         description: Country ID for flow processing
         type: string
+      dataSource:
+        title: Data Source
+        description: Database data source bean name for sequence generation
+        type: string
+        default: "dataSource"
   template:
     from:
       uri: "jms:queue:{{mqFileName}}?connectionFactory=#{{connectionFactory}}&concurrentConsumers={{concurrentConsumers}}"
@@ -80,6 +85,21 @@ spec:
         - setHeader:
             name: "ReceivedTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        # Store original body before sequence generation
+        - setHeader:
+            name: "originalBody"
+            simple: "${body}"
+        # Generate unique flow occurrence ID from database sequence
+        - to:
+            uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource=#dataSource"
+        - setHeader:
+            name: "flowOccurId"
+            simple: "${body[0][flowOccurId]}"
+        # Restore original body
+        - setBody:
+            simple: "${header.originalBody}"
+        - removeHeader:
+            name: "originalBody"
         - setHeader:
             name: "SourceQueue"
             simple: "{{mqFileName}}"
@@ -122,6 +142,30 @@ spec:
         - setHeader:
             name: "CorrelationId"
             simple: "${header.JMSCorrelationID}"
+        - setHeader:
+            name: "beginFlowDatetime"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        - setHeader:
+            name: "beginFlowDate"
+            simple: "${date:now:yyyy-MM-dd}"
+        # Set charset with proper fallback
+        - choice:
+            when:
+              - simple: "${header.JMS_IBM_CHARACTER_SET} != null && ${header.JMS_IBM_CHARACTER_SET} != ''"
+                steps:
+                  - setHeader:
+                      name: "JMSEncoding" 
+                      simple: "${header.JMS_IBM_CHARACTER_SET}"
+            otherwise:
+              steps:
+                - setHeader:
+                    name: "JMSEncoding"
+                    constant: "utf-8"
+        # Archive flowOccurId and timestamp
+        - toD:
+            uri: "file:/opt/in?fileName=${header.flowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&charset=${header.JMSEncoding}"
+        
+        
         - wireTap:
             uri: "kamelet:k-log-flow-summary"
             parameters:
@@ -129,5 +173,5 @@ spec:
               kafkaTopicName: "${header.kafkaFlowSummaryTopicName}"
               brokers: "{{brokers}}"
         - log:
-            message: "[K-MQ-STARTER] - Processing completed for message from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}"
+            message: "[K-MQ-STARTER] - Processing completed for message from queue: {{mqFileName}}, flowOccurId: ${header.flowOccurId}"
         - to: "{{sinkEndpoint}}"

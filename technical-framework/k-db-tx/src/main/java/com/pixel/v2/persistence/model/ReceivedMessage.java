@@ -8,7 +8,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
 /**
@@ -42,8 +41,7 @@ public class ReceivedMessage {
     private String source;
 
     // Message payload
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String payload;
 
     // File-specific fields

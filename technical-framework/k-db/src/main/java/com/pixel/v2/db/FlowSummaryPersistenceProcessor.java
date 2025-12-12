@@ -18,13 +18,14 @@ import jakarta.persistence.PersistenceContext;
 /**
  * FlowSummary persistence processor for JPA operations.
  * 
- * This component handles the persistence of FlowSummary entities to the database
- * using JPA and Spring transactions.
+ * This component handles the persistence of FlowSummary entities to the database using JPA and
+ * Spring transactions.
  */
 @Component
 public class FlowSummaryPersistenceProcessor {
 
-    private static final Logger logger = LoggerFactory.getLogger(FlowSummaryPersistenceProcessor.class);
+    private static final Logger logger =
+            LoggerFactory.getLogger(FlowSummaryPersistenceProcessor.class);
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -47,20 +48,23 @@ public class FlowSummaryPersistenceProcessor {
     @Transactional
     public FlowSummary persistFlowSummaryFromJson(@Body String jsonBody) {
         try {
-            logger.info("K-DB-FLOW-SUMMARY: Converting JSON to FlowSummary entity - Body: {}", jsonBody);
-            
+            logger.info("K-DB-FLOW-SUMMARY: Converting JSON to FlowSummary entity - Body: {}",
+                    jsonBody);
+
             // Convert JSON to FlowSummary entity using our configured ObjectMapper
             FlowSummary flowSummary = objectMapper.readValue(jsonBody, FlowSummary.class);
-            
-            logger.info("K-DB-FLOW-SUMMARY: FlowSummary entity created - ID: {}, Code: {}", 
-                        flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
-            
+
+            logger.info("K-DB-FLOW-SUMMARY: FlowSummary entity created - ID: {}, Code: {}",
+                    flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
+
             return persistFlowSummary(flowSummary);
-            
+
         } catch (Exception e) {
-            logger.error("K-DB-FLOW-SUMMARY: Failed to parse JSON and persist FlowSummary - JSON: {}, Error: {}", 
-                        jsonBody, e.getMessage(), e);
-            throw new RuntimeException("Failed to parse JSON and persist FlowSummary: " + e.getMessage(), e);
+            logger.error(
+                    "K-DB-FLOW-SUMMARY: Failed to parse JSON and persist FlowSummary - JSON: {}, Error: {}",
+                    jsonBody, e.getMessage(), e);
+            throw new RuntimeException(
+                    "Failed to parse JSON and persist FlowSummary: " + e.getMessage(), e);
         }
     }
 
@@ -73,41 +77,52 @@ public class FlowSummaryPersistenceProcessor {
     @Transactional
     public FlowSummary persistFlowSummary(FlowSummary flowSummary) {
         try {
-            logger.debug("K-DB: Persisting FlowSummary entity - FlowOccurId: {}, FlowCode: {}", 
-                       flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
-            
+            logger.debug("K-DB: Persisting FlowSummary entity - FlowOccurId: {}, FlowCode: {}",
+                    flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
+
             // Check if entity already exists using flowOccurId as primary key
             FlowSummary existingEntity = null;
             if (flowSummary.getFlowOccurId() != null) {
-                existingEntity = entityManager.find(FlowSummary.class, flowSummary.getFlowOccurId());
+                existingEntity =
+                        entityManager.find(FlowSummary.class, flowSummary.getFlowOccurId());
             }
-            
+
             FlowSummary result;
             if (existingEntity != null) {
                 // Update existing entity
-                logger.debug("📊 K-DB: Updating existing FlowSummary entity with FlowOccurId: {}", 
-                           flowSummary.getFlowOccurId());
+                try {
+                    logger.info(
+                            "K-DB: Updating existing FlowSummary entity with FlowOccurId: {} - JSON: {}",
+                            flowSummary.getFlowOccurId(),
+                            objectMapper.writeValueAsString(flowSummary));
+                } catch (Exception e) {
+                    logger.info(
+                            "K-DB: Updating existing FlowSummary entity with FlowOccurId: {} - JSON serialization failed: {}",
+                            flowSummary.getFlowOccurId(), e.getMessage());
+                }
+
                 result = entityManager.merge(flowSummary);
             } else {
                 // Persist new entity
-                logger.debug("K-DB: Persisting new FlowSummary entity with FlowOccurId: {}", 
-                           flowSummary.getFlowOccurId());
+                logger.info("K-DB: Persisting new FlowSummary entity with FlowOccurId: {}",
+                        flowSummary.getFlowOccurId());
                 entityManager.persist(flowSummary);
                 result = flowSummary;
             }
-            
+
             // Force synchronization to database
             entityManager.flush();
-            
-            logger.debug("K-DB: FlowSummary entity persisted successfully - FlowOccurId: {}, FlowCode: {}", 
-                       result.getFlowOccurId(), result.getFlowCode());
-            
+
+            logger.debug(
+                    "K-DB: FlowSummary entity persisted successfully - FlowOccurId: {}, FlowCode: {}",
+                    result.getFlowOccurId(), result.getFlowCode());
+
             return result;
-            
+
         } catch (Exception e) {
-            logger.error("K-DB: Failed to persist FlowSummary entity - FlowOccurId: {}, Error: {}", 
-                        flowSummary.getFlowOccurId(), e.getMessage(), e);
-            throw new RuntimeException("Failed to persist FlowSummary entity with FlowOccurId: " 
+            logger.error("K-DB: Failed to persist FlowSummary entity - FlowOccurId: {}, Error: {}",
+                    flowSummary.getFlowOccurId(), e.getMessage(), e);
+            throw new RuntimeException("Failed to persist FlowSummary entity with FlowOccurId: "
                     + flowSummary.getFlowOccurId(), e);
         }
     }

@@ -87,6 +87,25 @@ services:
       - pixel-v2-network
     restart: unless-stopped
 
+  # Redis Cache for Flow Configuration
+  redis:
+    image: redis:7-alpine
+    hostname: redis
+    container_name: pixel-v2-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # PIXEL-V2 Camel Runtime Application - Instance 1
   pixel-v2-app-1:
     build:
@@ -294,6 +313,8 @@ volumes:
     name: pixel-v2-app-logs-2
   pixel_v2_app_spring_1_logs:
     name: pixel-v2-app-spring-1-logs
+  redis_data:
+    name: pixel-v2-redis-data
 
 # Networks
 networks:

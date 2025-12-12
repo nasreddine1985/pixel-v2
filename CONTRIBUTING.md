@@ -175,9 +175,9 @@ mvn spring-boot:run -Dspring-boot.run.profiles=dev
 Located in `technical-framework/` directory:
 
 - **`k-mq-message-receiver/`** - IBM MQ message integration
-- **`k-http-message-receiver/`** - REST API message reception
+- **`k-http-starter/`** - REST API message reception
 - **`k-kafka-starter/`** - Kafka message consumption
-- **`k-cft-data-receiver/`** - CFT file-based message processing
+- **`k-cft-starter/`** - CFT file-based message processing
 - **`k-db-tx/`** - Unified database transaction operations
 - **`k-log-tx/`** - Centralized transaction logging
 - **`k-referentiel-data-loader/`** - Reference data enrichment
@@ -564,7 +564,7 @@ Kamelets are reusable integration components in Apache Camel. Follow these namin
 ```
 ✅ Good Examples:
 - k-mq-message-receiver (receives messages from MQ)
-- k-http-message-receiver (receives messages from HTTP API)
+- k-http-starter (receives messages from HTTP API)
 - k-referentiel-data-loader      (loads reference data)
 - k-pacs008-to-cdm-transformer   (transforms PACS.008 to CDM)
 

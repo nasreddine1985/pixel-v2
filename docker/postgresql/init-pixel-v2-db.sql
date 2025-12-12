@@ -17,6 +17,20 @@ BEGIN
     ALTER DEFAULT PRIVILEGES IN SCHEMA pixel_v2 GRANT ALL ON SEQUENCES TO pixelv2;
 END $$;
 
+-- Create sequence for flow occurrence ID generation
+CREATE SEQUENCE IF NOT EXISTS pixel_v2.flow_occurence_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+-- Grant usage permissions on the sequence
+GRANT USAGE, SELECT ON SEQUENCE pixel_v2.flow_occurence_id_seq TO pixelv2;
+
+-- Set comment on the sequence
+COMMENT ON SEQUENCE pixel_v2.flow_occurence_id_seq IS 'Sequence for generating unique flow occurrence identifiers in PIXEL-V2 payment processing';
+
 -- Create generic messages table for all message types
 CREATE TABLE IF NOT EXISTS pixel_v2.tb_messages (
     id SERIAL PRIMARY KEY,
@@ -47,7 +61,7 @@ CREATE INDEX IF NOT EXISTS idx_tb_messages_received_at ON pixel_v2.tb_messages(r
 CREATE INDEX IF NOT EXISTS idx_tb_messages_created_at ON pixel_v2.tb_messages(created_at);
 
 -- Create log events table for Camel route logging
-CREATE TABLE IF NOT EXISTS pixel_v2.tb_logevents (
+CREATE TABLE IF NOT EXISTS pixel_v2.log_event (
     id SERIAL PRIMARY KEY,
     message_id VARCHAR(255),
     correlation_id VARCHAR(255),
@@ -65,20 +79,20 @@ CREATE TABLE IF NOT EXISTS pixel_v2.tb_logevents (
     received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Index for better performance
-    CONSTRAINT idx_tb_logevents_message_id UNIQUE (message_id, timestamp)
+    CONSTRAINT idx_log_event_message_id UNIQUE (message_id, timestamp)
 );
 
 -- Create indexes for log events queries
-CREATE INDEX IF NOT EXISTS idx_tb_logevents_correlation_id ON pixel_v2.tb_logevents(correlation_id);
-CREATE INDEX IF NOT EXISTS idx_tb_logevents_status ON pixel_v2.tb_logevents(processing_status);
-CREATE INDEX IF NOT EXISTS idx_tb_logevents_type ON pixel_v2.tb_logevents(message_type);
-CREATE INDEX IF NOT EXISTS idx_tb_logevents_source ON pixel_v2.tb_logevents(source);
-CREATE INDEX IF NOT EXISTS idx_tb_logevents_timestamp ON pixel_v2.tb_logevents(timestamp);
-CREATE INDEX IF NOT EXISTS idx_tb_logevents_route_id ON pixel_v2.tb_logevents(route_id);
-CREATE INDEX IF NOT EXISTS idx_tb_logevents_log_level ON pixel_v2.tb_logevents(log_level);
+CREATE INDEX IF NOT EXISTS idx_log_event_correlation_id ON pixel_v2.log_event(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_log_event_status ON pixel_v2.log_event(processing_status);
+CREATE INDEX IF NOT EXISTS idx_log_event_type ON pixel_v2.log_event(message_type);
+CREATE INDEX IF NOT EXISTS idx_log_event_source ON pixel_v2.log_event(source);
+CREATE INDEX IF NOT EXISTS idx_log_event_timestamp ON pixel_v2.log_event(timestamp);
+CREATE INDEX IF NOT EXISTS idx_log_event_route_id ON pixel_v2.log_event(route_id);
+CREATE INDEX IF NOT EXISTS idx_log_event_log_level ON pixel_v2.log_event(log_level);
 
 -- Create flow summary table for flow tracking and monitoring
-CREATE TABLE IF NOT EXISTS pixel_v2.tb_flow_summary (
+CREATE TABLE IF NOT EXISTS pixel_v2.flow_summary (
     id SERIAL PRIMARY KEY,
     message_id VARCHAR(255),
     correlation_id VARCHAR(255),
@@ -95,68 +109,20 @@ CREATE TABLE IF NOT EXISTS pixel_v2.tb_flow_summary (
     received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     -- Index for better performance
-    CONSTRAINT idx_tb_flow_summary_message_id_timestamp UNIQUE (message_id, timestamp)
+    CONSTRAINT idx_flow_summary_message_id_timestamp UNIQUE (message_id, timestamp)
 );
 
 -- Create indexes for flow summary queries
-CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_correlation_id ON pixel_v2.tb_flow_summary(correlation_id);
-CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_status ON pixel_v2.tb_flow_summary(processing_status);
-CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_type ON pixel_v2.tb_flow_summary(message_type);
-CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_source ON pixel_v2.tb_flow_summary(source);
-CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_timestamp ON pixel_v2.tb_flow_summary(timestamp);
-CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_flow_code ON pixel_v2.tb_flow_summary(flow_code);
-CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_step ON pixel_v2.tb_flow_summary(step);
-CREATE INDEX IF NOT EXISTS idx_tb_flow_summary_queue ON pixel_v2.tb_flow_summary(queue);
+CREATE INDEX IF NOT EXISTS idx_flow_summary_correlation_id ON pixel_v2.flow_summary(correlation_id);
+CREATE INDEX IF NOT EXISTS idx_flow_summary_status ON pixel_v2.flow_summary(processing_status);
+CREATE INDEX IF NOT EXISTS idx_flow_summary_type ON pixel_v2.flow_summary(message_type);
+CREATE INDEX IF NOT EXISTS idx_flow_summary_source ON pixel_v2.flow_summary(source);
+CREATE INDEX IF NOT EXISTS idx_flow_summary_timestamp ON pixel_v2.flow_summary(timestamp);
+CREATE INDEX IF NOT EXISTS idx_flow_summary_flow_code ON pixel_v2.flow_summary(flow_code);
+CREATE INDEX IF NOT EXISTS idx_flow_summary_step ON pixel_v2.flow_summary(step);
+CREATE INDEX IF NOT EXISTS idx_flow_summary_queue ON pixel_v2.flow_summary(queue);
 
--- Create referential data table for validation
-CREATE TABLE IF NOT EXISTS pixel_v2.referential_data (
-    id SERIAL PRIMARY KEY,
-    entity_type VARCHAR(100) NOT NULL,
-    entity_code VARCHAR(100) NOT NULL,
-    entity_name VARCHAR(255),
-    entity_description TEXT,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Unique constraint for entity type and code
-    CONSTRAINT unique_entity_type_code UNIQUE (entity_type, entity_code)
-);
 
--- Create index for referential data lookups
-CREATE INDEX IF NOT EXISTS idx_referential_entity_type ON pixel_v2.referential_data(entity_type);
-CREATE INDEX IF NOT EXISTS idx_referential_entity_code ON pixel_v2.referential_data(entity_code);
-CREATE INDEX IF NOT EXISTS idx_referential_active ON pixel_v2.referential_data(is_active);
-
--- Insert sample referential data for PACS-008 validation
-INSERT INTO pixel_v2.referential_data (entity_type, entity_code, entity_name, entity_description) VALUES
-    ('BANK_CODE', 'FR1420041', 'BNP Paribas', 'BNP Paribas Bank Code'),
-    ('BANK_CODE', 'FR1430002', 'Crédit Agricole', 'Crédit Agricole Bank Code'),
-    ('CURRENCY', 'EUR', 'Euro', 'European Union Euro Currency'),
-    ('CURRENCY', 'USD', 'US Dollar', 'United States Dollar Currency'),
-    ('COUNTRY', 'FR', 'France', 'French Republic'),
-    ('COUNTRY', 'DE', 'Germany', 'Federal Republic of Germany'),
-    ('PAYMENT_TYPE', 'SEPA', 'SEPA Credit Transfer', 'Single Euro Payments Area Credit Transfer'),
-    ('PAYMENT_TYPE', 'INSTANT', 'Instant Payment', 'Real-time Payment Processing')
-ON CONFLICT (entity_type, entity_code) DO NOTHING;
-
--- Create audit log table for message monitoring
-CREATE TABLE IF NOT EXISTS pixel_v2.audit_log (
-    id SERIAL PRIMARY KEY,
-    message_id VARCHAR(255),
-    operation VARCHAR(100) NOT NULL,
-    operation_details TEXT,
-    user_context VARCHAR(255),
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    -- Foreign key to messages table
-    FOREIGN KEY (message_id) REFERENCES pixel_v2.tb_messages(message_id) ON DELETE CASCADE
-);
-
--- Create index for audit log queries
-CREATE INDEX IF NOT EXISTS idx_audit_message_id ON pixel_v2.audit_log(message_id);
-CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON pixel_v2.audit_log(timestamp);
-CREATE INDEX IF NOT EXISTS idx_audit_operation ON pixel_v2.audit_log(operation);
 
 -- Create function to update timestamp on record modification
 CREATE OR REPLACE FUNCTION pixel_v2.update_updated_at_column()
@@ -172,21 +138,24 @@ CREATE TRIGGER update_tb_messages_updated_at
     BEFORE UPDATE ON pixel_v2.tb_messages
     FOR EACH ROW EXECUTE FUNCTION pixel_v2.update_updated_at_column();
 
-CREATE TRIGGER update_tb_flow_summary_updated_at
-    BEFORE UPDATE ON pixel_v2.tb_flow_summary
+CREATE TRIGGER update_flow_summary_updated_at
+    BEFORE UPDATE ON pixel_v2.flow_summary
     FOR EACH ROW EXECUTE FUNCTION pixel_v2.update_updated_at_column();
 
-CREATE TRIGGER update_referential_data_updated_at
-    BEFORE UPDATE ON pixel_v2.referential_data
-    FOR EACH ROW EXECUTE FUNCTION pixel_v2.update_updated_at_column();
+
 
 -- Grant execute permissions on functions
 GRANT EXECUTE ON FUNCTION pixel_v2.update_updated_at_column() TO pixelv2;
+
+-- Include TIB_AUDIT_TEC schema initialization
+\i /docker-entrypoint-initdb.d/init-tib-audit-tec-schema.sql
 
 -- Display setup completion message
 DO $$
 BEGIN
     RAISE NOTICE 'PIXEL-V2 PostgreSQL database initialization completed successfully!';
     RAISE NOTICE 'Database: %, Schema: pixel_v2', current_database();
-    RAISE NOTICE 'Tables created: tb_messages, tb_logevents, tb_flow_summary, referential_data, audit_log';
+    RAISE NOTICE 'Schemas created: pixel_v2, TIB_AUDIT_TEC';
+    RAISE NOTICE 'Tables created: tb_messages, log_event, flow_summary';
+    RAISE NOTICE 'Referential tables created: REF_CHARSET_ENCODING, REF_FLOW, REF_FLOW_RULES, REF_FLOW_COUNTRY, REF_FLOW_PARTNER';
 END $$;

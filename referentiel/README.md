@@ -1,286 +1,396 @@
 # Referentiel Configuration Service
 
-A simple REST service mock for configuration management in the PIXEL-V2 payment processing system.
+The Referentiel Configuration Service is a Spring Boot REST API that provides configuration management for the PIXEL-V2 payment message processing system. It manages flow configurations, country mappings, partner settings, business rules, and character encodings.
 
 ## Overview
 
-The Referentiel service provides comprehensive configuration metadata for different payment flow types in the PIXEL-V2 ecosystem. Given a flow ID, it returns a complete configuration object containing processing parameters, transformation file paths, validation schemas, and Kafka integration settings. This service acts as a centralized configuration repository that supports dynamic configuration loading for payment message processing pipelines.
+This service acts as the central configuration repository for the PIXEL-V2 system, providing:
 
-## Features
+- Flow configuration management (payment flows like SEPA, SIC, etc.)
+- Country and partner mappings
+- Business rules and validation parameters
+- Character encoding configurations
+- Real-time configuration retrieval via REST API
 
-- REST API for configuration retrieval
-- Predefined configurations for common payment flows (PACS008, PACS009, PAIN001, CAMT053)
-- Enhanced configuration model with 13 comprehensive properties
-- Transformation file paths (XSLT for CDM conversion)
-- Schema validation files (XSD for flow and CDM validation)
-- Kafka integration configuration (broker and topic settings)
-- Default fallback configuration for unknown flow IDs
-- Health and info endpoints for monitoring
-- CORS enabled for cross-origin requests
+## Technology Stack
+
+- **Framework**: Spring Boot 3.4.1
+- **Java Version**: Java 21
+- **Database**: PostgreSQL with JPA/Hibernate
+- **Build Tool**: Maven 3.9+
+- **Containerization**: Docker with multi-stage builds
+- **Architecture**: Microservice with RESTful API
+
+## Database Schema
+
+The service uses the `tib_audit_tec` schema in PostgreSQL with the following main entities:
+
+- `ref_flow` - Payment flow definitions
+- `ref_flow_country` - Flow-country associations
+- `ref_flow_partner` - Flow-partner configurations
+- `ref_flow_rules` - Business rules per flow
+- `ref_charset_encoding` - Character encoding definitions
 
 ## API Endpoints
 
-### Get Configuration by Flow ID
+### Flow Configuration API
 
+#### Get Complete Flow Configuration
+
+```http
+GET /api/flows/{flowCode}/complete
 ```
-GET /api/config/{flowId}
-```
 
-Returns configuration for the specified flow ID.
+Returns comprehensive flow information including countries, partners, rules, and encoding settings.
 
-**Example:**
+**Example Request:**
 
 ```bash
-curl http://localhost:8099/api/config/pacs008
+curl -X GET "http://localhost:8099/api/flows/ICHSIC/complete" \
+  -H "Accept: application/json"
 ```
 
-**Response:**
+**Example Response:**
 
 ```json
 {
-  "cmdMapping": "pacs008_mapping",
-  "rail": "instant_payments",
-  "mode": "real_time",
-  "needSplit": true,
-  "splitExpr": "//Document",
-  "chunkSize": 100,
-  "outputs": ["queue1", "queue2"],
-  "xsltFileToCdm": "pacs008-to-cdm.xslt",
-  "xsltFileFromCdm": "cdm-to-pacs008.xslt",
-  "xsdFlowFile": "pacs008.xsd",
-  "xsdCdmFile": "cdm.xsd",
-  "kafkaBroker": "localhost:9092",
-  "kafkaTopic": "pacs008-topic"
+  "flowId": 71,
+  "flowName": "Switzerland IN SEPA SIC",
+  "flowCode": "ICHSIC",
+  "flowDirection": "IN",
+  "enableFlg": "Y",
+  "countries": [
+    {
+      "flowId": 71,
+      "countryId": 756
+    }
+  ],
+  "partners": [
+    {
+      "partnerId": 12,
+      "transportId": 3,
+      "partnerDirection": "IN",
+      "charsetEncodingId": 1
+    }
+  ],
+  "rules": {
+    "flowCode": "ICHSIC",
+    "transportType": "MQ",
+    "priority": "High",
+    "flowMaximum": 800
+  },
+  "charsetEncodings": [
+    {
+      "charsetEncodingId": 1,
+      "charsetCode": "UTF-8",
+      "charsetDesc": "UTF-8 Unicode encoding"
+    }
+  ]
 }
 ```
 
-### Get Default Configuration
+#### Get Basic Flow Information
 
-```
-GET /api/config?flowId={flowId}
-```
-
-Alternative endpoint for backward compatibility with k-referentiel-data-loader kamelet.
-
-### Get All Configurations
-
-```
-GET /api/configs
+```http
+GET /api/flows/{flowCode}
 ```
 
-Returns all available configurations.
+Returns basic flow information without related entities.
 
-### Health Check
+#### List All Flows
 
-```
-GET /api/health
-```
-
-Returns service health status.
-
-### Service Information
-
-```
-GET /api/info
+```http
+GET /api/flows
 ```
 
-Returns service metadata and available flows.
+Returns a list of all available flow configurations.
 
-## Configuration Properties
+### Management Endpoints
 
-Each flow configuration includes the following properties:
-
-### Core Properties
-
-- **cmdMapping**: Command mapping identifier for the flow
-- **rail**: Payment rail type (e.g., instant_payments, sepa_credit_transfer)
-- **mode**: Processing mode (real_time, batch, daily)
-- **needSplit**: Boolean indicating if message splitting is required
-- **splitExpr**: XPath expression for message splitting
-- **chunkSize**: Maximum number of items per processing chunk
-- **outputs**: List of output queue names
-
-### Transformation Properties
-
-- **xsltFileToCdm**: XSLT file path for transforming flow format to CDM
-- **xsltFileFromCdm**: XSLT file path for transforming CDM to flow format
-- **xsdFlowFile**: XSD schema file for flow format validation
-- **xsdCdmFile**: XSD schema file for CDM format validation
-
-### Integration Properties
-
-- **kafkaBroker**: Kafka broker address for message publishing
-- **kafkaTopic**: Kafka topic name for this flow type
-
-## Predefined Configurations
-
-### PACS008 (Instant Payments)
-
-- Command Mapping: `pacs008_mapping`
-- Rail: `instant_payments`
-- Mode: `real_time`
-- Split Required: `true`
-- Split Expression: `//Document`
-- Chunk Size: `100`
-- Outputs: `["queue1", "queue2"]`
-- XSLT To CDM: `pacs008-to-cdm.xslt`
-- XSLT From CDM: `cdm-to-pacs008.xslt`
-- XSD Flow File: `pacs008.xsd`
-- XSD CDM File: `cdm.xsd`
-- Kafka Broker: `localhost:9092`
-- Kafka Topic: `pacs008-topic`
-
-### PACS009 (Instant Payments Response)
-
-- Command Mapping: `pacs009_mapping`
-- Rail: `instant_payments`
-- Mode: `real_time`
-- Split Required: `true`
-- Split Expression: `//Document`
-- Chunk Size: `50`
-- Outputs: `["queue3", "queue4"]`
-- XSLT To CDM: `pacs009-to-cdm.xslt`
-- XSLT From CDM: `cdm-to-pacs009.xslt`
-- XSD Flow File: `pacs009.xsd`
-- XSD CDM File: `cdm.xsd`
-- Kafka Broker: `localhost:9092`
-- Kafka Topic: `pacs009-topic`
-
-### PAIN001 (SEPA Credit Transfer)
-
-- Command Mapping: `pain001_mapping`
-- Rail: `sepa_credit_transfer`
-- Mode: `batch`
-- Split Required: `true`
-- Split Expression: `//CstmrCdtTrfInitn`
-- Chunk Size: `200`
-- Outputs: `["queue5", "queue6"]`
-- XSLT To CDM: `pain001-to-cdm.xslt`
-- XSLT From CDM: `cdm-to-pain001.xslt`
-- XSD Flow File: `pain001.xsd`
-- XSD CDM File: `cdm.xsd`
-- Kafka Broker: `localhost:9092`
-- Kafka Topic: `pain001-topic`
-
-### CAMT053 (Bank Statement)
-
-- Command Mapping: `camt053_mapping`
-- Rail: `bank_statement`
-- Mode: `daily`
-- Split Required: `false`
-- Split Expression: ``
-- Chunk Size: `1000`
-- Outputs: `["queue7"]`
-- XSLT To CDM: `camt053-to-cdm.xslt`
-- XSLT From CDM: `cdm-to-camt053.xslt`
-- XSD Flow File: `camt053.xsd`
-- XSD CDM File: `cdm.xsd`
-- Kafka Broker: `localhost:9092`
-- Kafka Topic: `camt053-topic`
-
-## Running the Service
-
-### Prerequisites
-
-- Java 21+
-- Maven 3.9+
-
-### Build and Run
-
-```bash
-# Build the service
-mvn clean package
-
-# Run the service
-java -jar target/referentiel-1.0.1-SNAPSHOT.jar
-
-# Or use Maven Spring Boot plugin
-mvn spring-boot:run
-```
-
-The service will start on port 8099 by default.
-
-### Configuration
-
-Service configuration can be customized in `application.properties`:
-
-- `server.port`: Service port (default: 8099)
-- `logging.level.*`: Adjust logging levels
-- `management.endpoints.*`: Configure actuator endpoints
-- `spring.application.name`: Service name for discovery
-
-Current configuration runs on port **8099** to avoid conflicts with other PIXEL-V2 services.
-
-## Integration
-
-This service is designed to work seamlessly with the `k-referentiel-data-loader` kamelet in the PIXEL-V2 system. The kamelet loads configuration dynamically and sets message headers for downstream processing.
-
-### Kamelet Integration
-
-```yaml
-- to: "kamelet:k-referentiel-data-loader?serviceUrl=http://localhost:8099&configEndpoint=/api/config&flowId=pacs008"
-```
-
-### PACS008 Route Integration
-
-The service integrates with the PACS008 processing pipeline through the `pacs008-referentiel-loader` route:
-
-```java
-from("direct:pacs008-referentiel-loader")
-    .to("kamelet:k-referentiel-data-loader?serviceUrl=http://localhost:8099&configEndpoint=/api/config&flowId=#{header.flowId}")
-    .log("Configuration loaded for flow: ${header.flowId}")
-```
-
-### Configuration Headers
-
-The kamelet sets the following headers from the configuration response:
-
-- `cmdMapping`, `rail`, `mode`, `needSplit`, `splitExpr`, `chunkSize`, `outputs`
-- `xsltFileToCdm`, `xsltFileFromCdm`, `xsdFlowFile`, `xsdCdmFile`
-- `kafkaBroker`, `kafkaTopic`
-
-## Testing
-
-Run the unit tests:
-
-```bash
-mvn test
-```
-
-Test the service manually:
-
-```bash
-# Test health endpoint
-curl http://localhost:8099/api/health
-
-# Test configuration retrieval
-curl http://localhost:8099/api/config/pacs008
-
-# Test all configurations
-curl http://localhost:8099/api/configs
-
-# Test with query parameter (kamelet compatibility)
-curl "http://localhost:8099/api/config?flowId=pacs008"
-```
-
-## Docker Support
-
-Build and run with Docker:
-
-```bash
-# Build Docker image
-docker build -t pixel-v2/referentiel:latest .
-
-# Run container
-docker run -p 8099:8099 pixel-v2/referentiel:latest
-```
+- **Health Check**: `/actuator/health`
+- **Application Info**: `/actuator/info`
+- **Metrics**: `/actuator/metrics`
 
 ## Development
 
-The service follows Spring Boot conventions:
+### Prerequisites
 
-- Controllers in `controller` package
-- Services in `service` package
-- Models in `model` package
-- Configuration in `application.properties`
-- Tests mirror the source structure
+- Java 21 or higher
+- Maven 3.9+
+- PostgreSQL 15+ (or Docker for containerized development)
+- Docker (optional, for containerized development)
+
+### Local Development Setup
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone <repository-url>
+   cd pixel-v2/referentiel
+   ```
+
+2. **Configure the database:**
+
+   Update `src/main/resources/application.properties` with your local database settings:
+
+   ```properties
+   spring.datasource.url=jdbc:postgresql://localhost:5432/pixelv2
+   spring.datasource.username=pixelv2
+   spring.datasource.password=pixelv2_secure_password
+   ```
+
+3. **Start PostgreSQL (using Docker):**
+
+   ```bash
+   cd ../
+   docker-compose -f docker/docker-compose.yml up -d postgresql
+   ```
+
+4. **Build and run the application:**
+
+   ```bash
+   mvn clean compile
+   mvn spring-boot:run
+   ```
+
+5. **Verify the application:**
+   ```bash
+   curl http://localhost:8099/api/flows/ICHSIC/complete
+   ```
+
+### Configuration
+
+#### Application Properties
+
+**Development (`application.properties`):**
+
+- Database connection to local PostgreSQL
+- Debug logging enabled
+- Development CORS settings
+
+**Production (`application-prod.properties`):**
+
+- Environment variable-based configuration
+- Optimized logging levels
+- Production-ready connection pooling
+- Security-enhanced CORS settings
+
+#### Environment Variables
+
+| Variable            | Description               | Default                                    |
+| ------------------- | ------------------------- | ------------------------------------------ |
+| `DATABASE_URL`      | PostgreSQL connection URL | `jdbc:postgresql://localhost:5432/pixelv2` |
+| `DATABASE_USERNAME` | Database username         | `pixelv2`                                  |
+| `DATABASE_PASSWORD` | Database password         | `pixelv2_secure_password`                  |
+| `ALLOWED_ORIGINS`   | CORS allowed origins      | `http://localhost:*`                       |
+
+## Docker Deployment
+
+### Building the Docker Image
+
+The service uses a multi-stage Docker build for optimal image size and security:
+
+```bash
+# From the project root
+docker build -f docker/referentiel-runtime/Dockerfile -t pixel-v2/referentiel-runtime:latest .
+```
+
+### Running with Docker
+
+#### Using the Management Script (Recommended)
+
+```bash
+# From project root
+./start-referentiel.sh                    # Build and start service
+./start-referentiel.sh --build-only      # Build only
+./start-referentiel.sh --rebuild --logs  # Rebuild and follow logs
+./start-referentiel.sh --stop            # Stop service
+./start-referentiel.sh --restart         # Restart service
+```
+
+#### Using Docker Commands Directly
+
+```bash
+# Build image
+docker build -f docker/referentiel-runtime/Dockerfile -t pixel-v2/referentiel-runtime:latest .
+
+# Run container
+docker run -d \\
+  --name pixel-v2-referentiel \\
+  --network pixel-v2-network \\
+  -p 8099:8099 \\
+  -e DATABASE_URL=jdbc:postgresql://postgresql:5432/pixelv2 \\
+  -e DATABASE_USERNAME=pixelv2 \\
+  -e DATABASE_PASSWORD=pixelv2_secure_password \\
+  pixel-v2/referentiel-runtime:latest
+```
+
+### Container Features
+
+- **Base Image**: Amazon Corretto 21 Alpine (optimized JVM)
+- **Security**: Non-root user execution
+- **Health Checks**: Built-in container health monitoring
+- **Resource Management**: JVM optimized for containerized environments
+- **Logging**: Structured logging with configurable levels
+
+## Architecture
+
+### Data Access Layer
+
+The service uses **Spring Data JPA** with **Hibernate** for data persistence:
+
+- **Repository Pattern**: Clean separation of data access logic
+- **Entity Relationships**: Proper JPA entity mappings with lazy loading
+- **Connection Pooling**: HikariCP for optimal database performance
+- **Composite Keys**: Support for complex primary key relationships
+
+### Service Layer
+
+- **Business Logic**: Centralized in service classes
+- **DTO Mapping**: Clean separation between entities and API responses
+- **Transaction Management**: Declarative transaction handling
+- **Error Handling**: Comprehensive error handling with proper HTTP status codes
+
+### REST API Layer
+
+- **Spring Web MVC**: RESTful API implementation
+- **Content Negotiation**: JSON response format
+- **CORS Support**: Configurable cross-origin resource sharing
+- **Validation**: Input validation with proper error responses
+
+## Testing
+
+### Running Tests
+
+```bash
+# Unit tests
+mvn test
+
+# Integration tests
+mvn integration-test
+
+# All tests with coverage
+mvn clean test jacoco:report
+```
+
+### API Testing
+
+```bash
+# Test health endpoint
+curl http://localhost:8099/actuator/health
+
+# Test complete flow configuration
+curl http://localhost:8099/api/flows/ICHSIC/complete | jq .
+
+# Test with different flow codes
+curl http://localhost:8099/api/flows/pacs008/complete | jq .
+```
+
+## Monitoring and Observability
+
+### Health Checks
+
+The service provides comprehensive health checks:
+
+- **Liveness**: Basic application responsiveness
+- **Readiness**: Database connectivity and dependencies
+- **Custom**: Business logic validation
+
+### Metrics
+
+Available metrics through Spring Boot Actuator:
+
+- JVM metrics (memory, GC, threads)
+- Database connection pool metrics
+- HTTP request metrics
+- Custom business metrics
+
+### Logging
+
+Structured logging with:
+
+- **Levels**: Configurable per package/class
+- **Format**: JSON format for production environments
+- **Content**: Request/response logging, error tracking
+- **Performance**: Async logging for high throughput
+
+## Production Deployment
+
+### System Requirements
+
+- **CPU**: 2+ cores recommended
+- **Memory**: 512MB - 1GB heap (depending on load)
+- **Storage**: Minimal (application is stateless)
+- **Network**: PostgreSQL database connectivity required
+
+### Scaling Considerations
+
+- **Stateless Design**: Horizontal scaling supported
+- **Database**: Shared PostgreSQL instance
+- **Load Balancing**: Standard HTTP load balancing
+- **Caching**: Consider Redis for high-traffic scenarios
+
+### Security
+
+- **Non-root Execution**: Container runs as dedicated user
+- **Environment Variables**: Sensitive configuration externalized
+- **Network Security**: Restricted network access
+- **Input Validation**: All API inputs validated
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Database Connection Issues**
+
+   ```bash
+   # Check database connectivity
+   docker exec -it pixel-v2-postgresql psql -U pixelv2 -d pixelv2 -c "SELECT 1"
+   ```
+
+2. **Port Conflicts**
+
+   ```bash
+   # Check what's using port 8099
+   lsof -i :8099
+   ```
+
+3. **Container Issues**
+
+   ```bash
+   # Check container logs
+   docker logs pixel-v2-referentiel
+
+   # Check container status
+   docker ps --filter name=pixel-v2-referentiel
+   ```
+
+### Debug Mode
+
+Enable debug logging in `application.properties`:
+
+```properties
+logging.level.com.pixel.v2.referentiel=DEBUG
+logging.level.org.springframework.web=DEBUG
+spring.jpa.show-sql=true
+```
+
+## Contributing
+
+1. **Code Style**: Follow Spring Boot conventions
+2. **Testing**: Add unit tests for new features
+3. **Documentation**: Update API documentation
+4. **Database Changes**: Include migration scripts
+5. **Docker**: Update Dockerfile if dependencies change
+
+## License
+
+[Add license information]
+
+## Support
+
+For support and questions:
+
+- **Documentation**: See project wiki
+- **Issues**: Create GitHub issues
+- **Development**: See CONTRIBUTING.md

@@ -1,27 +1,26 @@
 package com.pixel.v2.persistence.model;
 
+import java.time.OffsetDateTime;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
-import jakarta.persistence.Table;
-import jakarta.persistence.Column;
 import jakarta.persistence.Index;
-import java.time.OffsetDateTime;
+import jakarta.persistence.Table;
 
 /**
- * Entity for persisting CDM (Common Data Model) messages
- * after transformation from various payment message formats (PACS.008, PAN.001, etc.)
+ * Entity for persisting CDM (Common Data Model) messages after transformation from various payment
+ * message formats (PACS.008, PAN.001, etc.)
  */
 @Entity
-@Table(name = "CDM_MESSAGE", indexes = {
-    @Index(name = "idx_cdm_created_at", columnList = "createdAt"),
-    @Index(name = "idx_cdm_message_id", columnList = "messageId"),
-    @Index(name = "idx_cdm_original_message_id", columnList = "originalMessageId"),
-    @Index(name = "idx_cdm_message_type", columnList = "messageType"),
-    @Index(name = "idx_cdm_enrichment_status", columnList = "enrichmentStatus")
-})
+@Table(name = "CDM_MESSAGE",
+        indexes = {@Index(name = "idx_cdm_created_at", columnList = "createdAt"),
+                @Index(name = "idx_cdm_message_id", columnList = "messageId"),
+                @Index(name = "idx_cdm_original_message_id", columnList = "originalMessageId"),
+                @Index(name = "idx_cdm_message_type", columnList = "messageType"),
+                @Index(name = "idx_cdm_enrichment_status", columnList = "enrichmentStatus")})
 public class CdmMessage {
 
     @Id
@@ -59,12 +58,11 @@ public class CdmMessage {
     private String processingError;
 
     // CDM payload as JSON
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String cdmPayload;
 
     // Original message payload (for reference)
-    @Lob
+    @Column(columnDefinition = "TEXT")
     private String originalPayload;
 
     // Reference to original received message
@@ -215,15 +213,10 @@ public class CdmMessage {
 
     @Override
     public String toString() {
-        return "CdmMessage{" +
-                "id=" + id +
-                ", messageId='" + messageId + '\'' +
-                ", originalMessageId='" + originalMessageId + '\'' +
-                ", messageType='" + messageType + '\'' +
-                ", source='" + source + '\'' +
-                ", enrichmentStatus='" + enrichmentStatus + '\'' +
-                ", processingStatus='" + processingStatus + '\'' +
-                ", createdAt=" + createdAt +
-                '}';
+        return "CdmMessage{" + "id=" + id + ", messageId='" + messageId + '\''
+                + ", originalMessageId='" + originalMessageId + '\'' + ", messageType='"
+                + messageType + '\'' + ", source='" + source + '\'' + ", enrichmentStatus='"
+                + enrichmentStatus + '\'' + ", processingStatus='" + processingStatus + '\''
+                + ", createdAt=" + createdAt + '}';
     }
 }

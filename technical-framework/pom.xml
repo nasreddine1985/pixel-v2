@@ -17,11 +17,10 @@
 
     <modules>
         <module>k-mq-starter</module>
-        <module>k-http-message-receiver</module>
-        <module>k-cft-data-receiver</module>
+        <module>k-http-starter</module>
+        <module>k-cft-starter</module>
         <module>k-db-tx</module>
         <module>k-db</module>
-        <module>k-referentiel-data-loader</module>
         <module>k-log-tx</module>
         <module>k-kafka-starter</module>
         <module>k-kafka-publisher</module>

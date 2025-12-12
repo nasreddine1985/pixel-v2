@@ -4,25 +4,24 @@ import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
 
 /**
- * CH Payment Processing Route
- * 
- * Main route for processing CH payment messages using k-kafka-starter kamelet
- * 
- * NOTE: This Java RouteBuilder uses k-mq-starter kamelet for CH processing
+ * CH Payment Processing Route - With Redis caching implementation
  */
 @Component
 public class ChProcessingRoute extends RouteBuilder {
 
+        // Route endpoint constants
+        private static final String FETCH_REFERENCE_DATA_ENDPOINT =
+                        "direct:fetchReferenceDataFromRedis";
+
         @Override
         public void configure() throws Exception {
 
-                // Global exception handler for all errors including XSD validation
+                // Global exception handler
                 onException(Exception.class).log(
                                 "Global exception handler - Exception caught in CH processing: ${exception.message}")
                                 .setHeader("ErrorType", simple("${exception.class.simpleName}"))
                                 .setHeader("ErrorReason", simple("${exception.message}"))
                                 .to("direct:error-handling").handled(true);
-
 
                 // Error handler configuration
                 errorHandler(defaultErrorHandler().maximumRedeliveries(0));
@@ -40,7 +39,8 @@ public class ChProcessingRoute extends RouteBuilder {
                                                 brokers={{kmq.starter.brokers}}&\
                                                 sinkEndpoint={{kmq.starter.sinkEndpoint}}&\
                                                 flowCountryCode={{kmq.starter.flowCountryCode}}&\
-                                                flowCountryId={{kmq.starter.flowCountryId}}""";
+                                                flowCountryId={{kmq.starter.flowCountryId}}&\
+                                                dataSource={{kmq.starter.dataSource}}""";
 
                 from(kameletMqStarterEndpoint).routeId("ch-processing-flow").log(
                                 "K-MQ-Starter kamelet initiated - message will be processed and sent to sink")
@@ -53,43 +53,25 @@ public class ChProcessingRoute extends RouteBuilder {
                                                 simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
                                 .to("direct:process-ch-message");
 
-                // CH processing logic
+                // CH processing logic - With Redis caching
                 from("direct:process-ch-message").routeId("ch-message-processing")
-                                // Enrich message with metadata
                                 .setHeader("RouteName", constant("CH-Processing"))
                                 .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
+                                .setHeader("flowCode", constant("ICHSIC")) // Set flow code for
+                                                                           // Redis caching
+                                .log("Processing CH message: ${body.substring(0, 100)}...")
 
-                                .doTry()
-                                // Step 1: XSD Validation using k-xsd-validation
-                                .to("kamelet:k-xsd-validation-custom?xsdFileName=pacs.008.001.02.ch.02.xsd&validationMode=STRICT")
-                                // Step 2: XSLT Transformation using k-xsl-transformation
+                                // Step 1: Fetch reference data from Redis cache
+                                .to(FETCH_REFERENCE_DATA_ENDPOINT)
+
+                                // Step 2: XSD Validation using k-xsd-validation
+                                .to("kamelet:k-xsd-validation?xsdFileName=pacs.008.001.02.ch.02.xsd&validationMode=STRICT")
+
+                                // Step 3: XSLT Transformation using k-xsl-transformation
                                 .to("kamelet:k-xsl-transformation?xslFileName=overall-xslt-ch-pacs008-001-02.xsl&transformationMode=STRICT")
-                                // Step 3: Business Validation Processor
-                                .doCatch(Exception.class).to("direct:error-handling").end().end();
 
-
-                // Error handling route
-                from("direct:error-handling").routeId("ch-error-handler")
-                                .log("Error processing message: ${exception.message}")
-                                .setHeader("ErrorTimestamp",
-                                                simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
-                                .setHeader("ErrorReason", simple("${exception.message}"))
-                                .setHeader("ShortErrorReason", simple(
-                                                "${exception.class.simpleName}: ${exception.message}"))
-                                .process(exchange -> {
-                                        // Truncate ShortErrorReason to fit varchar(128) constraint
-                                        String shortReason = exchange.getIn().getHeader(
-                                                        "ShortErrorReason", String.class);
-                                        if (shortReason != null && shortReason.length() > 120) {
-                                                exchange.getIn().setHeader("ShortErrorReason",
-                                                                shortReason.substring(0, 120)
-                                                                                + "...");
-                                        }
-                                })
-                                // Log error event to Kafka with explicit headers
-                                .wireTap("kamelet:k-log-events?level=ERROR&logMessageTxt=[CH-ERROR] ${header.MessageType}: ${header.ShortErrorReason}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}")
-                                .log("Error headers: ${headers}")
-                                .setHeader("step", constant("ERROR"))
-                                .wireTap("kamelet:k-log-flow-summary?kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}");
+                                // Log completion
+                                .log("CH message processing completed successfully")
+                                .wireTap("kamelet:k-log-flow-summary?step=COMPLETED&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}");
         }
 }
