@@ -136,17 +136,6 @@
             <artifactId>camel-jackson-starter</artifactId>
         </dependency>
 
-        <!-- Redis support for caching -->
-        <dependency>
-            <groupId>org.apache.camel.springboot</groupId>
-            <artifactId>camel-spring-redis-starter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.camel.springboot</groupId>
             <artifactId>camel-jsonpath-starter</artifactId>
@@ -165,6 +154,16 @@
         <dependency>
             <groupId>org.apache.camel.springboot</groupId>
             <artifactId>camel-groovy-starter</artifactId>
+        </dependency>
+
+        <!-- Redis dependencies for k-identification kamelet -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.lettuce</groupId>
+            <artifactId>lettuce-core</artifactId>
         </dependency>
 
         <!-- Database Driver -->
@@ -244,6 +243,12 @@
         <dependency>
             <groupId>com.pixel.v2</groupId>
             <artifactId>k-log-tx</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.pixel.v2</groupId>
+            <artifactId>k-identification</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 

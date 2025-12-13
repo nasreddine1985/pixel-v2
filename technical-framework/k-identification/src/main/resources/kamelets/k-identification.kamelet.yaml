@@ -1,0 +1,127 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-identification
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "1.0.1-SNAPSHOT"
+    camel.apache.org/provider: "PIXEL-V2"
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "PIXEL-V2 Identification Kamelet"
+    description: |-
+      Redis-based reference data identification and caching kamelet for payment processing.
+      Fetches flow configuration from Redis cache or referentiel service with automatic cache population.
+    required:
+      - flowCode
+    type: object
+    properties:
+      flowCode:
+        title: Flow Code
+        description: The flow code to identify and retrieve configuration for
+        type: string
+        example: "PACS008"
+      referentielServiceUrl:
+        title: Referentiel Service URL
+        description: Base URL of the referentiel service for flow configuration retrieval
+        type: string
+        default: "http://pixel-v2-referentiel:8099"
+      kafkaBrokers:
+        title: Kafka Brokers
+        description: Kafka broker URLs for cache refresh messaging
+        type: string
+        default: "kafka:29092"
+      cacheTtl:
+        title: Cache TTL
+        description: Cache time-to-live in seconds
+        type: integer
+        default: 3600
+  dependencies:
+    - "camel:kamelet"
+    - "camel:log"
+    - "camel:http"
+    - "camel:jackson"
+    - "camel:kafka"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Store original message body for preservation
+        - setHeader:
+            name: OriginalMessageBody
+            simple: "${body}"
+        
+        # Set cache key based on flow code
+        - setHeader:
+            name: CacheKey
+            simple: "flow_config_{{flowCode}}"
+        
+        # Try to get from Redis cache
+        - setHeader:
+            name: RedisCommand
+            constant: "GET"
+        - to: "bean:redisProcessor"
+        
+        # Choose based on cache result
+        - choice:
+            when:
+              - simple: "${body} == null"
+                steps:
+                  - log: "Cache MISS: Fetching flow config for {{flowCode}} from referentiel service"
+                  # Fetch from referentiel service
+                  - doTry:
+                      steps:
+                        - log: "Original message body preserved: ${header.OriginalMessageBody}"
+                        - setHeader:
+                            name: CamelHttpMethod
+                            constant: "GET"
+                        - setHeader:
+                            name: Content-Type
+                            constant: "application/json"
+                        - toD: "{{referentielServiceUrl}}/api/flows/{{flowCode}}/complete?bridgeEndpoint=true"
+                        - convertBodyTo: "java.lang.String"
+                        - log: "Successfully retrieved flow config for {{flowCode}} from referentiel service"
+                        - setHeader:
+                            name: FlowConfiguration
+                            simple: "${body}"
+                        - setHeader:
+                            name: CacheKey
+                            simple: "flow_config_{{flowCode}}"
+                        - setHeader:
+                            name: CacheTTL
+                            constant: "{{cacheTtl}}"
+                        - setBody:
+                            simple: "${header.OriginalMessageBody}"
+                        - log: "Original message body restored before Redis SET: ${body}"
+                        # Cache the result
+                        - setHeader:
+                            name: RedisCommand
+                            constant: "SETEX"
+                        - to: "bean:redisProcessor"
+                      doCatch:
+                        - exception: "java.lang.Exception"
+                          steps:
+                            - log: "Failed to retrieve flow config for {{flowCode}} from referentiel service: ${exception.message}"
+                            - setBody:
+                                constant: '{"error":"referentiel_service_unavailable","flowCode":"{{flowCode}}"}'
+                            - setHeader:
+                                name: FlowConfiguration
+                                simple: "${body}"
+                            - setBody:
+                                simple: "${header.OriginalMessageBody}"
+            otherwise:
+              steps:
+                - log: "Cache HIT: Using cached flow config for {{flowCode}}"
+                - setHeader:
+                    name: FlowConfiguration
+                    simple: "${body}"
+        
+        # Restore original message body
+        - setBody:
+            simple: "${header.OriginalMessageBody}"
+        - removeHeader: "OriginalMessageBody"
+        
+        # Send to sink
+        - to: "kamelet:sink"

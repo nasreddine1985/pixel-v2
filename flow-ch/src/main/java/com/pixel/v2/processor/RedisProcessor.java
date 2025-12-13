@@ -4,40 +4,36 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 /**
- * Redis processor for handling cache operations directly with RedisTemplate
+ * Redis Processor for k-identification kamelet
+ * 
+ * Handles Redis GET and SETEX operations using Spring RedisTemplate
  */
 @Component("redisProcessor")
 public class RedisProcessor implements Processor {
 
+    private static final Logger logger = LoggerFactory.getLogger(RedisProcessor.class);
+
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private RedisTemplate<String, String> redisTemplate;
 
     @Override
     public void process(Exchange exchange) throws Exception {
-        String operation = exchange.getIn().getHeader("RedisOperation", String.class);
+        String command = exchange.getIn().getHeader("RedisCommand", String.class);
         String key = exchange.getIn().getHeader("CacheKey", String.class);
 
-        if (operation == null || key == null) {
-            throw new IllegalArgumentException("RedisOperation and CacheKey headers are required");
-        }
-
-        switch (operation.toUpperCase()) {
-            case "GET":
-                handleGet(exchange, key);
-                break;
-            case "SET":
-                handleSet(exchange, key);
-                break;
-            case "DELETE":
-                handleDelete(exchange, key);
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported Redis operation: " + operation);
+        if ("GET".equals(command)) {
+            handleGet(exchange, key);
+        } else if ("SETEX".equals(command)) {
+            handleSetEx(exchange, key);
+        } else {
+            throw new IllegalArgumentException("Unsupported Redis command: " + command);
         }
     }
 
@@ -45,34 +41,26 @@ public class RedisProcessor implements Processor {
         try {
             String value = redisTemplate.opsForValue().get(key);
             exchange.getIn().setBody(value);
+            logger.debug("Redis GET for key '{}': {}", key, value != null ? "HIT" : "MISS");
         } catch (Exception e) {
+            logger.error("Redis GET failed for key '{}': {}", key, e.getMessage());
             exchange.getIn().setBody(null);
-            exchange.getIn().setHeader("RedisError", e.getMessage());
         }
     }
 
-    private void handleSet(Exchange exchange, String key) {
+    private void handleSetEx(Exchange exchange, String key) {
         try {
             String value = exchange.getIn().getHeader("FlowConfiguration", String.class);
-            Long ttl = exchange.getIn().getHeader("CacheTTL", Long.class);
+            Integer ttl = exchange.getIn().getHeader("CacheTTL", Integer.class);
 
-            if (value != null) {
-                if (ttl != null && ttl > 0) {
-                    redisTemplate.opsForValue().set(key, value, ttl, TimeUnit.SECONDS);
-                } else {
-                    redisTemplate.opsForValue().set(key, value);
-                }
+            if (value != null && ttl != null) {
+                redisTemplate.opsForValue().set(key, value, ttl, TimeUnit.SECONDS);
+                logger.debug("Redis SETEX for key '{}' with TTL {} seconds: SUCCESS", key, ttl);
+            } else {
+                logger.warn("Redis SETEX skipped - missing value or TTL for key '{}'", key);
             }
         } catch (Exception e) {
-            exchange.getIn().setHeader("RedisError", e.getMessage());
-        }
-    }
-
-    private void handleDelete(Exchange exchange, String key) {
-        try {
-            redisTemplate.delete(key);
-        } catch (Exception e) {
-            exchange.getIn().setHeader("RedisError", e.getMessage());
+            logger.error("Redis SETEX failed for key '{}': {}", key, e.getMessage());
         }
     }
 }

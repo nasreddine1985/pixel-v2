@@ -195,6 +195,7 @@ services:
       - postgresql
       - kafka
       - activemq
+      - redis
     environment:
       # Spring Boot Configuration
       SPRING_PROFILES_ACTIVE: prod
@@ -218,6 +219,13 @@ services:
       CAMEL_COMPONENT_KAFKA_BROKERS: kafka:29092
       CH_LOG_KAFKA_BROKERS: kafka:29092
       KMQ_STARTER_BROKERS: kafka:29092
+      
+      # Redis Configuration for k-identification kamelet
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      PIXEL_REFERENTIEL_SERVICE_URL: http://pixel-v2-referentiel:8099
+      PIXEL_KAFKA_BROKERS: kafka:29092
+      PIXEL_CACHE_TTL: 3600
       
       # Application Configuration
       SERVER_PORT: 8080

@@ -4,21 +4,47 @@ import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
 
 /**
- * CH Payment Processing Route - With Redis caching implementation
+ * CH Payment Processing Route - Uses k-identification kamelet for Redis caching
  */
 @Component
 public class ChProcessingRoute extends RouteBuilder {
 
-        // Route endpoint constants
-        private static final String FETCH_REFERENCE_DATA_ENDPOINT =
-                        "direct:fetchReferenceDataFromRedis";
+        // Kamelet endpoint for identification and Redis caching
+        private static final String K_IDENTIFICATION_ENDPOINT =
+                        "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
+
+        // Kamelet endpoint for XSD validation
+        private static final String K_XSD_VALIDATION_ENDPOINT =
+                        "kamelet:k-xsd-validation?xsdFileName=pacs.008.001.02.ch.02.xsd&validationMode=STRICT";
+
+        // Kamelet endpoint for XSL transformation
+        private static final String K_XSL_TRANSFORMATION_ENDPOINT =
+                        "kamelet:k-xsl-transformation?xslFileName=overall-xslt-ch-pacs008-001-02.xsl&transformationMode=STRICT";
+
+        // Kamelet endpoint for flow summary logging
+        private static final String K_LOG_FLOW_SUMMARY_ENDPOINT =
+                        "kamelet:k-log-flow-summary?step=COMPLETED&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}";
+
+        // Kamelet endpoint for MQ starter
+        private static final String K_MQ_STARTER_ENDPOINT = """
+                        kamelet:k-mq-starter?mqFileName={{kmq.starter.mqFileName}}&\
+                        connectionFactory={{kmq.starter.connectionFactory}}&\
+                        flowCode={{kmq.starter.flowCode}}&\
+                        messageType={{kmq.starter.messageType}}&\
+                        kafkaFlowSummaryTopicName={{kmq.starter.kafkaFlowSummaryTopicName}}&\
+                        kafkaLogTopicName={{kmq.starter.kafkaLogTopicName}}&\
+                        kafkaDistributionTopicName={{kmq.starter.kafkaDistributionTopicName}}&\
+                        brokers={{kmq.starter.brokers}}&\
+                        sinkEndpoint={{kmq.starter.sinkEndpoint}}&\
+                        flowCountryCode={{kmq.starter.flowCountryCode}}&\
+                        flowCountryId={{kmq.starter.flowCountryId}}&\
+                        dataSource={{kmq.starter.dataSource}}""";
 
         @Override
         public void configure() throws Exception {
 
                 // Global exception handler
-                onException(Exception.class).log(
-                                "Global exception handler - Exception caught in CH processing: ${exception.message}")
+                onException(Exception.class)
                                 .setHeader("ErrorType", simple("${exception.class.simpleName}"))
                                 .setHeader("ErrorReason", simple("${exception.message}"))
                                 .to("direct:error-handling").handled(true);
@@ -26,29 +52,11 @@ public class ChProcessingRoute extends RouteBuilder {
                 // Error handler configuration
                 errorHandler(defaultErrorHandler().maximumRedeliveries(0));
 
-                // Main PACS008 processing route using k-mq-starter kamelet with sink functionality
-                String kameletMqStarterEndpoint =
-                                """
-                                                kamelet:k-mq-starter?mqFileName={{kmq.starter.mqFileName}}&\
-                                                connectionFactory={{kmq.starter.connectionFactory}}&\
-                                                flowCode={{kmq.starter.flowCode}}&\
-                                                messageType={{kmq.starter.messageType}}&\
-                                                kafkaFlowSummaryTopicName={{kmq.starter.kafkaFlowSummaryTopicName}}&\
-                                                kafkaLogTopicName={{kmq.starter.kafkaLogTopicName}}&\
-                                                kafkaDistributionTopicName={{kmq.starter.kafkaDistributionTopicName}}&\
-                                                brokers={{kmq.starter.brokers}}&\
-                                                sinkEndpoint={{kmq.starter.sinkEndpoint}}&\
-                                                flowCountryCode={{kmq.starter.flowCountryCode}}&\
-                                                flowCountryId={{kmq.starter.flowCountryId}}&\
-                                                dataSource={{kmq.starter.dataSource}}""";
-
-                from(kameletMqStarterEndpoint).routeId("ch-processing-flow").log(
-                                "K-MQ-Starter kamelet initiated - message will be processed and sent to sink")
-                                .end();
+                from(K_MQ_STARTER_ENDPOINT).routeId("ch-processing-flow").to(
+                                "log:ch-processing?level=DEBUG&showBody=false&showHeaders=false");
 
                 // Sink endpoint to receive messages from k-mq-starter kamelet
                 from("{{kmq.starter.sinkEndpoint}}").routeId("ch-main-processing")
-                                .setHeader("MessageType", constant("PACS008"))
                                 .setHeader("ProcessingTimestamp",
                                                 simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
                                 .to("direct:process-ch-message");
@@ -57,23 +65,19 @@ public class ChProcessingRoute extends RouteBuilder {
                 from("direct:process-ch-message").routeId("ch-message-processing")
                                 .setHeader("RouteName", constant("CH-Processing"))
                                 .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
-                                .setHeader("flowCode", constant("ICHSIC")) // Set flow code for
-                                                                           // Redis caching
-                                .log("Processing CH message: ${body.substring(0, 100)}...")
+                                .setHeader("flowCode", simple("{{kmq.starter.flowCode}}"))
+                                .setHeader("MessageType", constant("{{kmq.starter.payementType}}"))
 
-                                // Step 1: Fetch reference data from Redis cache
-                                .to(FETCH_REFERENCE_DATA_ENDPOINT)
-                                .log("Flow configuration retrieved: ${header.FlowConfiguration}")
-                                .log("Message Body retrieved: ${body}")
+                                // Step 1: Fetch reference data using k-identification kamelet
+                                .to(K_IDENTIFICATION_ENDPOINT)
 
                                 // Step 2: XSD Validation using k-xsd-validation
-                                .to("kamelet:k-xsd-validation?xsdFileName=pacs.008.001.02.ch.02.xsd&validationMode=STRICT")
+                                .to(K_XSD_VALIDATION_ENDPOINT)
 
                                 // Step 3: XSLT Transformation using k-xsl-transformation
-                                .to("kamelet:k-xsl-transformation?xslFileName=overall-xslt-ch-pacs008-001-02.xsl&transformationMode=STRICT")
+                                .to(K_XSL_TRANSFORMATION_ENDPOINT)
 
-                                // Log completion
-                                .log("CH message processing completed successfully")
-                                .wireTap("kamelet:k-log-flow-summary?step=COMPLETED&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}");
+                                // Complete processing
+                                .wireTap(K_LOG_FLOW_SUMMARY_ENDPOINT);
         }
 }
