@@ -64,11 +64,6 @@ public class ChRoute extends RouteBuilder {
 
                 // Step 1: Receive Payement Message
                 from(K_MQ_STARTER_ENDPOINT)
-                                .setHeader("ProcessingTimestamp",
-                                                simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
-                                .setHeader("RouteName", constant("CH-Processing"))
-                                .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
-
 
                                 // Step 2: Fetch reference data using k-identification kamelet
                                 .to(K_IDENTIFICATION_ENDPOINT)
