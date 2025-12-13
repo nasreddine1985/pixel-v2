@@ -33,6 +33,7 @@ graph TB
         POSTGRES[pixel-v2-postgresql<br/>PostgreSQL Database<br/>:5432]
         REDIS[pixel-v2-redis<br/>Redis Cache<br/>:6379]
         NAS[pixel-v2-nas<br/>Samba NAS<br/>:445, :139]
+        REFERENTIEL[pixel-v2-referentiel<br/>Referentiel Service<br/>:8099]
     end
 
     subgraph "Management & Monitoring"
@@ -66,16 +67,19 @@ graph TB
     APP1 --> AMQ
     APP1 --> KAFKA
     APP1 --> NAS
+    APP1 --> REFERENTIEL
 
     CAMEL1 --> POSTGRES
     CAMEL1 --> REDIS
     CAMEL1 --> AMQ
     CAMEL1 --> KAFKA
+    CAMEL1 --> REFERENTIEL
 
     CAMEL2 --> POSTGRES
     CAMEL2 --> REDIS
     CAMEL2 --> AMQ
     CAMEL2 --> KAFKA
+    CAMEL2 --> REFERENTIEL
 
     %% Message broker dependencies
     KAFKA --> ZOO
@@ -101,7 +105,7 @@ graph TB
     classDef volumeLayer fill:#fafafa
 
     class APP1,CAMEL1,CAMEL2 appLayer
-    class POSTGRES,REDIS,NAS dataLayer
+    class POSTGRES,REDIS,NAS,REFERENTIEL dataLayer
     class KAFKA,AMQ,ZOO brokerLayer
     class PGADMIN,KAFDROP,HAWTIO mgmtLayer
     class VOL_PG,VOL_KAFKA,VOL_NAS_CH,VOL_NAS_SHARED,VOL_NAS_DATA volumeLayer
@@ -127,11 +131,12 @@ graph TB
 
 ### Data Services
 
-| Service        | Container           | Description           | Ports            | Dependencies |
-| -------------- | ------------------- | --------------------- | ---------------- | ------------ |
-| **postgresql** | pixel-v2-postgresql | PostgreSQL database   | 5432:5432        | None         |
-| **redis**      | pixel-v2-redis      | Redis cache           | 6379:6379        | None         |
-| **nas**        | pixel-v2-nas        | Samba NAS file server | 445:445, 139:139 | None         |
+| Service         | Container            | Description              | Ports            | Dependencies |
+| --------------- | -------------------- | ------------------------ | ---------------- | ------------ |
+| **postgresql**  | pixel-v2-postgresql  | PostgreSQL database      | 5432:5432        | None         |
+| **redis**       | pixel-v2-redis       | Redis cache              | 6379:6379        | None         |
+| **nas**         | pixel-v2-nas         | Samba NAS file server    | 445:445, 139:139 | None         |
+| **referentiel** | pixel-v2-referentiel | Referentiel data service | 8099:8099        | PostgreSQL   |
 
 ### Management & Monitoring
 
@@ -189,6 +194,7 @@ Services communicate using container names as hostnames:
 - `pixel-v2-kafka:29092` - Kafka internal communication
 - `pixel-v2-activemq:61616` - JMS messaging
 - `pixel-v2-nas:445` - File sharing (SMB/CIFS)
+- `pixel-v2-referentiel:8099` - Referential data service
 
 ## Volume Management
 
