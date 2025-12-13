@@ -28,8 +28,13 @@ graph TB
 
     subgraph "Message Brokers"
         KAFKA[pixel-v2-kafka<br/>Apache Kafka<br/>:9092, :29092]
-        AMQ[pixel-v2-activemq<br/>ActiveMQ<br/>:61616, :8161]
         ZOO[pixel-v2-zookeeper<br/>Zookeeper<br/>:2181]
+    end
+
+    subgraph "Message Providers"
+        AMQ[pixel-v2-activemq<br/>ActiveMQ<br/>:61616, :8161]
+        CFT[pixel-v2-cft<br/>CFT Payment Service<br/>:8099, :2121]
+        TCP[pixel-v2-tcp<br/>TCP Payment Listener<br/>:9999, :8088]
     end
 
     subgraph "Data Layer"
@@ -37,8 +42,6 @@ graph TB
         REDIS[pixel-v2-redis<br/>Redis Cache<br/>:6379]
         NAS[pixel-v2-nas<br/>Samba NAS<br/>:445, :139]
         REFERENTIEL[pixel-v2-referentiel<br/>Referentiel Service<br/>:8099]
-        CFT[pixel-v2-cft<br/>CFT Payment Service<br/>:8099, :2121]
-        TCP[pixel-v2-tcp<br/>TCP Payment Listener<br/>:9999, :8088]
     end
 
     subgraph "Management & Monitoring"
@@ -152,12 +155,14 @@ graph TB
     classDef appLayer fill:#e1f5fe
     classDef dataLayer fill:#f3e5f5
     classDef brokerLayer fill:#fff3e0
-    classDef mgmtLayer fill:#e8f5e8
+    classDef msgProviderLayer fill:#e8f5e8
+    classDef mgmtLayer fill:#f1f8e9
     classDef volumeLayer fill:#fafafa
 
     class APP1,APP2,APPN,CAMEL1,CAMEL2,CAMELN appLayer
-    class POSTGRES,REDIS,NAS,REFERENTIEL,CFT,TCP dataLayer
-    class KAFKA,AMQ,ZOO brokerLayer
+    class POSTGRES,REDIS,NAS,REFERENTIEL dataLayer
+    class KAFKA,ZOO brokerLayer
+    class AMQ,CFT,TCP msgProviderLayer
     class PGADMIN,KAFDROP,HAWTIO mgmtLayer
     class VOL_PG,VOL_KAFKA,VOL_NAS_CH,VOL_NAS_SHARED,VOL_NAS_DATA,VOL_CFT_INBOX,VOL_CFT_OUTBOX,VOL_CFT_DATA,VOL_TCP_INBOX,VOL_TCP_DATA volumeLayer
 ```
@@ -180,19 +185,24 @@ graph TB
 | Service       | Container          | Description                    | Ports                  | Dependencies |
 | ------------- | ------------------ | ------------------------------ | ---------------------- | ------------ |
 | **kafka**     | pixel-v2-kafka     | Apache Kafka message streaming | 9092:9092, 29092:29092 | Zookeeper    |
-| **activemq**  | pixel-v2-activemq  | ActiveMQ JMS broker            | 61616:61616, 8161:8161 | None         |
 | **zookeeper** | pixel-v2-zookeeper | Kafka coordination service     | 2181:2181              | None         |
+
+### Message Providers
+
+| Service      | Container         | Description          | Ports                  | Dependencies |
+| ------------ | ----------------- | -------------------- | ---------------------- | ------------ |
+| **activemq** | pixel-v2-activemq | ActiveMQ JMS broker  | 61616:61616, 8161:8161 | None         |
+| **cft**      | pixel-v2-cft      | CFT payment service  | 8099:8080, 2121:21     | None         |
+| **tcp**      | pixel-v2-tcp      | TCP payment listener | 9999:9999, 8088:8080   | None         |
 
 ### Data Services
 
-| Service         | Container            | Description              | Ports                | Dependencies |
-| --------------- | -------------------- | ------------------------ | -------------------- | ------------ |
-| **postgresql**  | pixel-v2-postgresql  | PostgreSQL database      | 5432:5432            | None         |
-| **redis**       | pixel-v2-redis       | Redis cache              | 6379:6379            | None         |
-| **nas**         | pixel-v2-nas         | Samba NAS file server    | 445:445, 139:139     | None         |
-| **referentiel** | pixel-v2-referentiel | Referentiel data service | 8099:8099            | PostgreSQL   |
-| **cft**         | pixel-v2-cft         | CFT payment service      | 8099:8080, 2121:21   | None         |
-| **tcp**         | pixel-v2-tcp         | TCP payment listener     | 9999:9999, 8088:8080 | None         |
+| Service         | Container            | Description              | Ports            | Dependencies |
+| --------------- | -------------------- | ------------------------ | ---------------- | ------------ |
+| **postgresql**  | pixel-v2-postgresql  | PostgreSQL database      | 5432:5432        | None         |
+| **redis**       | pixel-v2-redis       | Redis cache              | 6379:6379        | None         |
+| **nas**         | pixel-v2-nas         | Samba NAS file server    | 445:445, 139:139 | None         |
+| **referentiel** | pixel-v2-referentiel | Referentiel data service | 8099:8099        | PostgreSQL   |
 
 ### Management & Monitoring
 
