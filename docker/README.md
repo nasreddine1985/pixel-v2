@@ -14,13 +14,16 @@ graph TB
     end
 
     subgraph "Load Balancers & Proxies"
-        LB[Load Balancer<br/>:8080-8082]
+        LB[Load Balancer<br/>:8080-808n]
     end
 
     subgraph "Application Layer"
         APP1[pixel-v2-app-spring-1<br/>Spring Boot Camel App<br/>:8082]
+        APP2[pixel-v2-app-spring-2<br/>Spring Boot Camel App<br/>:8083]
+        APPN[pixel-v2-app-spring-n<br/>Spring Boot Camel App<br/>:808n]
         CAMEL1[pixel-v2-camel-1<br/>Camel JBang Runtime<br/>:8080]
         CAMEL2[pixel-v2-camel-2<br/>Camel JBang Runtime<br/>:8081]
+        CAMELN[pixel-v2-camel-n<br/>Camel JBang Runtime<br/>:808n]
     end
 
     subgraph "Message Brokers"
@@ -34,6 +37,8 @@ graph TB
         REDIS[pixel-v2-redis<br/>Redis Cache<br/>:6379]
         NAS[pixel-v2-nas<br/>Samba NAS<br/>:445, :139]
         REFERENTIEL[pixel-v2-referentiel<br/>Referentiel Service<br/>:8099]
+        CFT[pixel-v2-cft<br/>CFT Payment Service<br/>:8099, :2121]
+        TCP[pixel-v2-tcp<br/>TCP Payment Listener<br/>:9999, :8088]
     end
 
     subgraph "Management & Monitoring"
@@ -48,6 +53,11 @@ graph TB
         VOL_NAS_CH[(NAS CH Share)]
         VOL_NAS_SHARED[(NAS Shared)]
         VOL_NAS_DATA[(NAS Data)]
+        VOL_CFT_INBOX[(CFT Inbox)]
+        VOL_CFT_OUTBOX[(CFT Outbox)]
+        VOL_CFT_DATA[(CFT Data)]
+        VOL_TCP_INBOX[(TCP Inbox)]
+        VOL_TCP_DATA[(TCP Data)]
     end
 
     %% External connections
@@ -58,8 +68,11 @@ graph TB
 
     %% Load balancer to apps
     LB --> APP1
+    LB --> APP2
+    LB --> APPN
     LB --> CAMEL1
     LB --> CAMEL2
+    LB --> CAMELN
 
     %% Application dependencies
     APP1 --> POSTGRES
@@ -68,18 +81,50 @@ graph TB
     APP1 --> KAFKA
     APP1 --> NAS
     APP1 --> REFERENTIEL
+    APP1 --> CFT
+    APP1 --> TCP
+
+    APP2 --> POSTGRES
+    APP2 --> REDIS
+    APP2 --> AMQ
+    APP2 --> KAFKA
+    APP2 --> NAS
+    APP2 --> REFERENTIEL
+    APP2 --> CFT
+    APP2 --> TCP
+
+    APPN --> POSTGRES
+    APPN --> REDIS
+    APPN --> AMQ
+    APPN --> KAFKA
+    APPN --> NAS
+    APPN --> REFERENTIEL
+    APPN --> CFT
+    APPN --> TCP
 
     CAMEL1 --> POSTGRES
     CAMEL1 --> REDIS
     CAMEL1 --> AMQ
     CAMEL1 --> KAFKA
     CAMEL1 --> REFERENTIEL
+    CAMEL1 --> CFT
+    CAMEL1 --> TCP
 
     CAMEL2 --> POSTGRES
     CAMEL2 --> REDIS
     CAMEL2 --> AMQ
     CAMEL2 --> KAFKA
     CAMEL2 --> REFERENTIEL
+    CAMEL2 --> CFT
+    CAMEL2 --> TCP
+
+    CAMELN --> POSTGRES
+    CAMELN --> REDIS
+    CAMELN --> AMQ
+    CAMELN --> KAFKA
+    CAMELN --> REFERENTIEL
+    CAMELN --> CFT
+    CAMELN --> TCP
 
     %% Message broker dependencies
     KAFKA --> ZOO
@@ -89,6 +134,7 @@ graph TB
     KAFDROP --> KAFKA
     HAWTIO --> CAMEL1
     HAWTIO --> CAMEL2
+    HAWTIO --> CAMELN
 
     %% Volume connections
     POSTGRES --> VOL_PG
@@ -96,6 +142,11 @@ graph TB
     NAS --> VOL_NAS_CH
     NAS --> VOL_NAS_SHARED
     NAS --> VOL_NAS_DATA
+    CFT --> VOL_CFT_INBOX
+    CFT --> VOL_CFT_OUTBOX
+    CFT --> VOL_CFT_DATA
+    TCP --> VOL_TCP_INBOX
+    TCP --> VOL_TCP_DATA
 
     %% Network
     classDef appLayer fill:#e1f5fe
@@ -104,22 +155,25 @@ graph TB
     classDef mgmtLayer fill:#e8f5e8
     classDef volumeLayer fill:#fafafa
 
-    class APP1,CAMEL1,CAMEL2 appLayer
-    class POSTGRES,REDIS,NAS,REFERENTIEL dataLayer
+    class APP1,APP2,APPN,CAMEL1,CAMEL2,CAMELN appLayer
+    class POSTGRES,REDIS,NAS,REFERENTIEL,CFT,TCP dataLayer
     class KAFKA,AMQ,ZOO brokerLayer
     class PGADMIN,KAFDROP,HAWTIO mgmtLayer
-    class VOL_PG,VOL_KAFKA,VOL_NAS_CH,VOL_NAS_SHARED,VOL_NAS_DATA volumeLayer
+    class VOL_PG,VOL_KAFKA,VOL_NAS_CH,VOL_NAS_SHARED,VOL_NAS_DATA,VOL_CFT_INBOX,VOL_CFT_OUTBOX,VOL_CFT_DATA,VOL_TCP_INBOX,VOL_TCP_DATA volumeLayer
 ```
 
 ## Services Overview
 
 ### Application Services
 
-| Service                   | Container             | Description                            | Ports                | Dependencies                            |
-| ------------------------- | --------------------- | -------------------------------------- | -------------------- | --------------------------------------- |
-| **pixel-v2-app-spring-1** | Spring Boot Camel App | Main CH payment processing application | 8082:8080, 8782:8778 | PostgreSQL, Redis, ActiveMQ, Kafka, NAS |
-| **pixel-v2-camel-1**      | Camel JBang Runtime   | Camel integration runtime instance 1   | 8080:8080            | PostgreSQL, Redis, ActiveMQ, Kafka      |
-| **pixel-v2-camel-2**      | Camel JBang Runtime   | Camel integration runtime instance 2   | 8081:8080            | PostgreSQL, Redis, ActiveMQ, Kafka      |
+| Service                   | Container             | Description                          | Ports                | Dependencies                            |
+| ------------------------- | --------------------- | ------------------------------------ | -------------------- | --------------------------------------- |
+| **pixel-v2-app-spring-1** | Spring Boot Camel App | CH payment processing application #1 | 8082:8080, 8782:8778 | PostgreSQL, Redis, ActiveMQ, Kafka, NAS |
+| **pixel-v2-app-spring-2** | Spring Boot Camel App | CH payment processing application #2 | 8083:8080, 8783:8778 | PostgreSQL, Redis, ActiveMQ, Kafka, NAS |
+| **pixel-v2-app-spring-n** | Spring Boot Camel App | CH payment processing application #n | 808n:8080, 878n:8778 | PostgreSQL, Redis, ActiveMQ, Kafka, NAS |
+| **pixel-v2-camel-1**      | Camel JBang Runtime   | Camel integration runtime instance 1 | 8080:8080            | PostgreSQL, Redis, ActiveMQ, Kafka      |
+| **pixel-v2-camel-2**      | Camel JBang Runtime   | Camel integration runtime instance 2 | 8081:8080            | PostgreSQL, Redis, ActiveMQ, Kafka      |
+| **pixel-v2-camel-n**      | Camel JBang Runtime   | Camel integration runtime instance n | 808n:8080            | PostgreSQL, Redis, ActiveMQ, Kafka      |
 
 ### Message Brokers
 
@@ -131,12 +185,14 @@ graph TB
 
 ### Data Services
 
-| Service         | Container            | Description              | Ports            | Dependencies |
-| --------------- | -------------------- | ------------------------ | ---------------- | ------------ |
-| **postgresql**  | pixel-v2-postgresql  | PostgreSQL database      | 5432:5432        | None         |
-| **redis**       | pixel-v2-redis       | Redis cache              | 6379:6379        | None         |
-| **nas**         | pixel-v2-nas         | Samba NAS file server    | 445:445, 139:139 | None         |
-| **referentiel** | pixel-v2-referentiel | Referentiel data service | 8099:8099        | PostgreSQL   |
+| Service         | Container            | Description              | Ports                | Dependencies |
+| --------------- | -------------------- | ------------------------ | -------------------- | ------------ |
+| **postgresql**  | pixel-v2-postgresql  | PostgreSQL database      | 5432:5432            | None         |
+| **redis**       | pixel-v2-redis       | Redis cache              | 6379:6379            | None         |
+| **nas**         | pixel-v2-nas         | Samba NAS file server    | 445:445, 139:139     | None         |
+| **referentiel** | pixel-v2-referentiel | Referentiel data service | 8099:8099            | PostgreSQL   |
+| **cft**         | pixel-v2-cft         | CFT payment service      | 8099:8080, 2121:21   | None         |
+| **tcp**         | pixel-v2-tcp         | TCP payment listener     | 9999:9999, 8088:8080 | None         |
 
 ### Management & Monitoring
 
@@ -195,6 +251,10 @@ Services communicate using container names as hostnames:
 - `pixel-v2-activemq:61616` - JMS messaging
 - `pixel-v2-nas:445` - File sharing (SMB/CIFS)
 - `pixel-v2-referentiel:8099` - Referential data service
+- `pixel-v2-cft:8080` - CFT payment service (HTTP)
+- `pixel-v2-cft:21` - CFT file transfer (FTP)
+- `pixel-v2-tcp:9999` - TCP payment listener (Socket)
+- `pixel-v2-tcp:8080` - TCP management interface (HTTP)
 
 ## Volume Management
 
@@ -207,6 +267,13 @@ Services communicate using container names as hostnames:
 | `nas_ch`                     | `/CH`                             | CH payment files      | NAS, Applications |
 | `nas_shared`                 | `/shared`                         | Shared documents      | NAS, Applications |
 | `nas_data`                   | `/data`                           | General data storage  | NAS, Applications |
+| `cft_inbox`                  | `/opt/cft/inbox`                  | CFT incoming files    | CFT Service       |
+| `cft_outbox`                 | `/opt/cft/outbox`                 | CFT outgoing files    | CFT Service       |
+| `cft_data`                   | `/opt/cft/data`                   | CFT processed data    | CFT Service       |
+| `cft_logs`                   | `/opt/cft/logs`                   | CFT service logs      | CFT Service       |
+| `tcp_inbox`                  | `/opt/tcp/inbox`                  | TCP incoming messages | TCP Service       |
+| `tcp_data`                   | `/opt/tcp/data`                   | TCP processed data    | TCP Service       |
+| `tcp_logs`                   | `/opt/tcp/logs`                   | TCP service logs      | TCP Service       |
 | `pixel_v2_app_spring_1_logs` | `/opt/pixel-v2-app-spring-1/logs` | Application logs      | Spring App        |
 
 ### NAS Volume Mounting

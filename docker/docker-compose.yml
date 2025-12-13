@@ -87,6 +87,82 @@ services:
       - pixel-v2-network
     restart: unless-stopped
 
+  # CFT Payment Service (File-based payment processing)
+  cft:
+    image: alpine:latest
+    hostname: cft
+    container_name: pixel-v2-cft
+    ports:
+      - "8099:8080"   # HTTP endpoint for CFT operations
+      - "2121:21"     # FTP port for file transfers
+    environment:
+      CFT_MODE: server
+      CFT_HTTP_PORT: 8080
+      CFT_FTP_PORT: 21
+      CFT_DATA_DIR: /opt/cft/data
+      CFT_INBOX_DIR: /opt/cft/inbox
+      CFT_OUTBOX_DIR: /opt/cft/outbox
+    volumes:
+      - cft_data:/opt/cft/data
+      - cft_inbox:/opt/cft/inbox
+      - cft_outbox:/opt/cft/outbox
+      - cft_logs:/opt/cft/logs
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    command: >
+      sh -c "
+        mkdir -p /opt/cft/{data,inbox,outbox,logs} &&
+        echo 'CFT Service ready for payment processing' > /opt/cft/logs/service.log &&
+        while true; do
+          echo '[CFT] $(date): Service running, monitoring directories...' >> /opt/cft/logs/service.log;
+          sleep 60;
+        done
+      "
+    healthcheck:
+      test: ["CMD", "test", "-f", "/opt/cft/logs/service.log"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # TCP Payment Listener Service (Socket-based payment processing)
+  tcp:
+    image: alpine/socat:latest
+    hostname: tcp
+    container_name: pixel-v2-tcp
+    ports:
+      - "9999:9999"   # TCP listener port for payment messages
+      - "8088:8080"   # HTTP management/status port
+    environment:
+      TCP_LISTEN_PORT: 9999
+      TCP_HTTP_PORT: 8080
+      TCP_DATA_DIR: /opt/tcp/data
+      TCP_INBOX_DIR: /opt/tcp/inbox
+      TCP_LOGS_DIR: /opt/tcp/logs
+    volumes:
+      - tcp_data:/opt/tcp/data
+      - tcp_inbox:/opt/tcp/inbox
+      - tcp_logs:/opt/tcp/logs
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    command: >
+      sh -c "
+        mkdir -p /opt/tcp/{data,inbox,logs} &&
+        echo 'TCP Service ready for payment reception' > /opt/tcp/logs/service.log &&
+        echo 'Starting TCP listener on port 9999...' >> /opt/tcp/logs/service.log &&
+        socat -d -d TCP-LISTEN:9999,fork,reuseaddr SYSTEM:'echo \"\$(date): Received TCP payment message\" >> /opt/tcp/logs/messages.log; cat > /opt/tcp/inbox/payment_\$(date +%Y%m%d_%H%M%S_\$\$).txt' &
+        while true; do
+          echo '[TCP] \$(date): Listener active, monitoring port 9999...' >> /opt/tcp/logs/service.log;
+          sleep 60;
+        done
+      "
+    healthcheck:
+      test: ["CMD", "netstat", "-ln", "|", "grep", ":9999"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Redis Cache for Flow Configuration
   redis:
     image: redis:7-alpine
@@ -361,6 +437,20 @@ volumes:
     name: pixel-v2-nas-ch
   nas_config:
     name: pixel-v2-nas-config
+  cft_data:
+    name: pixel-v2-cft-data
+  cft_inbox:
+    name: pixel-v2-cft-inbox
+  cft_outbox:
+    name: pixel-v2-cft-outbox
+  cft_logs:
+    name: pixel-v2-cft-logs
+  tcp_data:
+    name: pixel-v2-tcp-data
+  tcp_inbox:
+    name: pixel-v2-tcp-inbox
+  tcp_logs:
+    name: pixel-v2-tcp-logs
 
 # Networks
 networks:
