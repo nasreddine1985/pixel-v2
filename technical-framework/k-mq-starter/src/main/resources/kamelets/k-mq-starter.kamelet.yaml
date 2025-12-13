@@ -53,11 +53,6 @@ spec:
         description: Kafka topic for distribution logs
         type: string
         default: "distribution"
-      sinkEndpoint:
-        title: Sink Endpoint
-        description: Endpoint where processed messages should be sent
-        type: string
-        default: "direct:pacs008-main-processing"
       brokers:
         title: Kafka Brokers
         description: Kafka brokers for flow summary
@@ -76,6 +71,15 @@ spec:
         description: Database data source bean name for sequence generation
         type: string
         default: "dataSource"
+      nasArchiveUrl:
+        title: NAS Archive URL
+        description: File URL for archiving messages to NAS (mounted directory)
+        type: string
+  dependencies:
+    - "camel:jms"
+    - "camel:sql"
+    - "camel:file"
+    - "camel:kamelet"
   template:
     from:
       uri: "jms:queue:{{mqFileName}}?connectionFactory=#{{connectionFactory}}&concurrentConsumers={{concurrentConsumers}}"
@@ -161,10 +165,9 @@ spec:
                 - setHeader:
                     name: "JMSEncoding"
                     constant: "utf-8"
-        # Archive flowOccurId and timestamp
+        # Archive flowOccurId and timestamp to NAS
         - toD:
-            uri: "file:/opt/in?fileName=${header.flowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&charset=${header.JMSEncoding}"
-        
+            uri: "{{nasArchiveUrl}}/IN/${header.flowOccurId}/?fileName=${header.flowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
         
         - wireTap:
             uri: "kamelet:k-log-flow-summary"
@@ -174,4 +177,4 @@ spec:
               brokers: "{{brokers}}"
         - log:
             message: "[K-MQ-STARTER] - Processing completed for message from queue: {{mqFileName}}, flowOccurId: ${header.flowOccurId}"
-        - to: "{{sinkEndpoint}}"
+        - to: "kamelet:sink"

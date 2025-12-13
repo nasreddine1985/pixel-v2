@@ -236,6 +236,10 @@ services:
       - "8782:8778"   # JMX port
     volumes:
       - pixel_v2_app_spring_1_logs:/opt/pixel-v2-app-spring-1/logs
+      # NAS directory mounts for file operations
+      - nas_shared:/opt/nas/shared
+      - nas_data:/opt/nas/data
+      - nas_ch:/opt/nas/CH
     networks:
       - pixel-v2-network
     healthcheck:
@@ -307,6 +311,32 @@ services:
     profiles:
       - tools
 
+  # NAS (Network Attached Storage) - Samba File Share
+  nas:
+    image: dperson/samba:latest
+    hostname: pixel-v2-nas
+    container_name: pixel-v2-nas
+    ports:
+      - "445:445"
+      - "139:139"
+    volumes:
+      - nas_shared:/shared
+      - nas_data:/data
+      - nas_ch:/CH
+      - nas_config:/config
+    environment:
+      - SHARE=shared;/shared;yes;no;no;pixel;pixel;pixel;PIXEL-V2 Shared Storage
+      - SHARE2=data;/data;yes;no;no;pixel;pixel;pixel;PIXEL-V2 Data Storage  
+      - SHARE3=CH;/CH;yes;no;no;pixel;pixel;pixel;PIXEL-V2 CH Files
+      - USER=pixel;pixel
+      - USERID=1000
+      - GROUPID=1000
+      - WORKGROUP=PIXEL
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    command: '-s "shared;/shared;yes;no;no;pixel" -s "data;/data;yes;no;no;pixel" -s "CH;/CH;yes;no;no;pixel" -u "pixel;pixel" -w "PIXEL"'
+
 # Volumes for data persistence
 volumes:
   postgres_data:
@@ -323,6 +353,14 @@ volumes:
     name: pixel-v2-app-spring-1-logs
   redis_data:
     name: pixel-v2-redis-data
+  nas_shared:
+    name: pixel-v2-nas-shared
+  nas_data:
+    name: pixel-v2-nas-data
+  nas_ch:
+    name: pixel-v2-nas-ch
+  nas_config:
+    name: pixel-v2-nas-config
 
 # Networks
 networks:

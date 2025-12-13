@@ -35,10 +35,10 @@ public class ChProcessingRoute extends RouteBuilder {
                         kafkaLogTopicName={{kmq.starter.kafkaLogTopicName}}&\
                         kafkaDistributionTopicName={{kmq.starter.kafkaDistributionTopicName}}&\
                         brokers={{kmq.starter.brokers}}&\
-                        sinkEndpoint={{kmq.starter.sinkEndpoint}}&\
                         flowCountryCode={{kmq.starter.flowCountryCode}}&\
                         flowCountryId={{kmq.starter.flowCountryId}}&\
-                        dataSource={{kmq.starter.dataSource}}""";
+                        dataSource={{kmq.starter.dataSource}}&\
+                        nasArchiveUrl={{pixel.nas.ch.smb.url}}""";
 
         @Override
         public void configure() throws Exception {
@@ -52,32 +52,24 @@ public class ChProcessingRoute extends RouteBuilder {
                 // Error handler configuration
                 errorHandler(defaultErrorHandler().maximumRedeliveries(0));
 
-                from(K_MQ_STARTER_ENDPOINT).routeId("ch-processing-flow").to(
-                                "log:ch-processing?level=DEBUG&showBody=false&showHeaders=false");
-
-                // Sink endpoint to receive messages from k-mq-starter kamelet
-                from("{{kmq.starter.sinkEndpoint}}").routeId("ch-main-processing")
+                // Step 1: Receive Payement Message
+                from(K_MQ_STARTER_ENDPOINT)
                                 .setHeader("ProcessingTimestamp",
                                                 simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
-                                .to("direct:process-ch-message");
-
-                // CH processing logic - With Redis caching
-                from("direct:process-ch-message").routeId("ch-message-processing")
                                 .setHeader("RouteName", constant("CH-Processing"))
                                 .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
-                                .setHeader("flowCode", simple("{{kmq.starter.flowCode}}"))
-                                .setHeader("MessageType", constant("{{kmq.starter.payementType}}"))
 
-                                // Step 1: Fetch reference data using k-identification kamelet
+
+                                // Step 2: Fetch reference data using k-identification kamelet
                                 .to(K_IDENTIFICATION_ENDPOINT)
 
-                                // Step 2: XSD Validation using k-xsd-validation
+                                // Step 3: XSD Validation using k-xsd-validation
                                 .to(K_XSD_VALIDATION_ENDPOINT)
 
-                                // Step 3: XSLT Transformation using k-xsl-transformation
+                                // Step 4: XSLT Transformation using k-xsl-transformation
                                 .to(K_XSL_TRANSFORMATION_ENDPOINT)
 
-                                // Complete processing
+                                // Step 5: Complete processing
                                 .wireTap(K_LOG_FLOW_SUMMARY_ENDPOINT);
         }
 }

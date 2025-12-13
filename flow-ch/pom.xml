@@ -156,6 +156,12 @@
             <artifactId>camel-groovy-starter</artifactId>
         </dependency>
 
+        <!-- File support for NAS operations -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-file-starter</artifactId>
+        </dependency>
+
         <!-- Redis dependencies for k-identification kamelet -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
