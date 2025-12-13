@@ -51,7 +51,7 @@ spec:
         - removeHeader:
             name: "logMessage"
         - toD:
-            uri: "kamelet:k-kafka-publisher?topic={{kafkaTopicName}}&brokers={{brokers}}&key=${header.kafka.KEY}"
+            uri: "kamelet:k-kafka-publisher?kafkaTopicName={{kafkaTopicName}}&brokers={{brokers}}&key=${header.kafka.KEY}"
         - setBody:
             simple: "${header.originalBody}"
         - removeHeader:

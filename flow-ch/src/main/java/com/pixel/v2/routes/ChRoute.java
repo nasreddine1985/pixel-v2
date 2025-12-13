@@ -4,7 +4,13 @@ import org.apache.camel.builder.RouteBuilder;
 import org.springframework.stereotype.Component;
 
 /**
- * CH Payment Processing Route - Uses k-identification kamelet for Redis caching
+ * ChRoute - CH Payment Processing Route
+ * 
+ * This route handles the complete CH payment processing pipeline: 1. Receives payment messages from
+ * MQ 2. Fetches reference data using k-identification kamelet with Redis caching 3. Performs XSD
+ * validation using k-xsd-validation kamelet 4. Applies XSLT transformation using
+ * k-xsl-transformation kamelet 5. Publishes transformed message to ch-out Kafka topic 6. Logs flow
+ * summary for monitoring and auditing
  */
 @Component
 public class ChRoute extends RouteBuilder {
