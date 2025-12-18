@@ -36,9 +36,9 @@ spec:
       uri: "kamelet:source"
       steps:
         # Log incoming validation request
-        - log:
-            message: "[XSD-VALIDATION] Starting validation - XSD: {{xsdFileName}}, Mode: {{validationMode}}"
-            loggingLevel: INFO
+        # - log:
+        #     message: "[XSD-VALIDATION] Starting validation - XSD: {{xsdFileName}}, Mode: {{validationMode}}"
+        #     loggingLevel: INFO
         
         # Set validation headers
         - setHeader:
@@ -54,23 +54,29 @@ spec:
             simple: "{{validationMode}}"
         
         # Log event before XSD validation
-        - wireTap:
-            uri: "kamelet:k-log-events"
-            parameters:
-              level: "INFO"
-              logMessageTxt: "[XSD-VALIDATION] Starting validation - XSD: {{xsdFileName}}, Mode: {{validationMode}}"
-              kafkaTopicName: "${header.kafkaLogTopicName}"
-              brokers: "${header.brokers}"
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start validation - flowOccurId: ${header.flowOccurId}, XSD: {{xsdFileName}}, Mode: {{validationMode}}&level=INFO"
+            pattern: "InOnly"
             
         # Validate XML against XSD using custom processor
         # Supports both single String messages and Collection<String> for batch validation
         - to:
             uri: "class:com.pixel.v2.validation.processor.XsdValidationProcessor"
+        # Log event after XSD validation
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End validation - flowOccurId: ${header.flowOccurId}, XSD: {{xsdFileName}}&level=INFO"
+            pattern: "InOnly"
             
         # Log validation success
-        - log:
-            message: "[XSD-VALIDATION] ✅ Validation successful - XSD: {{xsdFileName}}, Scope: ${header.ValidationScope}, Count: ${header.ValidationCount}, Duration: ${header.ValidationDuration}ms"
-            loggingLevel: INFO
+        # - log:
+        #     message: "[XSD-VALIDATION] ✅ Validation successful - XSD: {{xsdFileName}}, Scope: ${header.ValidationScope}, Count: ${header.ValidationCount}, Duration: ${header.ValidationDuration}ms"
+        #     loggingLevel: INFO
                       
         # Set success headers
         - setHeader:

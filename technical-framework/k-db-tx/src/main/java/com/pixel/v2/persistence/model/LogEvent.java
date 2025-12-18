@@ -1,9 +1,14 @@
 package com.pixel.v2.persistence.model;
 
-import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
 
 /**
  * Entity representing LOG_EVENT table Contains detailed logging information for flow processing
@@ -49,8 +54,7 @@ public class LogEvent {
     @Column(name = "TXT", length = 2048, nullable = false)
     private String txt;
 
-    @Lob
-    @Column(name = "LONGTXT")
+    @Column(name = "LONGTXT", columnDefinition = "TEXT")
     private String longTxt;
 
     @Column(name = "LOGROLE", length = 16, nullable = false)
@@ -104,15 +108,13 @@ public class LogEvent {
     @Column(name = "MSGSOURCESYSTEM", length = 128)
     private String msgSourceSystem;
 
-    @Lob
-    @Column(name = "MSGPRIVATECONTEXT")
+    @Column(name = "MSGPRIVATECONTEXT", columnDefinition = "TEXT")
     private String msgPrivateContext;
 
     @Column(name = "MSGTRANSACTIONID", length = 64)
     private String msgTransactionId;
 
-    @Lob
-    @Column(name = "MSGPROPERTIES")
+    @Column(name = "MSGPROPERTIES", columnDefinition = "TEXT")
     private String msgProperties;
 
     @Column(name = "MSGBATCHNAME", length = 256)
@@ -130,8 +132,7 @@ public class LogEvent {
     @Column(name = "MSGRESUBMITIND", length = 64)
     private String msgResubmitInd;
 
-    @Lob
-    @Column(name = "MSGBODY")
+    @Column(name = "MSGBODY", columnDefinition = "TEXT")
     private String msgBody;
 
     @Column(name = "LOG_DAY", insertable = false, updatable = false)

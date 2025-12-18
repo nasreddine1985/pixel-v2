@@ -7,17 +7,17 @@ import org.springframework.stereotype.Component;
  * ChRoute - CH Payment Processing Route
  * 
  * This route handles the complete CH payment processing pipeline: 1. Receives payment messages from
- * MQ 2. Fetches reference data using k-identification kamelet with Redis caching 3. Performs XSD
- * validation using k-xsd-validation kamelet 4. Applies XSLT transformation using
+ * MQ 2. Fetches reference data using k-identification-interne kamelet with Spring internal caching
+ * 3. Performs XSD validation using k-xsd-validation kamelet 4. Applies XSLT transformation using
  * k-xsl-transformation kamelet 5. Publishes transformed message to ch-out Kafka topic 6. Logs flow
  * summary for monitoring and auditing
  */
 @Component
 public class ChRoute extends RouteBuilder {
 
-        // Kamelet endpoint for identification and Redis caching
+        // Kamelet endpoint for identification and Spring internal caching
         private static final String K_IDENTIFICATION_ENDPOINT =
-                        "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
+                        "kamelet:k-identification-interne?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
 
         // Kamelet endpoint for XSD validation
         private static final String K_XSD_VALIDATION_ENDPOINT =
@@ -48,7 +48,7 @@ public class ChRoute extends RouteBuilder {
                         flowCountryCode={{kmq.starter.flowCountryCode}}&\
                         flowCountryId={{kmq.starter.flowCountryId}}&\
                         dataSource={{kmq.starter.dataSource}}&\
-                        nasArchiveUrl={{pixel.nas.ch.smb.url}}""";
+                        nasArchiveUrl={{nas.archive.url}}""";
 
         @Override
         public void configure() throws Exception {
@@ -65,10 +65,10 @@ public class ChRoute extends RouteBuilder {
                 // Step 1: Receive Payement Message
                 from(K_MQ_STARTER_ENDPOINT)
 
-                                // Step 2: Fetch reference data using k-identification kamelet
-                                .to(K_IDENTIFICATION_ENDPOINT)
-
-                                // Step 3: XSD Validation using k-xsd-validation
+                                // Step 2: Fetch reference data using k-identification-interne
+                                // kamelet
+                                .to(K_IDENTIFICATION_ENDPOINT) // Step 3: XSD Validation using
+                                                               // k-xsd-validation
                                 .to(K_XSD_VALIDATION_ENDPOINT)
 
                                 // Step 4: XSLT Transformation using k-xsl-transformation

@@ -47,11 +47,27 @@ spec:
         - setHeader:
             name: "TransformationMode"
             simple: "{{transformationMode}}"
+        
+        # Log event before XSL transformation
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start transformation - flowOccurId: ${header.flowOccurId}, XSL: {{xslFileName}}, Mode: {{transformationMode}}&level=INFO"
+            pattern: "InOnly"
             
         # Transform XML using XSL stylesheet via custom processor
         # Supports both single String messages and Collection<String> for batch transformation
         - to:
             uri: "bean:xslTransformationProcessor"
+        
+        # Log event after XSL transformation
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End transformation - flowOccurId: ${header.flowOccurId}, XSL: {{xslFileName}}&level=INFO"
+            pattern: "InOnly"
             
         # Set success headers
         - setHeader:

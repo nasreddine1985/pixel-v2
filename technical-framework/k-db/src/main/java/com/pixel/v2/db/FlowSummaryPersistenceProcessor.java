@@ -42,11 +42,10 @@ public class FlowSummaryPersistenceProcessor {
      * Persists a FlowSummary entity from JSON string to the database.
      * 
      * @param jsonBody the JSON string representing a FlowSummary
-     * @return the persisted FlowSummary entity
      */
     @Handler
     @Transactional
-    public FlowSummary persistFlowSummaryFromJson(@Body String jsonBody) {
+    public void persistFlowSummaryFromJson(@Body String jsonBody) {
         try {
 
 
@@ -56,7 +55,10 @@ public class FlowSummaryPersistenceProcessor {
             logger.debug("K-DB-FLOW-SUMMARY: FlowSummary entity created - ID: {}, Code: {}",
                     flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
 
-            return persistFlowSummary(flowSummary);
+            persistFlowSummary(flowSummary);
+
+            logger.debug("K-DB-FLOW-SUMMARY: Successfully persisted FlowSummary - ID: {}, Code: {}",
+                    flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
 
         } catch (Exception e) {
             logger.error(
@@ -90,12 +92,12 @@ public class FlowSummaryPersistenceProcessor {
             if (existingEntity != null) {
                 // Update existing entity
                 try {
-                    logger.info(
+                    logger.debug(
                             "K-DB: Updating existing FlowSummary entity with FlowOccurId: {} - JSON: {}",
                             flowSummary.getFlowOccurId(),
                             objectMapper.writeValueAsString(flowSummary));
                 } catch (Exception e) {
-                    logger.info(
+                    logger.error(
                             "K-DB: Updating existing FlowSummary entity with FlowOccurId: {} - JSON serialization failed: {}",
                             flowSummary.getFlowOccurId(), e.getMessage());
                 }
@@ -103,7 +105,7 @@ public class FlowSummaryPersistenceProcessor {
                 result = entityManager.merge(flowSummary);
             } else {
                 // Persist new entity
-                logger.info("K-DB: Persisting new FlowSummary entity with FlowOccurId: {}",
+                logger.debug("K-DB: Persisting new FlowSummary entity with FlowOccurId: {}",
                         flowSummary.getFlowOccurId());
                 entityManager.persist(flowSummary);
                 result = flowSummary;

@@ -42,11 +42,10 @@ public class LogEventPersistenceProcessor {
      * Persists a LogEvent entity from JSON string to the database.
      * 
      * @param jsonBody the JSON string representing a LogEvent
-     * @return the persisted LogEvent entity
      */
     @Handler
     @Transactional
-    public LogEvent persistLogEventFromJson(@Body String jsonBody) {
+    public void persistLogEventFromJson(@Body String jsonBody) {
         try {
 
             // Convert JSON to LogEvent entity using our configured ObjectMapper
@@ -56,7 +55,11 @@ public class LogEventPersistenceProcessor {
                     "K-DB-LOG-EVENT: LogEvent entity created - ID: {}, Code: {}, Component: {}",
                     logEvent.getLogId(), logEvent.getCode(), logEvent.getComponent());
 
-            return persistLogEvent(logEvent);
+            persistLogEvent(logEvent);
+
+            logger.debug(
+                    "K-DB-LOG-EVENT: Successfully persisted LogEvent - ID: {}, Code: {}, Component: {}",
+                    logEvent.getLogId(), logEvent.getCode(), logEvent.getComponent());
 
         } catch (Exception e) {
             logger.error(
@@ -76,7 +79,7 @@ public class LogEventPersistenceProcessor {
     @Transactional
     public LogEvent persistLogEvent(LogEvent logEvent) {
         try {
-            logger.info("K-DB: Persisting LogEvent entity - LogId: {}, FlowId: {}, Component: {}",
+            logger.debug("K-DB: Persisting LogEvent entity - LogId: {}, FlowId: {}, Component: {}",
                     logEvent.getLogId(), logEvent.getFlowId(), logEvent.getComponent());
 
             // Check if entity already exists using logId as primary key
@@ -102,7 +105,7 @@ public class LogEventPersistenceProcessor {
             // Force synchronization to database
             entityManager.flush();
 
-            logger.info(
+            logger.debug(
                     "K-DB: LogEvent entity persisted successfully - LogId: {}, FlowId: {}, Component: {}",
                     result.getLogId(), result.getFlowId(), result.getComponent());
 

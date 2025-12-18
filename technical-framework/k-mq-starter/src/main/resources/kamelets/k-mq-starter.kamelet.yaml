@@ -12,6 +12,10 @@ spec:
     required:
       - mqFileName
       - connectionFactory
+      - nasArchiveUrl
+      - flowCountryCode
+      - flowCountryId
+      - dataSource
     type: object
     properties:
       mqFileName:
@@ -84,11 +88,20 @@ spec:
     from:
       uri: "jms:queue:{{mqFileName}}?connectionFactory=#{{connectionFactory}}&concurrentConsumers={{concurrentConsumers}}"
       steps:
-        - log:
-            message: "[K-MQ-STARTER] - Message received from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}, CorrelationId: ${header.JMSCorrelationID}"
+        # - log:
+        #     message: "[K-MQ-STARTER] - Message received from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}, CorrelationId: ${header.JMSCorrelationID}"
         - setHeader:
             name: "ReceivedTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        
+        # Log event before starting MQ processing
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=Start MQ processing - queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}&level=INFO"
+            pattern: "InOnly"
+        
         # Store original body before sequence generation
         - setHeader:
             name: "originalBody"
@@ -152,6 +165,9 @@ spec:
         - setHeader:
             name: "beginFlowDate"
             simple: "${date:now:yyyy-MM-dd}"
+        - setHeader:
+            name: "nasArchiveUrl"
+            simple: "{{nasArchiveUrl}}"
         # Set charset with proper fallback
         - choice:
             when:
@@ -165,16 +181,32 @@ spec:
                 - setHeader:
                     name: "JMSEncoding"
                     constant: "utf-8"
+        # # Log event before save to NAS
+        # - to:
+        #     uri: "kamelet:k-log-events?flowId=${uuid}-start&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start receipt occurrence - flowOccurId: ${header.flowOccurId}&level=INFO"
+              
         # Archive flowOccurId and timestamp to NAS
+        # Store original body before file operation
+        - setHeader:
+            name: "originalBodyBeforeArchive"
+            simple: "${body}"
         - toD:
-            uri: "{{nasArchiveUrl}}/IN/${header.flowOccurId}/?fileName=${header.flowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
+            uri: "${header.nasArchiveUrl}/IN/${header.flowOccurId}/?fileName=${header.flowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
+        # Restore original body after file operation
+        - setBody:
+            simple: "${header.originalBodyBeforeArchive}"
+        - removeHeader:
+            name: "originalBodyBeforeArchive"
         
         - wireTap:
-            uri: "kamelet:k-log-flow-summary"
-            parameters:
-              step: "${header.step}"
-              kafkaTopicName: "${header.kafkaFlowSummaryTopicName}"
-              brokers: "{{brokers}}"
-        - log:
-            message: "[K-MQ-STARTER] - Processing completed for message from queue: {{mqFileName}}, flowOccurId: ${header.flowOccurId}"
+            uri: "kamelet:k-log-flow-summary?step=${header.step}&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}"
+        
+        # Log event after completing MQ processing
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=End MQ processing - queue: {{mqFileName}}, flowOccurId: ${header.flowOccurId}, archived to: ${header.nasArchiveUrl}/IN/${header.flowOccurId}/&level=INFO"
+            pattern: "InOnly"
+        
         - to: "kamelet:sink"

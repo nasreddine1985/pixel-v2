@@ -49,5 +49,3 @@ spec:
             constant: {}
         - to:
             uri: "bean:flowSummaryPersistenceProcessor?method=persistFlowSummaryFromJson"
-        - to:
-            uri: "bean:flowSummaryPersistenceProcessor?method=persistFlowSummary"

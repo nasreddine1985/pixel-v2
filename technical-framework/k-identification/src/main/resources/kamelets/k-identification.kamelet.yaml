@@ -58,6 +58,14 @@ spec:
             name: CacheKey
             simple: "flow_config_{{flowCode}}"
         
+        # Log event before identification
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start identification - flowOccurId: ${header.flowOccurId}, FlowCode: {{flowCode}}&level=INFO"
+            pattern: "InOnly"
+        
         # Try to get from Redis cache
         - setHeader:
             name: RedisCommand
@@ -69,11 +77,15 @@ spec:
             when:
               - simple: "${body} == null"
                 steps:
-                  - log: "Cache MISS: Fetching flow config for {{flowCode}} from referentiel service"
+                  - log: 
+                      message: "Cache MISS: Fetching flow config for {{flowCode}} from referentiel service"
+                      loggingLevel: DEBUG
                   # Fetch from referentiel service
                   - doTry:
                       steps:
-                        - log: "Original message body preserved: ${header.OriginalMessageBody}"
+                        - log: 
+                            message: "Original message body preserved: ${header.OriginalMessageBody}"
+                            loggingLevel: DEBUG
                         - setHeader:
                             name: CamelHttpMethod
                             constant: "GET"
@@ -82,7 +94,9 @@ spec:
                             constant: "application/json"
                         - toD: "{{referentielServiceUrl}}/api/flows/{{flowCode}}/complete?bridgeEndpoint=true"
                         - convertBodyTo: "java.lang.String"
-                        - log: "Successfully retrieved flow config for {{flowCode}} from referentiel service"
+                        - log: 
+                            message: "Successfully retrieved flow config for {{flowCode}} from referentiel service"
+                            loggingLevel: DEBUG
                         - setHeader:
                             name: FlowConfiguration
                             simple: "${body}"
@@ -94,7 +108,9 @@ spec:
                             constant: "{{cacheTtl}}"
                         - setBody:
                             simple: "${header.OriginalMessageBody}"
-                        - log: "Original message body restored before Redis SET: ${body}"
+                        - log: 
+                            message: "Original message body restored before Redis SET: ${body}"
+                            loggingLevel: DEBUG
                         # Cache the result
                         - setHeader:
                             name: RedisCommand
@@ -103,7 +119,9 @@ spec:
                       doCatch:
                         - exception: "java.lang.Exception"
                           steps:
-                            - log: "Failed to retrieve flow config for {{flowCode}} from referentiel service: ${exception.message}"
+                            - log: 
+                                message: "Failed to retrieve flow config for {{flowCode}} from referentiel service: ${exception.message}"
+                                loggingLevel: DEBUG
                             - setBody:
                                 constant: '{"error":"referentiel_service_unavailable","flowCode":"{{flowCode}}"}'
                             - setHeader:
@@ -113,7 +131,10 @@ spec:
                                 simple: "${header.OriginalMessageBody}"
             otherwise:
               steps:
-                - log: "Cache HIT: Using cached flow config for {{flowCode}}"
+                - log: 
+                    message: "Cache HIT: Using cached flow config for {{flowCode}}"
+                    loggingLevel: DEBUG
+                
                 - setHeader:
                     name: FlowConfiguration
                     simple: "${body}"
@@ -122,6 +143,14 @@ spec:
         - setBody:
             simple: "${header.OriginalMessageBody}"
         - removeHeader: "OriginalMessageBody"
+        
+        # Log event after identification
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End identification - flowOccurId: ${header.flowOccurId}, FlowCode: {{flowCode}}&level=INFO"
+            pattern: "InOnly"
         
         # Send to sink
         - to: "kamelet:sink"

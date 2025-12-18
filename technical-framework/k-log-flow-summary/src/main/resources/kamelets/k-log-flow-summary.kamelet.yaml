@@ -3,7 +3,7 @@ kind: Kamelet
 metadata:
   name: k-log-flow-summary
   labels:
-    camel.apache.org/kamelet.type: "sink"
+    camel.apache.org/kamelet.type: "action"
 spec:
   definition:
     title: "K-Log Flow Summary"
@@ -15,17 +15,14 @@ spec:
         title: Processing Step
         description: Current processing step
         type: string
-        default: "IN_PROGRESS"
       kafkaTopicName:
         title: Kafka Topic Name
         description: Kafka topic for flow summary logs
         type: string
-        default: "flow-summary"
       brokers:
         title: Kafka Brokers
         description: Kafka broker endpoints
         type: string
-        default: "pixel-v2-kafka:29092"
   template:
     from:
       uri: "kamelet:source"
@@ -42,11 +39,17 @@ spec:
             simple: "${body}"
         - setBody:
             simple: "${header.logMessage}"
-        - removeHeader:
-            name: "logMessage"
-        - toD:
-            uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}"
+        - log:
+            message: "K-LOG-FLOW-SUMMARY: logMessage=${header.logMessage}"
+            loggingLevel: DEBUG
+        - log:
+            message: "K-LOG-FLOW-SUMMARY: body=${body}"
+            loggingLevel: DEBUG
+        - to:
+            uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer"
         - setBody:
             simple: "${header.originalBody}"
         - removeHeader:
             name: "originalBody"
+        # Send to sink
+        - to: "kamelet:sink"

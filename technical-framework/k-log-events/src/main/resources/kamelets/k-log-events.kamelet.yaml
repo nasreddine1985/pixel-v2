@@ -8,7 +8,7 @@ spec:
   definition:
     title: "K-Log Events"
     description: |-
-      Creates and publishes detailed log event messages to Kafka for PACS008 processing monitoring
+      Creates and publishes detailed log event messages to Kafka for processing monitoring.
     type: object
     properties:
       logMessageTxt:
@@ -24,35 +24,99 @@ spec:
         default: "INFO"
       kafkaTopicName:
         title: Kafka Topic Name
-        description: Kafka topic for flow summary logs
+        description: Kafka topic for log events
         type: string
-        default: "ch-log-events"
       brokers:
         title: Kafka Brokers
         description: Kafka broker endpoints
         type: string
-        default: "kafka:29092"
+      flowCode:
+        title: Flow Code
+        description: The flow code for logging context
+        type: string
+      flowId:
+        title: Flow ID
+        description: The flow ID for logging context
+        type: string
   template:
-    from:
-      uri: "kamelet:source"
-      steps:
-        - setHeader:
-            name: "logMessage"
-            simple: |
-              {"logId":"LOG-${date:now:yyyyMMddHHmmssSSS}","datats":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","flowId":"${header.MessageId}","halfFlowId":"${header.MessageId}-HALF","flowCode":"${header.flowCode}","halfFlowCode":"${header.flowCode}-HALF","contextId":"${header.CorrelationId}","clientLogTimestamp":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","dbLogTimestamp":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","txt":"{{logMessageTxt}}","longTxt":"[{{level}}] {{logMessageTxt}}","logRole":"{{level}}","code":"{{level}}","customStep":"{{logMessageTxt}}","component":"pacs008-processing-flow","instanceId":"INST-001","servicePath":"${header.queueName}","processPath":"/pacs008/processing","refFlowId":1,"beginProcess":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","endProcess":null,"contextTimestamp":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","msgSentTimestamp":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","messagingType":"JMS","msgId":"${header.MessageId}","msgPriority":1,"msgCorrelationId":"${header.CorrelationId}","msgSourceSystem":"PIXEL-V2","msgPrivateContext":"${header.toString()}","msgTransactionId":"${header.MessageId}","msgProperties":"{}","msgBatchName":null,"msgBatchMsgNo":null,"msgBatchSize":null,"xmlMsgAction":null,"msgResubmitInd":"N","msgBody":"","logDay":"${date:now:yyyy-MM-dd}"}
-        - setHeader:
-            name: "kafka.KEY"
-            simple: "${header.MessageId}"
-        - setHeader:
-            name: "originalBody"
-            simple: "${body}"
-        - setBody:
-            simple: "${header.logMessage}"
-        - removeHeader:
-            name: "logMessage"
-        - toD:
-            uri: "kamelet:k-kafka-publisher?kafkaTopicName={{kafkaTopicName}}&brokers={{brokers}}&key=${header.kafka.KEY}"
+    route:
+      id: "k_log_event_{{flowId}}"
+      from:
+        uri: "kamelet:source"
+        steps:
+        
+        # Log route ID at the start
+        - log:
+            message: "K-LOG-EVENTS: Starting processing with route ID: ${routeId}"
+            loggingLevel: INFO
+        # Error handling with doTry/doCatch
+        - doTry:
+            steps:
+              # Store original body before processing
+              - setHeader:
+                  name: "originalBody"
+                  simple: "${body}"
+              - setHeader:
+                  name: "kafka.KEY"
+                  simple: "${header.flowOccurId}"
+              - setHeader:
+                  name: "logMessage"
+                  simple: |
+                    {
+                      "logId": "LOG-${date:now:yyyyMMddHHmmssSSS}",
+                      "datats": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                      "flowId": "${header.flowOccurId}",
+                      "halfFlowId": "${header.flowOccurId}-HALF",
+                      "flowCode": "${header.flowCode}",
+                      "halfFlowCode": "${header.flowCode}-HALF",
+                      "contextId": "${header.CorrelationId}",
+                      "clientLogTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                      "dbLogTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                      "txt": "{{logMessageTxt}}",
+                      "longTxt": "[{{level}}] {{logMessageTxt}}",
+                      "logRole": "{{level}}",
+                      "code": "{{level}}",
+                      "customStep": "{{logMessageTxt}}",
+                      "component": "pacs008-processing-flow",
+                      "instanceId": "INST-001",
+                      "servicePath": "${header.queueName}",
+                      "processPath": "/pacs008/processing",
+                      "refFlowId": 1,
+                      "beginProcess": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                      "endProcess": null,
+                      "contextTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                      "msgSentTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                      "messagingType": "JMS",
+                      "msgId": "${header.MessageId}",
+                      "msgPriority": 1,
+                      "msgCorrelationId": "${header.CorrelationId}",
+                      "msgSourceSystem": "PIXEL-V2",
+                      "msgPrivateContext": "${header.toString()}",
+                      "msgTransactionId": "${header.MessageId}",
+                      "msgProperties": "{}",
+                      "msgBatchName": null,
+                      "msgBatchMsgNo": null,
+                      "msgBatchSize": null,
+                      "xmlMsgAction": null,
+                      "msgResubmitInd": "N",
+                      "msgBody": "",
+                      "logDay": "${date:now:yyyy-MM-dd}"
+                    }
+              - log:
+                  message: "K-LOG-EVENTS (Route: ${routeId}): body=${header.logMessage}"
+                  loggingLevel: DEBUG
+              - setBody:
+                  simple: "${header.logMessage}"
+              - to:
+                  uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer"
+            doCatch:
+              - exception: "java.lang.Exception"
+                steps:
+                  - log:
+                      message: "K-LOG-EVENTS ERROR: Failed to process log event - ${exception.message}"
+                      loggingLevel: ERROR
+                  - setBody:
+                      simple: "${header.originalBody}"
+        # Always restore original body at the end
         - setBody:
             simple: "${header.originalBody}"
-        - removeHeader:
-            name: "originalBody"

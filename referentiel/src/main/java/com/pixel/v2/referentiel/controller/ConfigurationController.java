@@ -65,6 +65,14 @@ public class ConfigurationController {
     }
 
     /**
+     * Health check endpoint
+     */
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, String>> health() {
+        return ResponseEntity.ok(Map.of("status", "UP", "service", "referentiel-service"));
+    }
+
+    /**
      * Get service information
      */
     @GetMapping("/info")

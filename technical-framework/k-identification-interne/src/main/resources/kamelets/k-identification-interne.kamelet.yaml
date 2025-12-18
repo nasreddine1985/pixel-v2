@@ -1,0 +1,163 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-identification-interne
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "1.0.1-SNAPSHOT"
+    camel.apache.org/provider: "PIXEL-V2"
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "PIXEL-V2 Identification Interne Kamelet"
+    description: |-
+      Spring cache-based reference data identification and caching kamelet for payment processing.
+      Uses Spring Boot application's internal memory cache instead of external Redis.
+      Fetches flow configuration from Spring memory cache or referentiel service with automatic cache population.
+    required:
+      - flowCode
+    type: object
+    properties:
+      flowCode:
+        title: Flow Code
+        description: The flow code to identify and retrieve configuration for
+        type: string
+        example: "PACS008"
+      referentielServiceUrl:
+        title: Referentiel Service URL
+        description: Base URL of the referentiel service for flow configuration retrieval
+        type: string
+        default: "http://pixel-v2-referentiel:8099"
+      kafkaBrokers:
+        title: Kafka Brokers
+        description: Kafka broker URLs for cache refresh messaging
+        type: string
+        default: "kafka:29092"
+      cacheTtl:
+        title: Cache TTL
+        description: Cache time-to-live in seconds (for future use with TTL-enabled caches)
+        type: integer
+        default: 3600
+      springCacheName:
+        title: Spring Cache Name
+        description: Name of the Spring cache to use for storing flow configurations
+        type: string
+        default: "flowConfigCache"
+  dependencies:
+    - "camel:kamelet"
+    - "camel:log"
+    - "camel:http"
+    - "camel:jackson"
+    - "camel:kafka"
+    - "camel:spring-boot-starter"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Store original message body for preservation
+        - setHeader:
+            name: OriginalMessageBody
+            simple: "${body}"
+        
+        # Set cache key based on flow code
+        - setHeader:
+            name: CacheKey
+            simple: "flow_config_{{flowCode}}"
+        
+        # Set Spring cache operation headers
+        - setHeader:
+            name: SpringCacheName
+            constant: "{{springCacheName}}"
+        - setHeader:
+            name: SpringCacheKey
+            simple: "{{flowCode}}"
+        
+        # Log event before identification
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start identification - flowOccurId: ${header.flowOccurId}, FlowCode: ${header.SpringCacheKey}&level=INFO"
+            pattern: "InOnly"
+
+        
+        # Try to get from Spring cache using custom processor
+        - to: "bean:springCacheProcessorInterne?method=getCachedValue"
+        
+        # Choose based on cache result
+        - choice:
+            when:
+              - simple: "${body} == null"
+                steps:
+                  - log: 
+                      message: "Spring Cache MISS: Fetching flow config for ${header.SpringCacheKey} from referentiel service"
+                      loggingLevel: DEBUG
+                  # Fetch from referentiel service
+                  - doTry:
+                      steps:
+                        - log: 
+                            message: "Original message body preserved: ${header.OriginalMessageBody}"
+                            loggingLevel: DEBUG
+                        - setHeader:
+                            name: CamelHttpMethod
+                            constant: "GET"
+                        - setHeader:
+                            name: Content-Type
+                            constant: "application/json"
+                        - toD: "{{referentielServiceUrl}}/api/flows/{{flowCode}}/complete?bridgeEndpoint=true"
+                        - convertBodyTo: "java.lang.String"
+                        - log: 
+                            message: "Successfully retrieved flow config for ${header.SpringCacheKey} from referentiel service"
+                            loggingLevel: DEBUG
+                        - setHeader:
+                            name: FlowConfiguration
+                            simple: "${body}"
+                        - setHeader:
+                            name: SpringCacheValue
+                            simple: "${body}"
+                        - setBody:
+                            simple: "${header.OriginalMessageBody}"
+                        - log: 
+                            message: "Original message body restored before Spring cache PUT: ${body}"
+                            loggingLevel: DEBUG
+                        # Cache the result in Spring cache
+                        - to: "bean:springCacheProcessorInterne?method=putCachedValue"
+                      doCatch:
+                        - exception: "java.lang.Exception"
+                          steps:
+                            - log: 
+                                message: "Failed to retrieve flow config for ${header.SpringCacheKey} from referentiel service: ${exception.message}"
+                                loggingLevel: ERROR
+                            - setBody:
+                                simple: '{"error":"referentiel_service_unavailable","flowCode":"${header.SpringCacheKey}"}'
+                            - setHeader:
+                                name: FlowConfiguration
+                                simple: "${body}"
+                            - setBody:
+                                simple: "${header.OriginalMessageBody}"
+            otherwise:
+              steps:
+                - log: 
+                    message: "Spring Cache HIT: Using cached flow config for ${header.SpringCacheKey}"
+                    loggingLevel: DEBUG
+                
+                - setHeader:
+                    name: FlowConfiguration
+                    simple: "${body}"
+        
+        # Restore original message body
+        - setBody:
+            simple: "${header.OriginalMessageBody}"
+        - removeHeader: "OriginalMessageBody"
+        
+        # Log event after identification
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End identification - flowOccurId: ${header.flowOccurId}, FlowCode: ${header.SpringCacheKey}&level=INFO"
+            pattern: "InOnly"
+        
+        # Send to sink
+        - to: "kamelet:sink"

@@ -307,6 +307,11 @@ services:
       SERVER_PORT: 8080
       MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,camel,jolokia,prometheus
       
+      # NAS Configuration for file operations
+      PIXEL_NAS_CH_SMB_URL: file:///opt/nas/CH
+      PIXEL_NAS_SHARED_SMB_URL: file:///opt/nas/shared
+      PIXEL_NAS_DATA_SMB_URL: file:///opt/nas/data
+      
     ports:
       - "8082:8080"   # Application port
       - "8782:8778"   # JMX port

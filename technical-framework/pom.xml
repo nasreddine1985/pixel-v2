@@ -21,6 +21,7 @@
         <module>k-db-tx</module>
         <module>k-http-starter</module>
         <module>k-identification</module>
+        <module>k-identification-interne</module>
         <module>k-kafka-publisher</module>
         <module>k-kafka-starter</module>
         <module>k-log-events</module>

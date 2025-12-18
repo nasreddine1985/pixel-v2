@@ -49,5 +49,3 @@ spec:
             constant: {}
         - to:
             uri: "bean:logEventPersistenceProcessor?method=persistLogEventFromJson"
-        - to:
-            uri: "bean:logEventPersistenceProcessor?method=persistLogEvent"

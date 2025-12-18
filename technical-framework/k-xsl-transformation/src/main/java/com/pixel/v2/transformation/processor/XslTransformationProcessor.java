@@ -89,7 +89,7 @@ public class XslTransformationProcessor implements Processor {
     private void processSingleMessage(Exchange exchange, Templates templates, String xmlContent,
             long startTime) throws XslTransformationException {
 
-        logger.info("[XSL-TRANSFORMATION] Processing single message");
+        logger.debug("[XSL-TRANSFORMATION] Processing single message");
 
         try {
             String transformedXml = transformXml(xmlContent, templates);
@@ -102,7 +102,7 @@ public class XslTransformationProcessor implements Processor {
             // Set success headers
             setHeaders(exchange, "SUCCESS", "SINGLE", 1, 1, 0, null, startTime);
 
-            logger.info("[XSL-TRANSFORMATION] ✅ Single message transformed successfully");
+            logger.debug("[XSL-TRANSFORMATION] ✅ Single message transformed successfully");
 
         } catch (Exception e) {
             throw new XslTransformationException("XSL transformation failed: " + e.getMessage(), e);
@@ -189,7 +189,7 @@ public class XslTransformationProcessor implements Processor {
             throw new XslTransformationException(errorDetails);
         }
 
-        logger.info(
+        logger.debug(
                 "[XSL-TRANSFORMATION] ✅ Collection transformation completed - Success: {}, Errors: {}, Status: {}",
                 successCount, errorCount, status);
     }

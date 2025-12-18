@@ -15,12 +15,16 @@ public class LogRoute extends RouteBuilder {
                 // Main route: Consume from flow-summary topic and persist to database
                 from("kamelet:k-kafka-starter?bootstrapServers={{ch.log.kafka.brokers}}&topic={{kmq.starter.kafkaFlowSummaryTopicName}}&groupId={{ch.log.kafka.groupId}}&offsetReset={{ch.log.kafka.offsetReset}}&sinkEndpoint=direct:process-flow-summary-log")
                                 .routeId("log-processing-flow")
-                                .log("K-Kafka Starter kamelet initiated - flow summary message will be processed and persisted");
+                                .log(org.apache.camel.LoggingLevel.DEBUG,
+                                                "K-Kafka Starter kamelet initiated - flow summary message will be processed and persisted")
+                                .to("direct:process-flow-summary-log");
 
                 // Log Events route: Consume from log-events topic and persist to database
                 from("kamelet:k-kafka-starter?bootstrapServers={{ch.log.kafka.brokers}}&topic={{kmq.starter.kafkaLogTopicName}}&groupId={{ch.log.kafka.groupId}}&offsetReset={{ch.log.kafka.offsetReset}}&sinkEndpoint=direct:process-log-events")
                                 .routeId("log-events-processing-flow")
-                                .log("K-Kafka Starter kamelet initiated - log events message will be processed and persisted");
+                                .log(org.apache.camel.LoggingLevel.DEBUG,
+                                                "K-Kafka Starter kamelet initiated - log events message will be processed and persisted")
+                                .to("direct:process-log-events");
 
                 // Processing route: Handle flow summary message and persist to database
                 from("direct:process-flow-summary-log").routeId("log-main-processing")
@@ -33,8 +37,7 @@ public class LogRoute extends RouteBuilder {
                 from("direct:persist-flow-summary-message").routeId("log-message-persistence")
                                 .setHeader("RouteName", constant("CH-Log-Processing"))
                                 .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
-                                .to("kamelet:k-db-flow-summary")
-                ;
+                                .to("kamelet:k-db-flow-summary");
 
                 from("direct:process-log-events").routeId("log-events-processing")
                                 .setHeader("MessageType", constant("LOG_EVENTS"))
@@ -47,8 +50,7 @@ public class LogRoute extends RouteBuilder {
                                 "Persisting log events message with Kafka metadata - Topic: ${header.kafkaTopic}, Offset: ${header.kafkaOffset}")
                                 .setHeader("RouteName", constant("CH-Log-Events-Processing"))
                                 .setHeader("ProcessingNode", simple("${sys.HOSTNAME}"))
-                                .to("kamelet:k-db-log-events")
-                ;
+                                .to("kamelet:k-db-log-events");
 
         }
 }
