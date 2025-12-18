@@ -24,8 +24,11 @@ public class ChRoute extends RouteBuilder {
                         "kamelet:k-xsd-validation?xsdFileName=pacs.008.001.02.ch.02.xsd&validationMode=STRICT";
 
         // Kamelet endpoint for XSL transformation
-        private static final String K_XSL_TRANSFORMATION_ENDPOINT =
-                        "kamelet:k-xsl-transformation?xslFileName=overall-xslt-ch-pacs008-001-02.xsl&transformationMode=STRICT";
+        private static final String K_XSL_PACS008_001_08TO_CDM_TRANSFORMATION_ENDPOINT =
+                        "kamelet:k-xsl-transformation?xslFileName=overall-xslt-ch-pacs008-001-08-CH.xml&transformationMode=STRICT";
+        // Kamelet endpoint for XSL transformation
+        private static final String K_XSL_CDM_TO_PACS008_001_02_TRANSFORMATION_ENDPOINT =
+                        "kamelet:k-xsl-transformation?xslFileName=overall-xslt-ch-CDM-2pacs008-001-02DOM.xml&transformationMode=STRICT";
 
         // Kamelet endpoint for Kafka publisher
         private static final String K_KAFKA_PUBLISHER_ENDPOINT =
@@ -67,17 +70,22 @@ public class ChRoute extends RouteBuilder {
 
                                 // Step 2: Fetch reference data using k-identification-interne
                                 // kamelet
-                                .to(K_IDENTIFICATION_ENDPOINT) // Step 3: XSD Validation using
-                                                               // k-xsd-validation
-                                .to(K_XSD_VALIDATION_ENDPOINT)
+                                .to(K_IDENTIFICATION_ENDPOINT)
+
+                                // Step 3: XSD Validation using
+                                // k-xsd-validation
+                                // .to(K_XSD_VALIDATION_ENDPOINT)
 
                                 // Step 4: XSLT Transformation using k-xsl-transformation
-                                .to(K_XSL_TRANSFORMATION_ENDPOINT)
+                                .to(K_XSL_PACS008_001_08TO_CDM_TRANSFORMATION_ENDPOINT)
 
-                                // Step 5: Publish transformed message to ch-out topic
+                                // Step 5: XSLT Transformation using k-xsl-transformation
+                                .to(K_XSL_CDM_TO_PACS008_001_02_TRANSFORMATION_ENDPOINT)
+
+                                // Step 6: Publish transformed message to ch-out topic
                                 .to(K_KAFKA_PUBLISHER_ENDPOINT)
 
-                                // Step 6: Complete processing
+                                // Step 7: Complete processing
                                 .wireTap(K_LOG_FLOW_SUMMARY_ENDPOINT);
         }
 }
