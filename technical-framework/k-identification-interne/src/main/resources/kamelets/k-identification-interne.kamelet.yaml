@@ -55,23 +55,12 @@ spec:
     from:
       uri: "kamelet:source"
       steps:
-        # Store original message body for preservation
-        - setHeader:
-            name: OriginalMessageBody
-            simple: "${body}"
-        
-        # Set cache key based on flow code
-        - setHeader:
-            name: CacheKey
-            simple: "flow_config_{{flowCode}}"
-        
-        # Set Spring cache operation headers
-        - setHeader:
-            name: SpringCacheName
-            constant: "{{springCacheName}}"
-        - setHeader:
-            name: SpringCacheKey
-            simple: "{{flowCode}}"
+        # Store original message body for preservation and set cache configuration
+        - setHeaders:
+            OriginalMessageBody: "${body}"
+            CacheKey: "flow_config_{{flowCode}}"
+            SpringCacheName: "{{springCacheName}}"
+            SpringCacheKey: "{{flowCode}}"
         
         # Log event before identification
         - setHeader:
@@ -110,12 +99,9 @@ spec:
                         - log: 
                             message: "Successfully retrieved flow config for ${header.SpringCacheKey} from referentiel service"
                             loggingLevel: DEBUG
-                        - setHeader:
-                            name: FlowConfiguration
-                            simple: "${body}"
-                        - setHeader:
-                            name: SpringCacheValue
-                            simple: "${body}"
+                        - setHeaders:
+                            FlowConfiguration: "${body}"
+                            SpringCacheValue: "${body}"
                         - setBody:
                             simple: "${header.OriginalMessageBody}"
                         - log: 
@@ -129,11 +115,8 @@ spec:
                             - log: 
                                 message: "Failed to retrieve flow config for ${header.SpringCacheKey} from referentiel service: ${exception.message}"
                                 loggingLevel: ERROR
-                            - setBody:
-                                simple: '{"error":"referentiel_service_unavailable","flowCode":"${header.SpringCacheKey}"}'
-                            - setHeader:
-                                name: FlowConfiguration
-                                simple: "${body}"
+                            - setHeaders:
+                                FlowConfiguration: '{"error":"referentiel_service_unavailable","flowCode":"${header.SpringCacheKey}"}'
                             - setBody:
                                 simple: "${header.OriginalMessageBody}"
             otherwise:

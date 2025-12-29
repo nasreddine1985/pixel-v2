@@ -104,37 +104,15 @@ spec:
         - log:
             message: "Processing log entry from {{logSource}} with level {{logLevel}}"
             
-        - setHeader:
-            name: "LogLevel"
-            constant: "{{logLevel}}"
-            
-        - setHeader:
-            name: "LogSource"
-            constant: "{{logSource}}"
-            
-        - setHeader:
-            name: "LogCategory"
-            constant: "{{?logCategory}}"
-            
-        - setHeader:
-            name: "CorrelationId"
-            constant: "{{?correlationId}}"
-            
-        - setHeader:
-            name: "EnableAuditTrail"
-            constant: "{{enableAuditTrail}}"
-            
-        - setHeader:
-            name: "IncludeExchangeHeaders"
-            constant: "{{includeExchangeHeaders}}"
-            
-        - setHeader:
-            name: "MaxMessageLength"
-            constant: "{{maxMessageLength}}"
-            
-        - setHeader:
-            name: "ProcessingStartTime"
-            simple: "${date:now}"
+        - setHeaders:
+            LogLevel: "{{logLevel}}"
+            LogSource: "{{logSource}}"
+            LogCategory: "{{?logCategory}}"
+            CorrelationId: "{{?correlationId}}"
+            EnableAuditTrail: "{{enableAuditTrail}}"
+            IncludeExchangeHeaders: "{{includeExchangeHeaders}}"
+            MaxMessageLength: "{{maxMessageLength}}"
+            ProcessingStartTime: "${date:now}"
             
         - choice:
             when:
@@ -149,13 +127,9 @@ spec:
                 - to:
                     uri: "direct:syncLogProcessing"
                     
-        - setHeader:
-            name: "ProcessingEndTime"
-            simple: "${date:now}"
-            
-        - setHeader:
-            name: "ProcessingTime"
-            simple: "${header.ProcessingEndTime} - ${header.ProcessingStartTime}"
+        - setHeaders:
+            ProcessingEndTime: "${date:now}"
+            ProcessingTime: "${header.ProcessingEndTime} - ${header.ProcessingStartTime}"
 
   routes:
     # Synchronous processing route
@@ -211,9 +185,6 @@ spec:
             - log:
                 message: "Handling log processing error: ${exception.message}"
                 loggingLevel: ERROR
-            - setHeader:
-                name: "LogPersistenceStatus"
-                constant: "FAILED"
-            - setHeader:
-                name: "LogPersistenceError"
-                simple: "${exception.message}"
+            - setHeaders:
+                LogPersistenceStatus: "FAILED"
+                LogPersistenceError: "${exception.message}"

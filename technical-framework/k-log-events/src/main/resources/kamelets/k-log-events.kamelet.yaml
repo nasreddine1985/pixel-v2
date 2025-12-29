@@ -53,14 +53,10 @@ spec:
         - doTry:
             steps:
               # Store original body before processing
-              - setHeader:
-                  name: "originalBody"
-                  simple: "${body}"
-              - setHeader:
-                  name: "kafka.KEY"
-                  simple: "${header.flowOccurId}"
-              - setHeader:
-                  name: "logMessage"
+              - setHeaders:
+                  originalBody: "${body}"
+                  kafka.KEY: "${header.flowOccurId}"
+                  logMessage:
                   simple: |
                     {
                       "logId": "LOG-${date:now:yyyyMMddHHmmssSSS}",
