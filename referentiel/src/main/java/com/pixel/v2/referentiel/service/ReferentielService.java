@@ -156,22 +156,30 @@ public class ReferentielService {
      */
     private List<RefFlowDto.FlowFuncPrtyInfo> buildFlowFunctionalProperties(List<Map<String, Object>> results) {
         List<RefFlowDto.FlowFuncPrtyInfo> properties = new ArrayList<>();
+        java.util.Set<String> processedProperties = new java.util.HashSet<>();
         
         for (Map<String, Object> row : results) {
             String prtyFlowName = (String) row.get("prty_flow_name");
             String flowPrtyValue = (String) row.get("flow_prty_value");
+            String prtyFlowTyp = (String) row.get("prty_flow_typ");
             
             // Only add if we have valid functional property data
             if (prtyFlowName != null && !prtyFlowName.trim().isEmpty() && 
                 flowPrtyValue != null && !flowPrtyValue.trim().isEmpty()) {
                 
-                RefFlowDto.FlowFuncPrtyInfo property = new RefFlowDto.FlowFuncPrtyInfo();
-                property.setKey(prtyFlowName);
-                property.setType((String) row.get("prty_flow_typ"));
-                property.setDesc((String) row.get("prty_flow_desc"));
-                property.setValue(flowPrtyValue);
+                // Create a unique key to avoid duplicates
+                String uniqueKey = prtyFlowName + ":" + flowPrtyValue + ":" + prtyFlowTyp;
                 
-                properties.add(property);
+                if (!processedProperties.contains(uniqueKey)) {
+                    RefFlowDto.FlowFuncPrtyInfo property = new RefFlowDto.FlowFuncPrtyInfo();
+                    property.setKey(prtyFlowName);
+                    property.setType(prtyFlowTyp);
+                    property.setDesc((String) row.get("prty_flow_desc"));
+                    property.setValue(flowPrtyValue);
+                    
+                    properties.add(property);
+                    processedProperties.add(uniqueKey);
+                }
             }
         }
         
