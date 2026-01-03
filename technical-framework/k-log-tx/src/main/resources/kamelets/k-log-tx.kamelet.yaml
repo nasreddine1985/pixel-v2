@@ -104,15 +104,30 @@ spec:
         - log:
             message: "Processing log entry from {{logSource}} with level {{logLevel}}"
             
-        - setHeaders:
-            LogLevel: "{{logLevel}}"
-            LogSource: "{{logSource}}"
-            LogCategory: "{{?logCategory}}"
-            CorrelationId: "{{?correlationId}}"
-            EnableAuditTrail: "{{enableAuditTrail}}"
-            IncludeExchangeHeaders: "{{includeExchangeHeaders}}"
-            MaxMessageLength: "{{maxMessageLength}}"
-            ProcessingStartTime: "${date:now}"
+        - setHeader:
+            name: "LogLevel"
+            simple: "{{logLevel}}"
+        - setHeader:
+            name: "LogSource"
+            simple: "{{logSource}}"
+        - setHeader:
+            name: "LogCategory"
+            simple: "{{?logCategory}}"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "{{?correlationId}}"
+        - setHeader:
+            name: "EnableAuditTrail"
+            simple: "{{enableAuditTrail}}"
+        - setHeader:
+            name: "IncludeExchangeHeaders"
+            simple: "{{includeExchangeHeaders}}"
+        - setHeader:
+            name: "MaxMessageLength"
+            simple: "{{maxMessageLength}}"
+        - setHeader:
+            name: "ProcessingStartTime"
+            simple: "${date:now}"
             
         - choice:
             when:
@@ -127,9 +142,12 @@ spec:
                 - to:
                     uri: "direct:syncLogProcessing"
                     
-        - setHeaders:
-            ProcessingEndTime: "${date:now}"
-            ProcessingTime: "${header.ProcessingEndTime} - ${header.ProcessingStartTime}"
+        - setHeader:
+            name: "ProcessingEndTime"
+            simple: "${date:now}"
+        - setHeader:
+            name: "ProcessingTime"
+            simple: "${header.ProcessingEndTime} - ${header.ProcessingStartTime}"
 
   routes:
     # Synchronous processing route
@@ -185,6 +203,9 @@ spec:
             - log:
                 message: "Handling log processing error: ${exception.message}"
                 loggingLevel: ERROR
-            - setHeaders:
-                LogPersistenceStatus: "FAILED"
-                LogPersistenceError: "${exception.message}"
+            - setHeader:
+                name: "LogPersistenceStatus"
+                simple: "FAILED"
+            - setHeader:
+                name: "LogPersistenceError"
+                simple: "${exception.message}"

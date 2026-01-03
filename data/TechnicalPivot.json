@@ -1,0 +1,650 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "http://bnpp.com/TechPivot/schema.json",
+  "title": "Technical Pivot Schema",
+  "description": "JSON Schema for Technical Pivot XML structure",
+  "type": "object",
+  "properties": {
+    "TechPivotRoot": {
+      "$ref": "#/$defs/TechnicalPivot"
+    }
+  },
+  "required": ["TechPivotRoot"],
+  "$defs": {
+    "TechnicalPivot": {
+      "type": "object",
+      "properties": {
+        "FileName": {
+          "type": "string"
+        },
+        "FileContent": {
+          "type": "string"
+        },
+        "Flow": {
+          "$ref": "#/$defs/Flow"
+        },
+        "Input": {
+          "$ref": "#/$defs/Partner"
+        },
+        "Output": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Partner"
+          }
+        },
+        "Properties": {
+          "$ref": "#/$defs/Properties"
+        },
+        "Split": {
+          "$ref": "#/$defs/Split"
+        },
+        "Generic": {
+          "type": "object"
+        },
+        "ParentFlow": {
+          "$ref": "#/$defs/TechnicalPivot"
+        },
+        "Parking": {
+          "$ref": "#/$defs/Parking"
+        },
+        "FlowRules": {
+          "$ref": "#/$defs/FlowRules"
+        }
+      }
+    },
+    "Flow": {
+      "type": "object",
+      "properties": {
+        "FlowID": {
+          "type": "integer"
+        },
+        "FlowCode": {
+          "type": "string"
+        },
+        "FlowName": {
+          "type": "string"
+        },
+        "FlowTypeName": {
+          "type": "string"
+        },
+        "FlowDirection": {
+          "type": "string"
+        },
+        "FlowEnabled": {
+          "type": "string"
+        },
+        "FlowFuncPrty": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Key": {
+                "type": "string"
+              },
+              "Value": {
+                "type": "string"
+              }
+            },
+            "required": ["Key", "Value"]
+          }
+        },
+        "Countries": {
+          "type": "object",
+          "properties": {
+            "Country": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "ExternalServices": {
+          "$ref": "#/$defs/ExternalServices"
+        }
+      }
+    },
+    "ExternalServices": {
+      "type": "object",
+      "properties": {
+        "ExternalService": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExternalService"
+          }
+        }
+      }
+    },
+    "ExternalService": {
+      "type": "object",
+      "properties": {
+        "ServiceCode": {
+          "type": "string"
+        },
+        "SnapshotKey": {
+          "type": "string"
+        },
+        "Request": {
+          "$ref": "#/$defs/RequestReply"
+        },
+        "Reply": {
+          "$ref": "#/$defs/RequestReply"
+        },
+        "LateReply": {
+          "$ref": "#/$defs/RequestReply"
+        },
+        "FeedbackReply": {
+          "$ref": "#/$defs/RequestReply"
+        },
+        "TimeoutSoft": {
+          "type": "integer"
+        },
+        "TimeoutHard": {
+          "type": "integer"
+        }
+      },
+      "required": ["ServiceCode", "Request"]
+    },
+    "RequestReply": {
+      "type": "object",
+      "properties": {
+        "Transport": {
+          "$ref": "#/$defs/JMS"
+        },
+        "Content": {
+          "type": "object"
+        }
+      }
+    },
+    "JMS": {
+      "type": "object",
+      "properties": {
+        "QName": {
+          "type": "string"
+        }
+      }
+    },
+    "Partner": {
+      "type": "object",
+      "properties": {
+        "FileName": {
+          "type": "string"
+        },
+        "PartnerCode": {
+          "type": "string"
+        },
+        "PartnerName": {
+          "type": "string"
+        },
+        "PartnerTypeName": {
+          "type": "string"
+        },
+        "CharsetCode": {
+          "type": "string"
+        },
+        "Transport": {
+          "$ref": "#/$defs/Transport"
+        },
+        "Rule": {
+          "$ref": "#/$defs/Rule"
+        },
+        "PartnerEnabled": {
+          "type": "string"
+        },
+        "BMSAEnabled": {
+          "type": "string"
+        }
+      }
+    },
+    "Transport": {
+      "type": "object",
+      "oneOf": [
+        {
+          "properties": {
+            "CFT": {
+              "$ref": "#/$defs/CFT"
+            }
+          },
+          "required": ["CFT"]
+        },
+        {
+          "properties": {
+            "MQS": {
+              "$ref": "#/$defs/MQS"
+            }
+          },
+          "required": ["MQS"]
+        },
+        {
+          "properties": {
+            "JMS": {
+              "$ref": "#/$defs/JMS"
+            }
+          },
+          "required": ["JMS"]
+        },
+        {
+          "properties": {
+            "HTTP": {
+              "$ref": "#/$defs/HTTP"
+            }
+          },
+          "required": ["HTTP"]
+        },
+        {
+          "properties": {
+            "EMAIL": {
+              "$ref": "#/$defs/EMAIL"
+            }
+          },
+          "required": ["EMAIL"]
+        },
+        {
+          "properties": {
+            "SFTP": {
+              "$ref": "#/$defs/SFTP"
+            }
+          },
+          "required": ["SFTP"]
+        }
+      ]
+    },
+    "CFT": {
+      "type": "object",
+      "properties": {
+        "IDF": {
+          "type": "string"
+        },
+        "PartnerCode": {
+          "type": "string"
+        },
+        "DirectoryName": {
+          "type": "string"
+        },
+        "PrefFileName": {
+          "type": "string"
+        }
+      }
+    },
+    "MQS": {
+      "type": "object",
+      "properties": {
+        "QManager": {
+          "type": "string"
+        },
+        "QName": {
+          "type": "string"
+        }
+      }
+    },
+    "HTTP": {
+      "type": "object",
+      "properties": {
+        "URI": {
+          "type": "string"
+        },
+        "PartnerCode": {
+          "type": "string"
+        },
+        "ClientPORT": {
+          "type": "string"
+        },
+        "ClientHOST": {
+          "type": "string"
+        },
+        "ClientMETHOD": {
+          "type": "string"
+        },
+        "ClientBODY": {
+          "type": "string"
+        },
+        "isSecure": {
+          "type": "string"
+        },
+        "ExpectedCodeSucces": {
+          "type": "string"
+        },
+        "ApigeeHOST": {
+          "type": "string"
+        },
+        "ApigeePORT": {
+          "type": "string"
+        },
+        "ApigeeURI": {
+          "type": "string"
+        },
+        "ApigeeMETHOD": {
+          "type": "string"
+        },
+        "throughput_Max": {
+          "type": "string"
+        },
+        "nb_retry": {
+          "type": "string"
+        }
+      }
+    },
+    "EMAIL": {
+      "type": "object",
+      "properties": {
+        "email_name": {
+          "type": "string"
+        },
+        "from": {
+          "type": "string"
+        },
+        "to": {
+          "type": "string"
+        },
+        "cc": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "body": {
+          "type": "string"
+        },
+        "signature": {
+          "type": "string"
+        },
+        "attachement": {
+          "type": "boolean"
+        },
+        "OwnerApp": {
+          "type": "string"
+        },
+        "Param": {
+          "type": "string"
+        },
+        "ReplacementContent": {
+          "$ref": "#/$defs/ReplacementContent"
+        }
+      }
+    },
+    "ReplacementContent": {
+      "type": "object",
+      "properties": {
+        "Properties": {
+          "$ref": "#/$defs/ReplacementProperties"
+        },
+        "attachments": {
+          "$ref": "#/$defs/Attachments"
+        }
+      }
+    },
+    "ReplacementProperties": {
+      "type": "object",
+      "properties": {
+        "SimpleProperty": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Value": {
+                "type": "string"
+              },
+              "Key": {
+                "type": "string"
+              }
+            },
+            "required": ["Value", "Key"]
+          }
+        },
+        "ComplexProperty": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lines": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "data": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "isHeader": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["isHeader"]
+                }
+              },
+              "key": {
+                "type": "string"
+              }
+            },
+            "required": ["key"]
+          }
+        }
+      }
+    },
+    "Attachments": {
+      "type": "object",
+      "properties": {
+        "attachment": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "attachmentName": {
+                "type": "string"
+              },
+              "contentType": {
+                "type": "string"
+              },
+              "textAttachmentContent": {
+                "type": "string"
+              },
+              "binaryAttachmentContent": {
+                "type": "string"
+              }
+            },
+            "required": ["contentType"]
+          }
+        }
+      }
+    },
+    "SFTP": {
+      "type": "object",
+      "properties": {
+        "DirectoryName": {
+          "type": "string"
+        },
+        "PrefFileName": {
+          "type": "string"
+        }
+      }
+    },
+    "Split": {
+      "type": "object",
+      "properties": {
+        "ElementIndex": {
+          "type": "integer"
+        },
+        "IsLast": {
+          "type": "boolean"
+        },
+        "ParentIndex": {
+          "type": "integer"
+        },
+        "Type": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 32767
+        },
+        "PayLoad": {
+          "type": "string"
+        },
+        "FuncKey": {
+          "type": "string"
+        },
+        "ParentSplit": {
+          "$ref": "#/$defs/Split"
+        },
+        "IsDummy": {
+          "type": "boolean"
+        }
+      },
+      "required": ["ElementIndex", "IsLast", "Type"]
+    },
+    "Delay": {
+      "type": "object",
+      "oneOf": [
+        {
+          "properties": {
+            "DelayInSeconds": {
+              "type": "integer"
+            }
+          },
+          "required": ["DelayInSeconds"]
+        },
+        {
+          "properties": {
+            "DelayInMinutes": {
+              "type": "integer"
+            }
+          },
+          "required": ["DelayInMinutes"]
+        },
+        {
+          "properties": {
+            "DelayInHours": {
+              "type": "integer"
+            }
+          },
+          "required": ["DelayInHours"]
+        },
+        {
+          "properties": {
+            "DelayInDays": {
+              "type": "integer"
+            }
+          },
+          "required": ["DelayInDays"]
+        }
+      ]
+    },
+    "Parking": {
+      "type": "object",
+      "properties": {
+        "SnapshotKey": {
+          "type": "string"
+        },
+        "Restart": {
+          "type": "object",
+          "oneOf": [
+            {
+              "properties": {
+                "Delay": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Delay"
+                  }
+                }
+              },
+              "required": ["Delay"]
+            },
+            {
+              "properties": {
+                "Timestamp": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "required": ["Timestamp"]
+            }
+          ]
+        },
+        "IgnoreSnapshotNotFound": {
+          "type": "string"
+        },
+        "PostParking": {
+          "type": "object",
+          "properties": {
+            "UnparkWithNewOccurrenceId": {
+              "type": "boolean"
+            },
+            "RemoveProperties": {
+              "$ref": "#/$defs/Properties"
+            },
+            "AddProperties": {
+              "$ref": "#/$defs/Properties"
+            }
+          }
+        }
+      },
+      "required": ["SnapshotKey", "Restart"]
+    },
+    "FlowRules": {
+      "type": "object",
+      "properties": {
+        "FlowSeparation": {
+          "$ref": "#/$defs/FlowSeparation"
+        },
+        "FlowControl": {
+          "$ref": "#/$defs/FlowControl"
+        },
+        "FlowRetention": {
+          "$ref": "#/$defs/FlowRetention"
+        }
+      }
+    },
+    "FlowSeparation": {
+      "type": "object",
+      "properties": {
+        "JMSPriority": {
+          "type": "integer"
+        },
+        "UsePayload": {
+          "type": "boolean"
+        },
+        "Urgency": {
+          "type": "string"
+        }
+      }
+    },
+    "FlowControl": {
+      "type": "object",
+      "properties": {
+        "FlowControlEnabled": {
+          "type": "string"
+        },
+        "FlowMaximum": {
+          "type": "integer"
+        }
+      }
+    },
+    "FlowRetention": {
+      "type": "object",
+      "properties": {
+        "FlowRetentionEnabled": {
+          "type": "string"
+        },
+        "RetentionCyclePeriod": {
+          "type": "integer"
+        },
+        "FlowStatus": {
+          "type": "string"
+        }
+      }
+    },
+    "Properties": {
+      "type": "object",
+      "description": "Functional process properties - structure depends on implementation"
+    },
+    "Rule": {
+      "type": "object",
+      "description": "Flow catalog rule - structure depends on implementation"
+    }
+  }
+}

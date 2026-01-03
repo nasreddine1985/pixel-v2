@@ -19,6 +19,7 @@
         <module>k-cft-starter</module>
         <module>k-db</module>
         <module>k-db-tx</module>
+        <module>k-dumpcheck</module>
         <module>k-http-starter</module>
         <module>k-identification</module>
         <module>k-identification-interne</module>
@@ -30,6 +31,7 @@
         <module>k-message-concat</module>
         <module>k-message-split</module>
         <module>k-mq-starter</module>
+        <module>k-techpivot-enrichment</module>
         <module>k-xsd-validation</module>
         <module>k-xsl-transformation</module>
     </modules>

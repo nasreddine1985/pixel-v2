@@ -51,21 +51,20 @@ spec:
     - "camel:jackson"
     - "camel:kafka"
     - "camel:spring-boot-starter"
+    - "camel:groovy"
   template:
     from:
       uri: "kamelet:source"
       steps:
         # Store original message body for preservation and set cache configuration
-        - setHeaders:
-            OriginalMessageBody: "${body}"
-            CacheKey: "flow_config_{{flowCode}}"
-            SpringCacheName: "{{springCacheName}}"
-            SpringCacheKey: "{{flowCode}}"
+        - script:
+            groovy: |
+              exchange.in.headers['OriginalMessageBody'] = exchange.in.body
+              exchange.in.headers['CacheKey'] = 'flow_config_{{flowCode}}'
+              exchange.in.headers['SpringCacheName'] = '{{springCacheName}}'
+              exchange.in.headers['SpringCacheKey'] = '{{flowCode}}'
+              exchange.in.headers['CamelKameletFlowId'] = new java.text.SimpleDateFormat('yyyyMMddHHmmssSSS').format(new Date())
         
-        # Log event before identification
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
             uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start identification - flowOccurId: ${header.flowOccurId}, FlowCode: ${header.SpringCacheKey}&level=INFO"
             pattern: "InOnly"
@@ -99,9 +98,10 @@ spec:
                         - log: 
                             message: "Successfully retrieved flow config for ${header.SpringCacheKey} from referentiel service"
                             loggingLevel: DEBUG
-                        - setHeaders:
-                            FlowConfiguration: "${body}"
-                            SpringCacheValue: "${body}"
+                        - script:
+                            groovy: |
+                              exchange.in.headers['FlowConfiguration'] = exchange.in.body
+                              exchange.in.headers['SpringCacheValue'] = exchange.in.body
                         - setBody:
                             simple: "${header.OriginalMessageBody}"
                         - log: 
@@ -115,8 +115,9 @@ spec:
                             - log: 
                                 message: "Failed to retrieve flow config for ${header.SpringCacheKey} from referentiel service: ${exception.message}"
                                 loggingLevel: ERROR
-                            - setHeaders:
-                                FlowConfiguration: '{"error":"referentiel_service_unavailable","flowCode":"${header.SpringCacheKey}"}'
+                            - setHeader:
+                                name: "FlowConfiguration"
+                                simple: '{"error":"referentiel_service_unavailable","flowCode":"${header.SpringCacheKey}"}'
                             - setBody:
                                 simple: "${header.OriginalMessageBody}"
             otherwise:
@@ -135,9 +136,9 @@ spec:
         - removeHeader: "OriginalMessageBody"
         
         # Log event after identification
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - script:
+            groovy: |
+              exchange.in.headers['CamelKameletFlowId'] = new java.text.SimpleDateFormat('yyyyMMddHHmmssSSS').format(new Date())
         - toD:
             uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End identification - flowOccurId: ${header.flowOccurId}, FlowCode: ${header.SpringCacheKey}&level=INFO"
             pattern: "InOnly"
