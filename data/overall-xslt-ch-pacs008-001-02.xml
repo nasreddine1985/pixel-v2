@@ -482,7 +482,7 @@
 						<pfx3:TxIdInf>
 							<pfx3:PmtId>
 								<xsl:choose>
-									<xsl:when test="../../../FlowCode=&quot;OCHSIC&quot; and (pfx2:PmtTpInf/pfx2:LclInstrm/pfx2:Prtry='ESRDEB' or pfx2:PmtTpInf/pfx2:LclInstrm/pfx2:Prtry='IPIDEB')"/>
+									<xsl:when test="../../../FlowCode=&quot;ICHSIC&quot; and (pfx2:PmtTpInf/pfx2:LclInstrm/pfx2:Prtry='ESRDEB' or pfx2:PmtTpInf/pfx2:LclInstrm/pfx2:Prtry='IPIDEB')"/>
 									<xsl:otherwise>
 										<xsl:if test="./pfx2:PmtId/pfx2:InstrId">
 											<pfx3:InstrId>

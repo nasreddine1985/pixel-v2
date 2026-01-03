@@ -656,16 +656,16 @@ CREATE TABLE tib_audit_tec.ref_postflow_notify (
 
 ## Sample Data Configuration
 
-### OCHSIC Flow Example
+### ICHSIC Flow Example
 
-The schema includes comprehensive sample data for an OCHSIC (CH Switzerland ACH Clearing) payment flow that demonstrates the complete integration pattern.
+The schema includes comprehensive sample data for an ICHSIC (CH Switzerland ACH Clearing) payment flow that demonstrates the complete integration pattern.
 
 #### Flow Configuration
 
 ```sql
--- OCHSIC Payment Flow
-Flow Code: OCHSIC
-Flow Name: OCHSIC Payment Flow
+-- ICHSIC Payment Flow
+Flow Code: ICHSIC
+Flow Name: ICHSIC Payment Flow
 Direction: BID (Bidirectional)
 Type: Payment Processing
 Application: PIXEL (Pixel Integration Platform)
@@ -698,7 +698,7 @@ Partner Code: DOME
 **MQ Transport (CHBANK01 - General Partner)**
 
 ```sql
-Queue Name: OCHSIC.QUEUE
+Queue Name: ICHSIC.QUEUE
 Queue Manager: QM_PIXEL_V2
 ```
 
@@ -812,10 +812,10 @@ CREATE INDEX idx_func_process_prty_prty_flow_id ON tib_audit_tec.ref_func_proces
 
 ## Sample Data Initialization
 
-The schema includes comprehensive sample data through the `insert_ochsic_sample_data.sql` script:
+The schema includes comprehensive sample data through the `insert_ichsic_sample_data.sql` script:
 
 - **Reference Data**: Applications, flow types, partner types, countries, charsets, route rules
-- **OCHSIC Flow**: Complete payment flow configuration with three-partner setup
+- **ICHSIC Flow**: Complete payment flow configuration with three-partner setup
 - **Transport Configurations**: MQ, MQS, and CFT transport protocols
 - **Functional Properties**: Property definitions and process-specific bindings
 - **Verification Queries**: Comprehensive validation queries for data integrity

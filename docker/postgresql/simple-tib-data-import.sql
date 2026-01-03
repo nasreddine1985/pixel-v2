@@ -39,7 +39,7 @@ INSERT INTO TIB_AUDIT_TEC.REF_FLOW (FLOW_ID,FUNC_PROCESS_ID,FLOW_TYP_ID,TECH_PRO
 (69,42,1,5,'Denmark OUT SWIFT MT','OUT','ODKSWIFT','Y',NULL,NULL,1,0),
 (70,44,4,7,'Denmark IN CFT ACK OUT SWIFT MT','IN','IDKSWCFT2','Y',NULL,NULL,1,0),
 (71,45,1,136,'Switzerland IN SEPA SIC','IN','ICHSIC','Y',to_timestamp('15/06/20 10:30:00','DD/MM/RR HH24:MI:SS'),NULL,1,0),
-(72,46,1,42,'Switzerland OUT SEPA SIC','OUT','OCHSIC','Y',to_timestamp('15/06/20 10:30:01','DD/MM/RR HH24:MI:SS'),NULL,1,0);
+(72,46,1,42,'Switzerland OUT SEPA SIC','OUT','ICHSIC','Y',to_timestamp('15/06/20 10:30:01','DD/MM/RR HH24:MI:SS'),NULL,1,0);
 
 -- Insert sample flow rules data (based on actual table structure)
 INSERT INTO TIB_AUDIT_TEC.REF_FLOW_RULES (FLOWCODE, TRANSPORTTYPE, ISUNITARY, PRIORITY, URGENCY, FLOWCONTROLLEDENABLED, FLOWMAXIMUM, FLOWRETENTIONENABLED, RETENTIONCYCLEPERIOD, WRITE_FILE, MINREQUIREDFILESIZE, IGNOREOUTPUTDUPCHECK, LOGALL) VALUES
@@ -54,7 +54,7 @@ INSERT INTO TIB_AUDIT_TEC.REF_FLOW_RULES (FLOWCODE, TRANSPORTTYPE, ISUNITARY, PR
 ('OCZSWCFT1', 'CFT', 'true', 'Medium', 'Medium', 'true', 200, 'true', '30days', 'true', 1024, 'false', 'true'),
 ('OCZSWCFT3', 'CFT', 'true', 'Medium', 'Medium', 'true', 200, 'true', '30days', 'true', 1024, 'false', 'true'),
 ('ICHSIC', 'MQ', 'false', 'High', 'Medium', 'true', 800, 'true', '45days', 'true', 1536, 'false', 'true'),
-('OCHSIC', 'MQ', 'false', 'High', 'Medium', 'true', 800, 'true', '45days', 'true', 1536, 'false', 'true');
+('ICHSIC', 'MQ', 'false', 'High', 'Medium', 'true', 800, 'true', '45days', 'true', 1536, 'false', 'true');
 
 -- Insert sample flow country data (based on actual table structure - just flow_id and country_id)
 INSERT INTO TIB_AUDIT_TEC.REF_FLOW_COUNTRY (FLOW_ID, COUNTRY_ID) VALUES

@@ -15,7 +15,7 @@ RUN mkdir -p /docker-entrypoint-initdb.d/
 # Copy initialization scripts
 COPY init_pixel_v2_schema.sql /docker-entrypoint-initdb.d/
 COPY init_tib_audit_tec_schema.sql /docker-entrypoint-initdb.d/
-COPY insert_ochsic_sample_data.sql /docker-entrypoint-initdb.d/
+COPY insert_ichsic_sample_data.sql /docker-entrypoint-initdb.d/
 COPY postgresql.conf /etc/postgresql/postgresql.conf
 COPY pg_hba.conf /etc/postgresql/pg_hba.conf
 

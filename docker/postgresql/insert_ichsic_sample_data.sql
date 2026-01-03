@@ -1,6 +1,6 @@
 -- ========================================
 -- Sample Data Insert Script for TIB_AUDIT_TEC
--- Flow: OCHSIC with MQ Transport
+-- Flow: ICHSIC with MQ Transport
 -- ========================================
 
 -- ========================================
@@ -57,12 +57,12 @@ VALUES
 ON CONFLICT (rule_name) DO NOTHING;
 
 -- ========================================
--- OCHSIC SPECIFIC SAMPLE DATA INSERTS
+-- ICHSIC SPECIFIC SAMPLE DATA INSERTS
 -- ========================================
 
 -- 7. Insert Functional Process
 INSERT INTO tib_audit_tec.ref_func_process (func_process_name, creation_dte, update_dte)
-VALUES ('OCHSIC_PROCESSING', NOW(), NOW())
+VALUES ('ICHSIC_PROCESSING', NOW(), NOW())
 ON CONFLICT (func_process_name) DO NOTHING;
 
 -- 8. Insert Technical Process
@@ -144,7 +144,7 @@ INSERT INTO tib_audit_tec.ref_transport_mqs (
 )
 SELECT 
     t.transport_id,
-    'OCHSIC.QUEUE',
+    'ICHSIC.QUEUE',
     'QM_PIXEL_V2'
 FROM tib_audit_tec.ref_transport t
 WHERE t.transport_typ = 'MQ'
@@ -199,9 +199,9 @@ SELECT
     fp.func_process_id,
     ft.flow_typ_id,
     tp.tech_process_id,
-    'OCHSIC Payment Flow',
+    'ICHSIC Payment Flow',
     'BID',
-    'OCHSIC',
+    'ICHSIC',
     'Y',
     NOW(),
     NOW(),
@@ -211,7 +211,7 @@ FROM tib_audit_tec.ref_func_process fp
 CROSS JOIN tib_audit_tec.ref_flow_typ ft
 CROSS JOIN tib_audit_tec.ref_tech_process tp
 CROSS JOIN tib_audit_tec.ref_application app
-WHERE fp.func_process_name = 'OCHSIC_PROCESSING'
+WHERE fp.func_process_name = 'ICHSIC_PROCESSING'
   AND ft.flow_typ_name = 'Payment Processing'
   AND tp.tech_process_name = 'MQ_TRANSPORT_PROCESS'
   AND app.application_code = 'PIXEL'
@@ -248,7 +248,7 @@ CROSS JOIN tib_audit_tec.ref_transport t
 CROSS JOIN tib_audit_tec.ref_route_rule rr
 CROSS JOIN tib_audit_tec.ref_charset_encoding ce
 WHERE p.partner_code = 'CHBANK01'
-  AND f.flow_code = 'OCHSIC'
+  AND f.flow_code = 'ICHSIC'
   AND t.transport_typ = 'MQ'
   AND rr.rule_name = 'DEFAULT_ROUTING'
   AND ce.charset_code = 'UTF-8'
@@ -284,7 +284,7 @@ CROSS JOIN tib_audit_tec.ref_transport t
 CROSS JOIN tib_audit_tec.ref_route_rule rr
 CROSS JOIN tib_audit_tec.ref_charset_encoding ce
 WHERE p.partner_code = 'CHSIC'
-  AND f.flow_code = 'OCHSIC'
+  AND f.flow_code = 'ICHSIC'
   AND t.transport_typ = 'MQS'
   AND rr.rule_name = 'DEFAULT_ROUTING'
   AND ce.charset_code = 'UTF-8'
@@ -320,7 +320,7 @@ CROSS JOIN tib_audit_tec.ref_transport t
 CROSS JOIN tib_audit_tec.ref_route_rule rr
 CROSS JOIN tib_audit_tec.ref_charset_encoding ce
 WHERE p.partner_code = 'DOME'
-  AND f.flow_code = 'OCHSIC'
+  AND f.flow_code = 'ICHSIC'
   AND t.transport_typ = 'CFT'
   AND rr.rule_name = 'CHIPS_RULE'
   AND ce.charset_code = 'UTF-8'
@@ -336,7 +336,7 @@ SELECT
     c.country_id
 FROM tib_audit_tec.ref_flow f
 CROSS JOIN tib_audit_tec.ref_country c
-WHERE f.flow_code = 'OCHSIC'
+WHERE f.flow_code = 'ICHSIC'
   AND c.country_iso_code = 'CH'
 ON CONFLICT (flow_id, country_id) DO NOTHING;
 
@@ -357,7 +357,7 @@ INSERT INTO tib_audit_tec.ref_flow_rules (
     logall
 )
 VALUES (
-    'OCHSIC',
+    'ICHSIC',
     'MQ',
     'true',
     1,
@@ -373,7 +373,7 @@ VALUES (
 )
 ON CONFLICT (flowcode) DO NOTHING;
 
--- 16. Insert Functional Properties for OCHSIC flow
+-- 16. Insert Functional Properties for ICHSIC flow
 -- Insert property flow definitions
 INSERT INTO tib_audit_tec.ref_prty_flow (prty_flow_id, prty_flow_name, prty_flow_desc, prty_flow_typ) VALUES
 (1, 'BIC', 'FP for CH SIC CLEARING Incoming payments', 'Enrichment'),
@@ -382,7 +382,7 @@ INSERT INTO tib_audit_tec.ref_prty_flow (prty_flow_id, prty_flow_name, prty_flow
 (4, 'Application', 'FP for CH SIC CLEARING Incoming payments', 'Application')
 ON CONFLICT (prty_flow_id) DO NOTHING;
 
--- 17. Insert functional process properties with values for OCHSIC flow
+-- 17. Insert functional process properties with values for ICHSIC flow
 INSERT INTO tib_audit_tec.ref_func_process_prty (func_process_id, prty_flow_id, flow_prty_value) VALUES
 (1, 1, 'BPPBCHGGXXX'),
 (1, 2, 'P01'),
@@ -414,7 +414,7 @@ JOIN tib_audit_tec.ref_flow_typ ft ON f.flow_typ_id = ft.flow_typ_id
 JOIN tib_audit_tec.ref_func_process fp ON f.func_process_id = fp.func_process_id
 JOIN tib_audit_tec.ref_tech_process tp ON f.tech_process_id = tp.tech_process_id
 JOIN tib_audit_tec.ref_application app ON f.application_id = app.application_id
-WHERE f.flow_code = 'OCHSIC';
+WHERE f.flow_code = 'ICHSIC';
 
 -- Show flow-partner relationships (enhanced)
 SELECT 
@@ -435,7 +435,7 @@ JOIN tib_audit_tec.ref_partner_typ pt ON p.partner_type_id = pt.partner_type_id
 JOIN tib_audit_tec.ref_transport t ON fp.transport_id = t.transport_id
 JOIN tib_audit_tec.ref_charset_encoding ce ON fp.charset_encoding_id = ce.charset_encoding_id
 JOIN tib_audit_tec.ref_route_rule rr ON fp.rule_id = rr.rule_id
-WHERE f.flow_code = 'OCHSIC'
+WHERE f.flow_code = 'ICHSIC'
 ORDER BY fp.partner_direction, p.partner_code;
 
 -- Show flow-country relationships
@@ -448,7 +448,7 @@ SELECT
 FROM tib_audit_tec.ref_flow_country fc
 JOIN tib_audit_tec.ref_flow f ON fc.flow_id = f.flow_id
 JOIN tib_audit_tec.ref_country c ON fc.country_id = c.country_id
-WHERE f.flow_code = 'OCHSIC';
+WHERE f.flow_code = 'ICHSIC';
 
 -- Show flow rules
 SELECT 
@@ -462,7 +462,7 @@ SELECT
     flowretentionenabled,
     retentioncycleperiod
 FROM tib_audit_tec.ref_flow_rules
-WHERE flowcode = 'OCHSIC';
+WHERE flowcode = 'ICHSIC';
 
 -- Show MQ transport configuration
 SELECT 
@@ -490,7 +490,7 @@ SELECT
 FROM tib_audit_tec.ref_transport_cft tcft
 JOIN tib_audit_tec.ref_transport t ON tcft.transport_id = t.transport_id;
 
--- Show functional properties for OCHSIC flow
+-- Show functional properties for ICHSIC flow
 SELECT 
     fp.func_process_name,
     rfpp.func_process_id,
@@ -502,11 +502,11 @@ SELECT
 FROM tib_audit_tec.ref_func_process_prty rfpp
 JOIN tib_audit_tec.ref_func_process fp ON fp.func_process_id = rfpp.func_process_id
 JOIN tib_audit_tec.ref_prty_flow rpf ON rpf.prty_flow_id = rfpp.prty_flow_id
-WHERE fp.func_process_name = 'OCHSIC_PROCESSING'
+WHERE fp.func_process_name = 'ICHSIC_PROCESSING'
 ORDER BY rfpp.prty_flow_id;
 
-RAISE NOTICE 'Sample data for OCHSIC flow inserted successfully!';
-RAISE NOTICE 'Flow Code: OCHSIC';
+RAISE NOTICE 'Sample data for ICHSIC flow inserted successfully!';
+RAISE NOTICE 'Flow Code: ICHSIC';
 RAISE NOTICE 'Transport: MQ';
 RAISE NOTICE 'Country: Switzerland (CH)';
 RAISE NOTICE 'Charset: UTF-8';

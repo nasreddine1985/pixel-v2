@@ -209,7 +209,7 @@ GRANT EXECUTE ON FUNCTION pixel_v2.update_updated_at_column() TO pixelv2;
 \i /docker-entrypoint-initdb.d/init_tib_audit_tec_schema.sql
 
 -- Include sample data for TIB_AUDIT_TEC schema
-\i /docker-entrypoint-initdb.d/insert_ochsic_sample_data.sql
+\i /docker-entrypoint-initdb.d/insert_ichsic_sample_data.sql
 
 -- Display setup completion message
 DO $$
