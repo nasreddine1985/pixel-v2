@@ -83,7 +83,7 @@ erDiagram
     }
 
     REF_TRANSPORT_HTTP {
-        bigint transport_id PK FK
+        bigint transport_id PK
         varchar http_uri
         varchar http_partner_code
         varchar client_port
@@ -101,7 +101,7 @@ erDiagram
     }
 
     REF_TRANSPORT_EMAIL {
-        bigint transport_id PK FK
+        bigint transport_id PK
         varchar email_name UK
         varchar email_from
         varchar email_recipient_to
@@ -113,18 +113,18 @@ erDiagram
     }
 
     REF_TRANSPORT_JMS {
-        bigint transport_id PK FK
+        bigint transport_id PK
         varchar jms_q_name UK
     }
 
     REF_TRANSPORT_MQS {
-        bigint transport_id PK FK
+        bigint transport_id PK
         varchar mqs_q_name
         varchar mqs_q_manager
     }
 
     REF_TRANSPORT_CFT {
-        bigint transport_id PK FK
+        bigint transport_id PK
         varchar cft_idf
         varchar cft_partner_code
     }
