@@ -32,6 +32,10 @@ public class RefFlowCountry {
     @JoinColumn(name = "FLOW_ID", insertable = false, updatable = false)
     private RefFlow refFlow;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "COUNTRY_ID", insertable = false, updatable = false)
+    private RefCountry country;
+
     // Default constructor
     public RefFlowCountry() {
         // Required for JPA
@@ -111,5 +115,13 @@ public class RefFlowCountry {
 
     public void setRefFlow(RefFlow refFlow) {
         this.refFlow = refFlow;
+    }
+
+    public RefCountry getCountry() {
+        return country;
+    }
+
+    public void setCountry(RefCountry country) {
+        this.country = country;
     }
 }

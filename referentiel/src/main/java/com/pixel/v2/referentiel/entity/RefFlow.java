@@ -7,6 +7,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -60,6 +62,23 @@ public class RefFlow {
 
     @OneToMany(mappedBy = "refFlow", fetch = FetchType.LAZY)
     private List<RefFlowPartner> partners;
+
+    // Many-to-one relationships with reference tables
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "FUNC_PROCESS_ID", insertable = false, updatable = false)
+    private RefFuncProcess funcProcess;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "FLOW_TYP_ID", insertable = false, updatable = false)
+    private RefFlowTyp flowTyp;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "TECH_PROCESS_ID", insertable = false, updatable = false)
+    private RefTechProcess techProcess;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "APPLICATION_ID", insertable = false, updatable = false)
+    private RefApplication application;
 
     // Default constructor
     public RefFlow() {
@@ -177,5 +196,37 @@ public class RefFlow {
 
     public void setPartners(List<RefFlowPartner> partners) {
         this.partners = partners;
+    }
+
+    public RefFuncProcess getFuncProcess() {
+        return funcProcess;
+    }
+
+    public void setFuncProcess(RefFuncProcess funcProcess) {
+        this.funcProcess = funcProcess;
+    }
+
+    public RefFlowTyp getFlowTyp() {
+        return flowTyp;
+    }
+
+    public void setFlowTyp(RefFlowTyp flowTyp) {
+        this.flowTyp = flowTyp;
+    }
+
+    public RefTechProcess getTechProcess() {
+        return techProcess;
+    }
+
+    public void setTechProcess(RefTechProcess techProcess) {
+        this.techProcess = techProcess;
+    }
+
+    public RefApplication getApplication() {
+        return application;
+    }
+
+    public void setApplication(RefApplication application) {
+        this.application = application;
     }
 }

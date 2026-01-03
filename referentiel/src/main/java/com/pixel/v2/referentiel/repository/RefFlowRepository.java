@@ -1,168 +1,149 @@
 package com.pixel.v2.referentiel.repository;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.pixel.v2.referentiel.entity.RefFlow;
-import com.pixel.v2.referentiel.entity.RefFlowRules;
-import com.pixel.v2.referentiel.entity.RefFlowCountry;
-import com.pixel.v2.referentiel.entity.RefFlowPartner;
-import com.pixel.v2.referentiel.entity.RefCharsetEncoding;
-import com.pixel.v2.referentiel.model.RefFlowCompleteDto;
-import com.pixel.v2.referentiel.model.RefFlowCompleteDto.RefCharsetEncodingDto;
-import com.pixel.v2.referentiel.model.RefFlowCompleteDto.RefFlowCountryDto;
-import com.pixel.v2.referentiel.model.RefFlowCompleteDto.RefFlowPartnerDto;
-import com.pixel.v2.referentiel.model.RefFlowCompleteDto.RefFlowRulesDto;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
- * Repository for accessing TIB_AUDIT_TEC schema tables using JPA Provides methods to retrieve
- * RefFlow data with related information
+ * Repository for complex referentiel queries that match the SQL structure
  */
 @Repository
-public class RefFlowRepository {
-
-    private final RefFlowJpaRepository refFlowJpaRepository;
-    private final RefFlowRulesJpaRepository refFlowRulesJpaRepository;
-    private final RefCharsetEncodingJpaRepository refCharsetEncodingJpaRepository;
-
-    @Autowired
-    public RefFlowRepository(RefFlowJpaRepository refFlowJpaRepository,
-            RefFlowRulesJpaRepository refFlowRulesJpaRepository,
-            RefCharsetEncodingJpaRepository refCharsetEncodingJpaRepository) {
-        this.refFlowJpaRepository = refFlowJpaRepository;
-        this.refFlowRulesJpaRepository = refFlowRulesJpaRepository;
-        this.refCharsetEncodingJpaRepository = refCharsetEncodingJpaRepository;
-    }
+public interface RefFlowRepository extends JpaRepository<RefFlow, Integer> {
 
     /**
-     * Find RefFlow by flowCode
+     * Complex query that matches the referentiel_get.sql structure Returns all referential data for
+     * a specific flow code
      */
-    public Optional<RefFlowCompleteDto> findByFlowCode(String flowCode) {
-        try {
-            Optional<RefFlow> refFlowOpt =
-                    refFlowJpaRepository.findByFlowCodeWithRelations(flowCode);
-            if (refFlowOpt.isPresent()) {
-                RefFlow refFlow = refFlowOpt.get();
-                RefFlowCompleteDto dto = convertToDto(refFlow);
+    @Query(value = """
+            SELECT
+                f.FLOW_ID,
+                f.FLOW_CODE,
+                f.FLOW_NAME,
+                f.FLOW_DIRECTION,
+                f.ENABLE_FLG,
+                f.CREATION_DTE,
+                f.UPDATE_DTE,
+                f.MAX_FILE_SIZE,
 
-                // Load rules separately as it's not in entity relationships
-                Optional<RefFlowRules> rulesOpt =
-                        refFlowRulesJpaRepository.findByFlowCode(flowCode);
-                rulesOpt.ifPresent(rules -> dto.setRules(convertRulesToDto(rules)));
+                -- Application
+                a.APPLICATION_ID,
+                a.APPLICATION_NAME,
 
-                return Optional.of(dto);
-            }
-        } catch (Exception e) {
-            // Log error and return empty
-            System.err.println("Error finding RefFlow by flowCode: " + flowCode + ", error: "
-                    + e.getMessage());
-        }
+                -- Flow type
+                ft.FLOW_TYP_ID,
+                ft.FLOW_TYP_NAME,
 
-        return Optional.empty();
-    }
+                -- Technical process
+                tp.TECH_PROCESS_ID,
+                tp.TECH_PROCESS_NAME,
+
+                -- Countries (CSV)
+                (SELECT STRING_AGG(c.COUNTRY_NAME, ', ')
+                 FROM TIB_AUDIT_TEC.REF_FLOW_COUNTRY fc
+                 JOIN TIB_AUDIT_TEC.REF_COUNTRY c ON c.COUNTRY_ID = fc.COUNTRY_ID
+                 WHERE fc.FLOW_ID = f.FLOW_ID) AS FLOW_COUNTRIES,
+
+                -- Flow rules
+                fr.FLOWCODE AS RULE_FLOWCODE,
+                fr.TRANSPORTTYPE,
+                fr.ISUNITARY,
+                fr.PRIORITY,
+                fr.URGENCY,
+                fr.FLOWCONTROLLEDENABLED,
+                fr.FLOWMAXIMUM,
+                fr.FLOWRETENTIONENABLED,
+                fr.RETENTIONCYCLEPERIOD,
+                fr.WRITE_FILE,
+                fr.MINREQUIREDFILESIZE,
+                fr.IGNOREOUTPUTDUPCHECK,
+                fr.LOGALL,
+
+                -- Functional process
+                fp_main.FUNC_PROCESS_ID,
+                fp_main.FUNC_PROCESS_NAME,
+
+                -- Functional process properties
+                fpp.FLOW_PRTY_VALUE,
+                pf.PRTY_FLOW_NAME,
+                pf.PRTY_FLOW_DESC,
+                pf.PRTY_FLOW_TYP,
+
+                -- Partner information
+                p.PARTNER_ID,
+                p.PARTNER_CODE,
+                p.PARTNER_NAME,
+                pt.PARTNER_TYPE_ID,
+                pt.PARTNER_TYPE_NAME,
+
+                fp.PARTNER_DIRECTION,
+                fp.CREATION_DTE AS PARTNER_CREATION_DTE,
+                fp.UPDATE_DTE AS PARTNER_UPDATE_DTE,
+                fp.RULE_ID AS PARTNER_RULE_ID,
+                fp.CHARSET_ENCODING_ID,
+                fp.ENABLE_OUT,
+                fp.ENABLE_BMSA,
+
+                -- Transport generic
+                tr.TRANSPORT_ID,
+                tr.TRANSPORT_TYP,
+
+                -- Transport specific
+                tc.CFT_IDF,
+                tc.CFT_PARTNER_CODE,
+
+                te.EMAIL_NAME,
+                te.EMAIL_FROM,
+                te.EMAIL_RECIPIENT_TO,
+                te.EMAIL_RECIPIENT_CC,
+                te.EMAIL_SUBJECT,
+                te.HAS_ATTACHMENT,
+
+                th.HTTP_URI,
+                th.CLIENT_METHOD,
+
+                tj.JMS_Q_NAME,
+
+                tm.MQS_Q_NAME,
+                tm.MQS_Q_MANAGER,
+
+                -- Charset encoding
+                cs.CHARSET_ENCODING_ID,
+                cs.CHARSET_CODE,
+                cs.CHARSET_DESC
+
+            FROM TIB_AUDIT_TEC.REF_FLOW f
+            LEFT JOIN TIB_AUDIT_TEC.REF_APPLICATION a ON a.APPLICATION_ID = f.APPLICATION_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_FLOW_TYP ft ON ft.FLOW_TYP_ID = f.FLOW_TYP_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_TECH_PROCESS tp ON tp.TECH_PROCESS_ID = f.TECH_PROCESS_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_FLOW_RULES fr ON fr.FLOWCODE = f.FLOW_CODE
+            LEFT JOIN TIB_AUDIT_TEC.REF_FUNC_PROCESS fp_main ON fp_main.FUNC_PROCESS_ID = f.FUNC_PROCESS_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_FUNC_PROCESS_PRTY fpp ON fpp.FUNC_PROCESS_ID = fp_main.FUNC_PROCESS_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_PRTY_FLOW pf ON pf.PRTY_FLOW_ID = fpp.PRTY_FLOW_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_FLOW_PARTNER fp ON fp.FLOW_ID = f.FLOW_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_PARTNER p ON p.PARTNER_ID = fp.PARTNER_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_PARTNER_TYP pt ON pt.PARTNER_TYPE_ID = p.PARTNER_TYPE_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_TRANSPORT tr ON tr.TRANSPORT_ID = fp.TRANSPORT_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_TRANSPORT_CFT tc ON tc.TRANSPORT_ID = tr.TRANSPORT_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_TRANSPORT_EMAIL te ON te.TRANSPORT_ID = tr.TRANSPORT_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_TRANSPORT_HTTP th ON th.TRANSPORT_ID = tr.TRANSPORT_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_TRANSPORT_JMS tj ON tj.TRANSPORT_ID = tr.TRANSPORT_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_TRANSPORT_MQS tm ON tm.TRANSPORT_ID = tr.TRANSPORT_ID
+            LEFT JOIN TIB_AUDIT_TEC.REF_CHARSET_ENCODING cs ON cs.CHARSET_ENCODING_ID = fp.CHARSET_ENCODING_ID
+            WHERE f.FLOW_CODE = :flowCode
+            ORDER BY f.FLOW_ID, p.PARTNER_ID
+            """,
+            nativeQuery = true)
+    List<Map<String, Object>> findCompleteReferentielByFlowCode(@Param("flowCode") String flowCode);
 
     /**
-     * Get all charset encodings (utility method)
+     * Find flow by flow code with basic entity mapping
      */
-    public List<RefCharsetEncodingDto> findAllCharsetEncodings() {
-        List<RefCharsetEncoding> entities = refCharsetEncodingJpaRepository.findAll();
-        return entities.stream().map(this::convertCharsetEncodingToDto)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Convert RefFlow entity to DTO
-     */
-    private RefFlowCompleteDto convertToDto(RefFlow refFlow) {
-        RefFlowCompleteDto dto = new RefFlowCompleteDto();
-        dto.setFlowId(refFlow.getFlowId());
-        dto.setFuncProcessId(refFlow.getFuncProcessId());
-        dto.setFlowTypId(refFlow.getFlowTypId());
-        dto.setTechProcessId(refFlow.getTechProcessId());
-        dto.setFlowName(refFlow.getFlowName());
-        dto.setFlowDirection(refFlow.getFlowDirection());
-        dto.setFlowCode(refFlow.getFlowCode());
-        dto.setEnableFlg(refFlow.getEnableFlg());
-        dto.setCreationDte(refFlow.getCreationDte());
-        dto.setUpdateDte(refFlow.getUpdateDte());
-        dto.setApplicationId(refFlow.getApplicationId());
-        dto.setMaxFileSize(refFlow.getMaxFileSize());
-
-        // Convert related entities
-        if (refFlow.getCountries() != null) {
-            dto.setCountries(refFlow.getCountries().stream().map(this::convertCountryToDto)
-                    .collect(Collectors.toList()));
-        }
-
-        if (refFlow.getPartners() != null) {
-            dto.setPartners(refFlow.getPartners().stream().map(this::convertPartnerToDto)
-                    .collect(Collectors.toList()));
-
-            // Get unique charset encodings from partners
-            List<RefCharsetEncodingDto> charsetEncodings = refFlow.getPartners().stream()
-                    .map(RefFlowPartner::getCharsetEncoding).filter(ce -> ce != null).distinct()
-                    .map(this::convertCharsetEncodingToDto).collect(Collectors.toList());
-            dto.setCharsetEncodings(charsetEncodings);
-        }
-
-        return dto;
-    }
-
-    /**
-     * Convert RefFlowRules entity to DTO
-     */
-    private RefFlowRulesDto convertRulesToDto(RefFlowRules rules) {
-        RefFlowRulesDto dto = new RefFlowRulesDto();
-        dto.setFlowCode(rules.getFlowCode());
-        dto.setTransportType(rules.getTransportType());
-        dto.setIsUnitary(rules.getIsUnitary());
-        dto.setPriority(rules.getPriority());
-        dto.setUrgency(rules.getUrgency());
-        dto.setFlowControlledEnabled(rules.getFlowControlledEnabled());
-        dto.setFlowMaximum(rules.getFlowMaximum());
-        dto.setFlowRetentionEnabled(rules.getFlowRetentionEnabled());
-        dto.setRetentionCyclePeriod(rules.getRetentionCyclePeriod());
-        dto.setWriteFile(rules.getWriteFile());
-        dto.setMinRequiredFileSize(rules.getMinRequiredFileSize());
-        dto.setIgnoreOutputDupCheck(rules.getIgnoreOutputDupCheck());
-        dto.setLogAll(rules.getLogAll());
-        return dto;
-    }
-
-    /**
-     * Convert RefFlowCountry entity to DTO
-     */
-    private RefFlowCountryDto convertCountryToDto(RefFlowCountry country) {
-        return new RefFlowCountryDto(country.getFlowId(), country.getCountryId());
-    }
-
-    /**
-     * Convert RefFlowPartner entity to DTO
-     */
-    private RefFlowPartnerDto convertPartnerToDto(RefFlowPartner partner) {
-        RefFlowPartnerDto dto = new RefFlowPartnerDto();
-        dto.setPartnerId(partner.getPartnerId());
-        dto.setFlowId(partner.getFlowId());
-        dto.setTransportId(partner.getTransportId());
-        dto.setPartnerDirection(partner.getPartnerDirection());
-        dto.setCreationDte(partner.getCreationDte());
-        dto.setUpdateDte(partner.getUpdateDte());
-        dto.setRuleId(partner.getRuleId());
-        dto.setCharsetEncodingId(partner.getCharsetEncodingId());
-        dto.setEnableOut(partner.getEnableOut());
-        dto.setEnableBmsa(partner.getEnableBmsa());
-        return dto;
-    }
-
-    /**
-     * Convert RefCharsetEncoding entity to DTO
-     */
-    private RefCharsetEncodingDto convertCharsetEncodingToDto(RefCharsetEncoding charsetEncoding) {
-        return new RefCharsetEncodingDto(charsetEncoding.getCharsetEncodingId(),
-                charsetEncoding.getCharsetCode(), charsetEncoding.getCharsetDesc());
-    }
+    @Query("SELECT f FROM RefFlow f WHERE f.flowCode = :flowCode")
+    RefFlow findByFlowCode(@Param("flowCode") String flowCode);
 }

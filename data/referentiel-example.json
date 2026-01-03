@@ -1,0 +1,147 @@
+{
+  /* -------------------------------------------------------------
+     1️⃣  Flow definition (maps to REF_FLOW)
+     ------------------------------------------------------------- */
+  "flow": {
+	"FlowID": "584",
+    "flowCode":          "ICHSIC",
+    "flowName":          "Incoming payment from local clearing SIC",
+	"flowTypeName": "Payment",
+    "flowDirection":     "IN",
+    "flowEnabled":       "Y",
+    "application": {
+      "code":        "ITL",
+      "name":        "Isolation And Transformation Layer"
+    },
+    "flowFuncPrty": [
+      {
+        "key":   "BIC",
+        "type":  "Enrichment",
+        "desc":  "FP for CH SIC CLEARING Incoming payments",
+        "value": "BPPBCHGGXXX"
+      },
+	  {
+        "key":   "PcssA2Bank",
+        "type":  "Enrichment",
+        "desc":  "FP for CH SIC CLEARING Incoming payments",
+        "value": "P01"
+      },
+      {
+        "key":   "XmlSchema",
+        "type":  "Validation",
+        "desc":  "FP for CH SIC CLEARING Incoming payments",
+        "value": "pacs.008.001.08.ch.02.itl.v2.xsd"
+      },
+      {
+        "key":   "Application",
+        "type":  "Application",
+        "desc":  "FP for CH SIC CLEARING Incoming payments",
+        "value": "ITL"
+      }
+    ],
+    "countries": [ "SWITZERLAND" ]
+  },
+ 
+  /* -------------------------------------------------------------
+     2️⃣  IN‑partner – the system that pushes the file to us
+     ------------------------------------------------------------- */
+  "partnerIn": {
+    "partnerCode":      "CHSIC",
+    "partnerName":      "CH - Switzerland ACH Clearing",
+    "partnerTypeName":  "Internal Partner",
+    "charsetCode":      "UTF-8",
+    "transport": {
+      "type": "MQS",                                 -- the transport type stored in REF_TRANSPORT.TRANSPORT_TYP
+      "mqs": {
+        "qName":    "OITARTMI01",                    -- REF_TRANSPORT_MQS.MQS_Q_NAME
+        "qManager": "FRITL01Z"                       -- REF_TRANSPORT_MQS.MQS_Q_MANAGER
+      },
+      "cft":   null,
+      "jms":   null,
+      "http":  null,
+      "email": null,
+      "sftp":  null
+    }
+  },
+ 
+  /* -------------------------------------------------------------
+     3️⃣  OUT‑partner – the system that receives the processed file
+        (in this case the partner is also a HUB and receives an e‑mail)
+     ------------------------------------------------------------- */
+  "partnerOut": {
+    "partnerCode":      "DOME",
+    "partnerName":      "Domestic payment engine",
+    "partnerTypeName":  "Internal Partner",
+    "charsetCode":      "UTF-8",
+    "ruleName":         "CHIPS_RULE",                 -- must exist in REF_ROUTE_RULE
+    "enabled":          "Y",
+    "bmsaEnabled":      "N",
+    "transport": {
+      "type": "CFT",
+      "cft": {
+        "idf":         null,            -- REF_TRANSPORT_CFT.CFT_IDF
+        "partnerCode": null
+      },
+      "mqs": {
+        "qName":    "DOMCHI02MQS",
+        "qManager": "CHIPS_MGR"
+      },
+      "jms":   null,
+      "http":  null,
+      "email": {
+        "email_name":   null,
+        "from":         null,
+        "to":           null,
+        "cc":           null,
+        "subject":      null,
+        "body":         null,
+        "signature":    null,
+        "attachement":  false
+      },
+      "sftp":  null
+    }
+  },
+ 
+  /* -------------------------------------------------------------
+     4️⃣  HTTP transport – not used for this flow (kept for schema‑completeness)
+     ------------------------------------------------------------- */
+  "httpTransport": {
+    "in":  { "uri": null, "partnerCode": null },
+    "out": { "uri": null, "partnerCode": null }
+  },
+ 
+  /* -------------------------------------------------------------
+     5️⃣  Virtual Account – not required for the CHIPS capture flow
+     ------------------------------------------------------------- */
+  "virtualAccount": {
+    "format": null,
+    "path":   null
+  },
+ 
+  /* -------------------------------------------------------------
+     6️⃣  Functional modules – none are required for a plain capture flow
+     ------------------------------------------------------------- */
+  "functionalModules": [],
+ 
+  /* -------------------------------------------------------------
+Flow‑rule – one row that matches the INSERT you posted earlier
+        (REF_FLOW_RULES)
+     ------------------------------------------------------------- */
+  "flowRules": [
+    {
+      "flowCode":               "ICHSIC",
+      "transportType":          "MQ",
+      "isUnitary":              false,
+      "priority":               3,
+      "urgency":                "Low",
+      "flowControlledEnabled": true,
+      "flowMaximum":            10000,
+      "flowRetentionEnabled":   false,
+      "retentionCyclePeriod":   null,
+      "writeFile":              true,
+      "minRequiredFileSize":    null,
+      "ignoreOutputDupCheck":   false,
+      "logAll":                 false
+    }
+  ]
+}

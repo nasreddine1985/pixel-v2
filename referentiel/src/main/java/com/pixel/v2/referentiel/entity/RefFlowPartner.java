@@ -57,6 +57,10 @@ public class RefFlowPartner {
     @JoinColumn(name = "CHARSET_ENCODING_ID", insertable = false, updatable = false)
     private RefCharsetEncoding charsetEncoding;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "TRANSPORT_ID", insertable = false, updatable = false)
+    private RefTransport transport;
+
     // Default constructor
     public RefFlowPartner() {
         // Required for JPA
@@ -157,5 +161,13 @@ public class RefFlowPartner {
 
     public void setCharsetEncoding(RefCharsetEncoding charsetEncoding) {
         this.charsetEncoding = charsetEncoding;
+    }
+
+    public RefTransport getTransport() {
+        return transport;
+    }
+
+    public void setTransport(RefTransport transport) {
+        this.transport = transport;
     }
 }

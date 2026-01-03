@@ -206,7 +206,10 @@ CREATE TRIGGER update_flow_summary_last_update_datetime
 GRANT EXECUTE ON FUNCTION pixel_v2.update_updated_at_column() TO pixelv2;
 
 -- Include TIB_AUDIT_TEC schema initialization
-\i /docker-entrypoint-initdb.d/init-tib-audit-tec-schema.sql
+\i /docker-entrypoint-initdb.d/init_tib_audit_tec_schema.sql
+
+-- Include sample data for TIB_AUDIT_TEC schema
+\i /docker-entrypoint-initdb.d/insert_ochsic_sample_data.sql
 
 -- Display setup completion message
 DO $$

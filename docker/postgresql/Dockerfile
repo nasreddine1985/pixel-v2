@@ -13,9 +13,9 @@ ENV POSTGRES_INITDB_ARGS="--encoding=UTF8 --locale=C"
 RUN mkdir -p /docker-entrypoint-initdb.d/
 
 # Copy initialization scripts
-COPY init-pixel-v2-db.sql /docker-entrypoint-initdb.d/
-COPY init-tib-audit-tec-schema.sql /docker-entrypoint-initdb.d/
-COPY simple-tib-data-import.sql /docker-entrypoint-initdb.d/
+COPY init_pixel_v2_schema.sql /docker-entrypoint-initdb.d/
+COPY init_tib_audit_tec_schema.sql /docker-entrypoint-initdb.d/
+COPY insert_ochsic_sample_data.sql /docker-entrypoint-initdb.d/
 COPY postgresql.conf /etc/postgresql/postgresql.conf
 COPY pg_hba.conf /etc/postgresql/pg_hba.conf
 
