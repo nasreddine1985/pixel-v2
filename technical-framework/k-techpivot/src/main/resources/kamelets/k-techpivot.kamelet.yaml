@@ -1,0 +1,181 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-techpivot
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "1.0.1-SNAPSHOT"
+    camel.apache.org/provider: "PIXEL-V2"
+  labels:
+    camel.apache.org/kamelet.type: "action"
+
+spec:
+  definition:
+    title: "TechPivot Generic Manipulator (XSD-based)"
+    description: |-
+      Kamelet générique pour initialiser et manipuler le pivot partagé (exchangeProperty.tp),
+      inspiré du XSD TechPivot (TechnicalPivot).
+      Opérations supportées:
+        - ensure : initialise tp si absent
+        - put    : set d'une valeur sur un path (ex: Flow.FlowCode)
+        - add    : append d'un objet JSON dans une liste (ex: Output, Flow.ExternalServices.ExternalService)
+        - merge  : deep merge d'un objet JSON dans un objet (ex: merge dans Flow)
+        - get    : snapshot complet du pivot en JSON dans un header (ex: TechPivotJson)
+  required:
+    - op
+  type: object
+  properties:
+    op:
+      title: Operation
+      type: string
+      enum: ["ensure", "put", "add", "merge", "get"]
+
+    # -------- ensure --------
+    flowCode:
+      title: Flow Code
+      type: string
+      default: ""
+    occurIdHeader:
+      title: OccurId header name
+      type: string
+      default: "flowOccurId"
+    fileNameHeader:
+      title: FileName header name
+      type: string
+      default: "fileName"
+    kameletFlowIdHeader:
+      title: Kamelet Flow Id header name
+      type: string
+      default: "CamelKameletFlowId"
+
+    # -------- put/add/merge/get --------
+    path:
+      title: Path
+      description: "Ex: Flow.FlowEnabled | Input.Transport.JMS.QName | FlowRules.FlowControl.FlowMaximum"
+      type: string
+      default: ""
+
+    # -------- put --------
+    value:
+      title: Value
+      type: string
+      default: ""
+    valueType:
+      title: Value type
+      description: "string | int | long | bool"
+      type: string
+      default: "string"
+      enum: ["string", "int", "long", "bool"]
+
+    # -------- add/merge --------
+    json:
+      title: JSON payload
+      description: "Objet JSON (pour add/merge). Ex: {"PartnerCode":"OUT1"...}"
+      type: string
+      default: "{}"
+
+    # -------- get --------
+    targetHeader:
+      title: Target header name
+      description: "Header cible (pour op=get). Par défaut: TechPivotJson"
+      type: string
+      default: "TechPivotJson"
+
+  dependencies:
+    - "camel:kamelet"
+    - "camel:bean"
+    - "camel:jackson"
+
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Preserve body
+        - setHeader:
+            name: __tpBody
+            simple: "${body}"
+
+        # -------------------------
+        # ENSURE (init tp if absent)
+        # -------------------------
+        - choice:
+            when:
+              - simple: "'{{op}}' == 'ensure'"
+                steps:
+                  - toD: "bean:pivotService?method=ensure(${exchangeProperty.tp}, '{{flowCode}}', ${header.{{occurIdHeader}}}, ${header.{{fileNameHeader}}}, ${header.{{kameletFlowIdHeader}}})"
+                  - setProperty:
+                      name: tp
+                      simple: "${body}"
+
+        # -------------------------
+        # PUT (set value at path)
+        # -------------------------
+        - choice:
+            when:
+              - simple: "'{{op}}' == 'put'"
+                steps:
+                  - toD: "bean:pivotService?method=ensure(${exchangeProperty.tp}, '{{flowCode}}', ${header.{{occurIdHeader}}}, ${header.{{fileNameHeader}}}, ${header.{{kameletFlowIdHeader}}})"
+                  - setProperty:
+                      name: tp
+                      simple: "${body}"
+                  - toD: "bean:pivotService?method=putPath(${exchangeProperty.tp}, '{{path}}', '{{value}}', '{{valueType}}')"
+
+        # -------------------------
+        # ADD (append JSON object to a list at path)
+        # -------------------------
+        - choice:
+            when:
+              - simple: "'{{op}}' == 'add'"
+                steps:
+                  - toD: "bean:pivotService?method=ensure(${exchangeProperty.tp}, '{{flowCode}}', ${header.{{occurIdHeader}}}, ${header.{{fileNameHeader}}}, ${header.{{kameletFlowIdHeader}}})"
+                  - setProperty:
+                      name: tp
+                      simple: "${body}"
+                  - setBody:
+                      simple: "{{json}}"
+                  - unmarshal:
+                      json: {}
+                  - toD: "bean:pivotService?method=addToList(${exchangeProperty.tp}, '{{path}}', ${body})"
+
+        # -------------------------
+        # MERGE (deep merge JSON object into object at path)
+        # -------------------------
+        - choice:
+            when:
+              - simple: "'{{op}}' == 'merge'"
+                steps:
+                  - toD: "bean:pivotService?method=ensure(${exchangeProperty.tp}, '{{flowCode}}', ${header.{{occurIdHeader}}}, ${header.{{fileNameHeader}}}, ${header.{{kameletFlowIdHeader}}})"
+                  - setProperty:
+                      name: tp
+                      simple: "${body}"
+                  - setBody:
+                      simple: "{{json}}"
+                  - unmarshal:
+                      json: {}
+                  - toD: "bean:pivotService?method=mergeInto(${exchangeProperty.tp}, '{{path}}', ${body})"
+
+        # -------------------------
+        # GET (snapshot full pivot as JSON into header)
+        # -------------------------
+        - choice:
+            when:
+              - simple: "'{{op}}' == 'get'"
+                steps:
+                  - toD: "bean:pivotService?method=ensure(${exchangeProperty.tp}, '{{flowCode}}', ${header.{{occurIdHeader}}}, ${header.{{fileNameHeader}}}, ${header.{{kameletFlowIdHeader}}})"
+                  - setProperty:
+                      name: tp
+                      simple: "${body}"
+                  - setBody:
+                      simple: "${exchangeProperty.tp}"
+                  - marshal:
+                      json: {}
+                  - setHeader:
+                      name: "{{targetHeader}}"
+                      simple: "${body}"
+
+        # Restore body
+        - setBody:
+            simple: "${header.__tpBody}"
+        - removeHeader: "__tpBody"
+
+        - to: "kamelet:sink"

@@ -6,47 +6,212 @@ metadata:
     camel.apache.org/kamelet.type: "source"
 spec:
   definition:
-    title: "K-HTTP Message Receiver"
-    description: "Consumes JSON messages from REST API, logs receipt details, and routes messages for further processing"
-    required: [path]
+    title: "K-HTTP Starter"
+    description: |-
+      HTTP Endpoint listener that processes messages
+    required:
+      - httpPath
+      - nasArchiveUrl
+      - flowCountryCode
+      - flowCountryId
+      - dataSource
+    type: object
     properties:
-      path:
-        title: "REST API path"
+      httpPath:
+        title: HTTP Path
+        description: HTTP endpoint path to listen on
         type: string
-        default: "/api/messages"
-      port:
-        title: "HTTP port"
+      httpPort:
+        title: HTTP Port
+        description: HTTP port to listen on
         type: integer
         default: 8080
-      consumes:
-        title: "Content type consumed"
+      httpMethod:
+        title: HTTP Method
+        description: HTTP method to accept (GET, POST, PUT, etc.)
         type: string
-        default: "application/json"
-      produces:
-        title: "Content type produced"
+        default: "POST"
+      flowCode:
+        title: Flow Code
+        description: Flow processing code
         type: string
-        default: "application/json"
+        default: "PACS008"
+      messageType:
+        title: Message Type
+        description: Type of message being processed
+        type: string
+        default: "PACS008"
+      kafkaFlowSummaryTopicName:
+        title: Kafka Flow Summary Topic Name
+        description: Kafka topic for flow summary logs
+        type: string
+        default: "flow-summary"
+      kafkaLogTopicName:
+        title: Kafka Log Topic Name
+        description: Kafka topic for log events
+        type: string
+        default: "log-events"
+      kafkaDistributionTopicName:
+        title: Kafka Distribution Topic Name
+        description: Kafka topic for distribution logs
+        type: string
+        default: "distribution"
+      brokers:
+        title: Kafka Brokers
+        description: Kafka brokers for flow summary
+        type: string
+        default: "pixel-v2-kafka:29092"
+      flowCountryCode:
+        title: Flow Country Code
+        description: Country code for flow processing
+        type: string
+      flowCountryId:
+        title: Flow Country ID
+        description: Country ID for flow processing
+        type: string
+      dataSource:
+        title: Data Source
+        description: Database data source bean name for sequence generation
+        type: string
+        default: "dataSource"
+      nasArchiveUrl:
+        title: NAS Archive URL
+        description: File URL for archiving messages to NAS (mounted directory)
+        type: string
+  dependencies:
+    - "camel:http"
+    - "camel:jetty"
+    - "camel:sql"
+    - "camel:file"
+    - "camel:kamelet"
   template:
     from:
-      uri: "platform-http:{{path}}"
-      parameters:
-        httpMethodRestrict: "POST"
+      uri: "jetty:http://0.0.0.0:{{httpPort}}{{httpPath}}?httpMethodRestrict={{httpMethod}}"
       steps:
-        - log: 
-            message: "[HTTP-RECEIVER] Message received via REST API on {{path}}: ${body}"
-            loggingLevel: "INFO"
+        - setHeader:
+            name: "ReceivedTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
         
-        - set-header:
-            name: "Content-Type"
-            constant: "{{produces}}"
+        # Log event before starting HTTP processing
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=Start HTTP processing - path: {{httpPath}}, method: {{httpMethod}}, RemoteAddress: ${header.CamelHttpRemoteAddress}&level=INFO"
+            pattern: "InOnly"
         
-        - set-header:
-            name: "messageSource"
-            constant: "HTTP_API"
+        # Store original body before sequence generation
+        - setHeader:
+            name: "originalBody"
+            simple: "${body}"
+        # Generate unique flow occurrence ID from database sequence
+        - to:
+            uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource=#dataSource"
+        - setHeader:
+            name: "flowOccurId"
+            simple: "${body[0][flowOccurId]}"
+        # Restore original body
+        - setBody:
+            simple: "${header.originalBody}"
+        - removeHeader:
+            name: "originalBody"
+        - setHeader:
+            name: "SourceEndpoint"
+            simple: "{{httpPath}}"
+        - setHeader:
+            name: "httpPath"
+            simple: "{{httpPath}}"
+        - setHeader:
+            name: "flowCode"
+            constant: "{{flowCode}}"
+        - setHeader:
+            name: "MessageType"
+            constant: "{{messageType}}"
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - setHeader:
+            name: "step"
+            constant: "IN_PROGRESS"
+        - setHeader:
+            name: "brokers"
+            constant: "{{brokers}}"
+        - setHeader:
+            name: "kafkaFlowSummaryTopicName"
+            constant: "{{kafkaFlowSummaryTopicName}}"
+        - setHeader:
+            name: "kafkaLogTopicName"
+            constant: "{{kafkaLogTopicName}}"
+        - setHeader:
+            name: "kafkaDistributionTopicName"
+            constant: "{{kafkaDistributionTopicName}}"
+        - setHeader:
+            name: "flowCountryCode"
+            simple: "{{flowCountryCode}}"
+        - setHeader:
+            name: "flowCountryId"
+            simple: "{{flowCountryId}}"
+        - setHeader:
+            name: "MessageId"
+            simple: "${header.CamelHttpRemoteAddress}-${header.flowOccurId}"
+        - setHeader:
+            name: "CorrelationId"
+            simple: "${header.CamelHttpUri}-${date:now:yyyyMMddHHmmssSSS}"
+        - setHeader:
+            name: "beginFlowDatetime"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        - setHeader:
+            name: "beginFlowDate"
+            simple: "${date:now:yyyy-MM-dd}"
+        - setHeader:
+            name: "nasArchiveUrl"
+            simple: "{{nasArchiveUrl}}"
+        # Set charset with proper fallback for HTTP
+        - choice:
+            when:
+              - simple: "${header.Content-Type} != null && ${header.Content-Type} contains 'charset'"
+                steps:
+                  - setHeader:
+                      name: "HttpEncoding" 
+                      simple: "${header.Content-Type}"
+            otherwise:
+              steps:
+                - setHeader:
+                    name: "HttpEncoding"
+                    constant: "utf-8"
+              
+        # Archive flowOccurId and timestamp to NAS
+        # Store original body before file operation
+        - setHeader:
+            name: "originalBodyBeforeArchive"
+            simple: "${body}"
+        - toD:
+            uri: "${header.nasArchiveUrl}/IN/${header.flowOccurId}/?fileName=${header.flowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
+        # Restore original body after file operation
+        - setBody:
+            simple: "${header.originalBodyBeforeArchive}"
+        - removeHeader:
+            name: "originalBodyBeforeArchive"
         
-        - set-header:
-            name: "receiptTimestamp"
-            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+        - wireTap:
+            uri: "kamelet:k-log-flow-summary?step=${header.step}&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}"
+        
+        # Log event after completing HTTP processing
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=End HTTP processing - path: {{httpPath}}, flowOccurId: ${header.flowOccurId}, archived to: ${header.nasArchiveUrl}/IN/${header.flowOccurId}/&level=INFO"
+            pattern: "InOnly"
+        
+        # Set HTTP response status
+        - setHeader:
+            name: "CamelHttpResponseCode"
+            constant: "200"
+        - setBody:
+            constant: "{\"status\":\"success\",\"flowOccurId\":\"${header.flowOccurId}\",\"timestamp\":\"${header.ProcessingTimestamp}\"}"
+        
+        - to: "kamelet:sink"
         
         - set-header:
             name: "receiptChannel"

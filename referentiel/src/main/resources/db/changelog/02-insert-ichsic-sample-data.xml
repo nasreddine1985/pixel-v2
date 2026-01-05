@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.17.xsd">
+
+    <changeSet id="02-insert-ichsic-sample-data" author="pixelv2">
+        <comment>Insert ICHSIC sample data</comment>
+        <sqlFile path="db/changelog/insert_ichsic_sample_data.sql"
+            splitStatements="true"
+            stripComments="true" />
+        <rollback>
+            <comment>Remove sample data</comment>
+            <sql> DELETE FROM TIB_AUDIT_TEC.REF_TRANSPORT WHERE transport_id IN
+            ('PACS.008.001.02', 'ICHSIC.008.001.02'); DELETE FROM TIB_AUDIT_TEC.REF_FLOW WHERE
+            flow_id IN ('CH_PACS008', 'ICHSIC_008'); </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

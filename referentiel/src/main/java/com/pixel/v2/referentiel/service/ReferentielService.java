@@ -1,9 +1,12 @@
 package com.pixel.v2.referentiel.service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,8 +76,9 @@ public class ReferentielService {
         // Build partner information (IN and OUT)
         buildPartnerInfo(dto, results);
 
-        // Build flow rules
-        dto.setFlowRules(buildFlowRules(firstRow));
+        // Build flow rules from all rows to get all transport types
+        List<RefFlowDto.FlowRuleInfo> allFlowRules = buildAllFlowRules(results);
+        dto.setFlowRules(allFlowRules);
 
         // Build additional sections with defaults
         dto.setHttpTransport(buildHttpTransportInfo());
@@ -121,15 +125,34 @@ public class ReferentielService {
      * Build partner information for IN and OUT partners
      */
     private void buildPartnerInfo(RefFlowDto dto, List<Map<String, Object>> results) {
+        List<RefFlowDto.PartnerInfo> partnerOutList = new ArrayList<>();
+
+        // Use a Set to track unique partner+transport+direction combinations
+        Set<String> processedPartners = new HashSet<>();
+
         for (Map<String, Object> row : results) {
             String partnerDirection = (String) row.get("partner_direction");
+            String partnerCode = (String) row.get("partner_code");
+            String transportType = (String) row.get("transport_typ");
 
-            if ("IN".equals(partnerDirection)) {
-                dto.setPartnerIn(buildPartnerInfoFromRow(row));
-            } else if ("OUT".equals(partnerDirection)) {
-                dto.setPartnerOut(buildPartnerInfoFromRow(row));
+            if (partnerCode == null)
+                continue; // Skip rows without partner data
+
+            // Create unique key for this partner+transport+direction combination
+            String uniqueKey = partnerCode + "_" + transportType + "_" + partnerDirection;
+
+            if (!processedPartners.contains(uniqueKey)) {
+                processedPartners.add(uniqueKey);
+
+                if ("IN".equals(partnerDirection)) {
+                    dto.setPartnerIn(buildPartnerInfoFromRow(row));
+                } else if ("OUT".equals(partnerDirection) || "INOUT".equals(partnerDirection)) {
+                    partnerOutList.add(buildPartnerInfoFromRow(row));
+                }
             }
         }
+
+        dto.setPartnerOut(partnerOutList);
     }
 
     /**
@@ -241,6 +264,45 @@ public class ReferentielService {
         transport.setSftp(null);
 
         return transport;
+    }
+
+    /**
+     * Build flow rules from all rows to collect all unique transport types
+     */
+    private List<RefFlowDto.FlowRuleInfo> buildAllFlowRules(List<Map<String, Object>> results) {
+        Map<String, RefFlowDto.FlowRuleInfo> uniqueRules = new HashMap<>();
+
+        for (Map<String, Object> row : results) {
+            String ruleFlowCode = (String) row.get("rule_flowcode");
+            String transportType = (String) row.get("transporttype");
+
+            if (ruleFlowCode != null && !ruleFlowCode.trim().isEmpty() && transportType != null
+                    && !transportType.trim().isEmpty()) {
+
+                String key = ruleFlowCode + "_" + transportType;
+
+                if (!uniqueRules.containsKey(key)) {
+                    RefFlowDto.FlowRuleInfo rule = new RefFlowDto.FlowRuleInfo();
+                    rule.setFlowCode(ruleFlowCode);
+                    rule.setTransportType(transportType);
+                    rule.setIsUnitary(getBooleanValue(row, "isunitary"));
+                    rule.setPriority(getIntegerValue(row, "priority"));
+                    rule.setUrgency((String) row.get("urgency"));
+                    rule.setFlowControlledEnabled(getBooleanValue(row, "flowcontrolledenabled"));
+                    rule.setFlowMaximum(getLongValue(row, "flowmaximum"));
+                    rule.setFlowRetentionEnabled(getBooleanValue(row, "flowretentionenabled"));
+                    rule.setRetentionCyclePeriod(getStringValue(row, "retentioncycleperiod"));
+                    rule.setWriteFile(getBooleanValue(row, "write_file"));
+                    rule.setMinRequiredFileSize(getLongValue(row, "minrequiredfilesize"));
+                    rule.setIgnoreOutputDupCheck(getBooleanValue(row, "ignoreoutputdupcheck"));
+                    rule.setLogAll(getBooleanValue(row, "logall"));
+
+                    uniqueRules.put(key, rule);
+                }
+            }
+        }
+
+        return new ArrayList<>(uniqueRules.values());
     }
 
     /**

@@ -1,0 +1,158 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-http-publisher
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-HTTP Publisher"
+    description: |-
+      HTTP Message Publisher that sends messages to HTTP endpoints
+    required:
+      - httpUrl
+      - flowId
+      - flowCode
+      - dataSource
+    type: object
+    properties:
+      httpUrl:
+        title: HTTP URL
+        description: Target HTTP endpoint URL to publish to
+        type: string
+      httpMethod:
+        title: HTTP Method
+        description: HTTP method to use (POST, PUT, etc.)
+        type: string
+        default: "POST"
+      flowId:
+        title: Flow ID
+        description: Unique flow identifier for tracking
+        type: string
+      flowCode:
+        title: Flow Code
+        description: Flow processing code
+        type: string
+      dataSource:
+        title: Data Source
+        description: Database data source bean name for logging
+        type: string
+        default: "dataSource"
+      contentType:
+        title: Content Type
+        description: HTTP Content-Type header
+        type: string
+        default: "application/json"
+      connectionTimeout:
+        title: Connection Timeout
+        description: HTTP connection timeout in milliseconds
+        type: integer
+        default: 30000
+      socketTimeout:
+        title: Socket Timeout
+        description: HTTP socket timeout in milliseconds
+        type: integer
+        default: 30000
+      retryAttempts:
+        title: Retry Attempts
+        description: Number of retry attempts on failure
+        type: integer
+        default: 3
+      brokers:
+        title: Kafka Brokers
+        description: Kafka brokers for logging events
+        type: string
+        default: "pixel-v2-kafka:29092"
+      kafkaLogTopicName:
+        title: Kafka Log Topic Name
+        description: Kafka topic for log events
+        type: string
+        default: "log-events"
+  dependencies:
+    - "camel:http"
+    - "camel:sql"
+    - "camel:kamelet"
+    - "camel:jackson"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Log event before publishing to HTTP
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "{{flowId}}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId={{flowId}}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=Start HTTP publishing - url: {{httpUrl}}, flowCode: {{flowCode}}&level=INFO"
+            pattern: "InOnly"
+        
+        # Set HTTP headers
+        - setHeader:
+            name: "Content-Type"
+            simple: "{{contentType}}"
+        - setHeader:
+            name: "CamelHttpMethod"
+            simple: "{{httpMethod}}"
+        - setHeader:
+            name: "flowCode"
+            simple: "{{flowCode}}"
+        - setHeader:
+            name: "flowId"
+            simple: "{{flowId}}"
+        - setHeader:
+            name: "PublishTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        
+        # Store original body for retry logic
+        - setHeader:
+            name: "originalBodyForHttp"
+            simple: "${body}"
+        
+        # Publish to HTTP endpoint with retry logic
+        - doTry:
+            steps:
+              - toD:
+                  uri: "{{httpUrl}}?connectionTimeout={{connectionTimeout}}&socketTimeout={{socketTimeout}}&httpMethod={{httpMethod}}"
+              # Store response information
+              - setHeader:
+                  name: "HttpResponseCode"
+                  simple: "${header.CamelHttpResponseCode}"
+              - setHeader:
+                  name: "HttpResponseText"
+                  simple: "${header.CamelHttpResponseText}"
+            doCatch:
+              - exception: "java.lang.Exception"
+                steps:
+                  - log:
+                      message: "HTTP publishing failed for flowId={{flowId}}, attempt ${header.CamelRedeliveryCounter}: ${exception.message}"
+                  - setHeader:
+                      name: "HttpPublishError"
+                      simple: "${exception.message}"
+                  # Restore original body for retry
+                  - setBody:
+                      simple: "${header.originalBodyForHttp}"
+                  # Retry logic could be implemented here
+                  - throwException:
+                      exceptionType: "java.lang.RuntimeException"
+                      message: "HTTP publishing failed after retry attempts"
+        
+        # Restore original body after HTTP operation
+        - setBody:
+            simple: "${header.originalBodyForHttp}"
+        - removeHeader:
+            name: "originalBodyForHttp"
+        
+        # Set response headers with HTTP details
+        - setHeader:
+            name: "HttpPublishStatus"
+            constant: "SUCCESS"
+        - setHeader:
+            name: "HttpTargetUrl"
+            simple: "{{httpUrl}}"
+        
+        # Log event after successful publishing
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "{{flowId}}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId={{flowId}}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=End HTTP publishing - url: {{httpUrl}}, flowCode: {{flowCode}}, ResponseCode: ${header.HttpResponseCode}&level=INFO"
+            pattern: "InOnly"

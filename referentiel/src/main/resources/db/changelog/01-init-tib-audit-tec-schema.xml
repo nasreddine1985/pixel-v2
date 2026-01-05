@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.17.xsd">
+
+    <changeSet id="01-init-tib-audit-tec-schema" author="pixelv2">
+        <comment>Initialize TIB_AUDIT_TEC schema structure</comment>
+        <sqlFile path="db/changelog/init_tib_audit_tec_schema.sql"
+            splitStatements="true"
+            stripComments="true" />
+        <rollback>
+            <comment>Drop all tables and schema objects</comment>
+            <sql> DROP TABLE IF EXISTS TIB_AUDIT_TEC.TT_TRANSPORT CASCADE; DROP
+            TABLE IF EXISTS TIB_AUDIT_TEC.REF_TRANSPORT CASCADE; DROP TABLE IF EXISTS
+            TIB_AUDIT_TEC.TT_FLOW CASCADE; DROP TABLE IF EXISTS TIB_AUDIT_TEC.REF_FLOW CASCADE; DROP
+            TABLE IF EXISTS TIB_AUDIT_TEC.TT_ERRORS CASCADE; </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

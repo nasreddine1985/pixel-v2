@@ -16,13 +16,12 @@
     <description>Collection of Apache Camel Kamelets for PIXEL-V2 technical framework</description>
 
     <modules>
+        <module>k-cft-publisher</module>
         <module>k-cft-starter</module>
-        <module>k-db</module>
         <module>k-db-tx</module>
-        <module>k-dumpcheck</module>
+        <module>k-http-publisher</module>
         <module>k-http-starter</module>
         <module>k-identification</module>
-        <module>k-identification-interne</module>
         <module>k-kafka-publisher</module>
         <module>k-kafka-starter</module>
         <module>k-log-events</module>
@@ -30,8 +29,10 @@
         <module>k-log-tx</module>
         <module>k-message-concat</module>
         <module>k-message-split</module>
+        <module>k-mq-publisher</module>
         <module>k-mq-starter</module>
-        <module>k-techpivot-enrichment</module>
+        <module>k-dynamic-publisher</module>
+        <module>k-techpivot</module>
         <module>k-xsd-validation</module>
         <module>k-xsl-transformation</module>
     </modules>

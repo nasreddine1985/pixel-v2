@@ -1,0 +1,130 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-cft-publisher
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-CFT Publisher"
+    description: |-
+      CFT File Publisher that writes XML payment files to CFT directory.
+      Publishes collection of XML payment files from a flowCode to CFT system.
+    required:
+      - directoryPath
+      - flowCode
+      - flowId
+      - dataSource
+    type: object
+    properties:
+      directoryPath:
+        title: CFT Directory Path
+        description: Target directory path for CFT files
+        type: string
+        default: "/nas/outgoing/cft"
+      flowCode:
+        title: Flow Code
+        description: Flow processing code for file naming
+        type: string
+      flowId:
+        title: Flow ID
+        description: Unique flow identifier for tracking
+        type: string
+      dataSource:
+        title: Data Source
+        description: Database data source bean name for logging
+        type: string
+        default: "dataSource"
+      filePrefix:
+        title: File Prefix
+        description: Prefix for generated CFT files
+        type: string
+        default: "CFT"
+      fileExtension:
+        title: File Extension
+        description: File extension for generated files
+        type: string
+        default: ".xml"
+      tempPrefix:
+        title: Temporary File Prefix
+        description: Prefix for temporary files during write
+        type: string
+        default: ".tmp"
+      brokers:
+        title: Kafka Brokers
+        description: Kafka brokers for logging events
+        type: string
+        default: "pixel-v2-kafka:29092"
+      kafkaLogTopicName:
+        title: Kafka Log Topic Name
+        description: Kafka topic for log events
+        type: string
+        default: "log-events"
+  dependencies:
+    - "camel:file"
+    - "camel:sql"
+    - "camel:kamelet"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Log event before publishing to CFT
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "{{flowId}}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId={{flowId}}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=Start CFT publishing - flowCode: {{flowCode}}, directory: {{directoryPath}}&level=INFO"
+            pattern: "InOnly"
+        
+        # Set publishing metadata
+        - setHeader:
+            name: "flowCode"
+            simple: "{{flowCode}}"
+        - setHeader:
+            name: "flowId"
+            simple: "{{flowId}}"
+        - setHeader:
+            name: "publishTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        - setHeader:
+            name: "cftDirectory"
+            simple: "{{directoryPath}}"
+        
+        # Generate unique filename
+        - setHeader:
+            name: "fileName"
+            simple: "{{filePrefix}}_{{flowCode}}_${date:now:yyyyMMddHHmmssSSS}{{fileExtension}}"
+        
+        # Store original body before file operation
+        - setHeader:
+            name: "originalBodyForCft"
+            simple: "${body}"
+        
+        # Write to CFT directory with temporary file
+        - toD:
+            uri: "{{directoryPath}}?fileName=${header.fileName}&autoCreate=true&tempPrefix={{tempPrefix}}"
+        
+        # Restore original body after file operation
+        - setBody:
+            simple: "${header.originalBodyForCft}"
+        - removeHeader:
+            name: "originalBodyForCft"
+        
+        # Set response headers with file details
+        - setHeader:
+            name: "CftFileName"
+            simple: "${header.fileName}"
+        - setHeader:
+            name: "CftFilePath"
+            simple: "{{directoryPath}}/${header.fileName}"
+        - setHeader:
+            name: "CftPublishStatus"
+            constant: "SUCCESS"
+        
+        # Log event after successful publishing
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "{{flowId}}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId={{flowId}}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=End CFT publishing - flowCode: {{flowCode}}, file: ${header.fileName}, path: {{directoryPath}}/${header.fileName}&level=INFO"
+            pattern: "InOnly"

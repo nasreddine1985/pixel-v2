@@ -87,6 +87,3 @@ spec:
             uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&keySerializer={{keySerializer}}&valueSerializer={{valueSerializer}}&requestTimeoutMs={{requestTimeoutMs}}&connectionMaxIdleMs={{connectionMaxIdleMs}}&retries={{retries}}&requestRequiredAcks={{requestRequiredAcks}}&enableIdempotence={{enableIdempotence}}"
         # Continue to next step (validation passed)
         - to: "kamelet:sink"
-        - log:
-             message: "[K-KAFKA-PUBLISHER] Message successfully published to topic: {{kafkaTopicName}}, Key: ${header.kafka.KEY}"
-             loggingLevel: DEBUG

@@ -17,7 +17,7 @@ public class ChRoute extends RouteBuilder {
 
         // Kamelet endpoint for identification and Spring internal caching
         private static final String K_IDENTIFICATION_ENDPOINT =
-                        "kamelet:k-identification-interne?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
+                        "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
 
         // Kamelet endpoint for XSD validation
         private static final String K_XSD_VALIDATION_ENDPOINT =
@@ -33,6 +33,9 @@ public class ChRoute extends RouteBuilder {
         // Kamelet endpoint for Kafka publisher
         private static final String K_KAFKA_PUBLISHER_ENDPOINT =
                         "kamelet:k-kafka-publisher?kafkaTopicName=ch-out&brokers={{pixel.kafka.brokers}}";
+
+        // Kamelet endpoint for dynamic publisher
+        private static final String K_DYNAMIC_PUBLISHER_ENDPOINT = "kamelet:k-dynamic-publisher?header-name=RefFlowData";
 
         // Kamelet endpoint for flow summary logging
         private static final String K_LOG_FLOW_SUMMARY_ENDPOINT =
@@ -74,7 +77,7 @@ public class ChRoute extends RouteBuilder {
 
                                 // Step 3: XSD Validation using
                                 // k-xsd-validation
-                                //.to(K_XSD_VALIDATION_ENDPOINT)
+                                // .to(K_XSD_VALIDATION_ENDPOINT)
 
                                 // Step 4: XSLT Transformation using k-xsl-transformation
                                 .to(K_XSL_PACS008_001_08TO_CDM_TRANSFORMATION_ENDPOINT)
@@ -82,10 +85,13 @@ public class ChRoute extends RouteBuilder {
                                 // Step 5: XSLT Transformation using k-xsl-transformation
                                 .to(K_XSL_CDM_TO_PACS008_001_02_TRANSFORMATION_ENDPOINT)
 
-                                // Step 6: Publish transformed message to ch-out topic
-                                .to(K_KAFKA_PUBLISHER_ENDPOINT)
+                                // Step 6: Dynamic route to destination using k-dynamic-publisher
+                                .to(K_DYNAMIC_PUBLISHER_ENDPOINT)
 
-                                // Step 7: Complete processing
+                                // Step 7: Publish transformed message to ch-out topic
+                                //.to(K_KAFKA_PUBLISHER_ENDPOINT)
+
+                                // Step 8: Complete processing
                                 .wireTap(K_LOG_FLOW_SUMMARY_ENDPOINT);
         }
 }

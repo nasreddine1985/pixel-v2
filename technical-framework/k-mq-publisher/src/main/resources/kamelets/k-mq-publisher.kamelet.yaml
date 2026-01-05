@@ -1,0 +1,113 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-mq-publisher
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-MQ Publisher"
+    description: |-
+      JMS Message Publisher that sends messages to JMS queues
+    required:
+      - mqFileName
+      - connectionFactory
+      - flowId
+      - flowCode
+      - dataSource
+    type: object
+    properties:
+      mqFileName:
+        title: MQ File Name
+        description: Name of the JMS queue to publish to
+        type: string
+      connectionFactory:
+        title: Connection Factory
+        description: JMS connection factory bean name
+        type: string
+        default: "jmsConnectionFactory"
+      flowId:
+        title: Flow ID
+        description: Unique flow identifier for tracking
+        type: string
+      flowCode:
+        title: Flow Code
+        description: Flow processing code
+        type: string
+      dataSource:
+        title: Data Source
+        description: Database data source bean name for logging
+        type: string
+        default: "dataSource"
+      deliveryMode:
+        title: Delivery Mode
+        description: JMS delivery mode (1=NON_PERSISTENT, 2=PERSISTENT)
+        type: integer
+        default: 2
+      priority:
+        title: Message Priority
+        description: JMS message priority (0-9)
+        type: integer
+        default: 4
+      timeToLive:
+        title: Time To Live
+        description: Message time to live in milliseconds
+        type: integer
+        default: 0
+      brokers:
+        title: Kafka Brokers
+        description: Kafka brokers for logging events
+        type: string
+        default: "pixel-v2-kafka:29092"
+      kafkaLogTopicName:
+        title: Kafka Log Topic Name
+        description: Kafka topic for log events
+        type: string
+        default: "log-events"
+  dependencies:
+    - "camel:jms"
+    - "camel:sql"
+    - "camel:kamelet"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Log event before publishing to MQ
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "{{flowId}}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId={{flowId}}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=Start MQ publishing - queue: {{mqFileName}}, flowCode: {{flowCode}}&level=INFO"
+            pattern: "InOnly"
+        
+        # Set JMS headers
+        - setHeader:
+            name: "JMSDeliveryMode"
+            simple: "{{deliveryMode}}"
+        - setHeader:
+            name: "JMSPriority"
+            simple: "{{priority}}"
+        - setHeader:
+            name: "JMSTimeToLive"
+            simple: "{{timeToLive}}"
+        - setHeader:
+            name: "flowCode"
+            simple: "{{flowCode}}"
+        - setHeader:
+            name: "flowId"
+            simple: "{{flowId}}"
+        - setHeader:
+            name: "PublishTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        
+        # Publish to JMS queue
+        - toD:
+            uri: "jms:queue:{{mqFileName}}?connectionFactory=#{{connectionFactory}}&deliveryMode={{deliveryMode}}&priority={{priority}}&timeToLive={{timeToLive}}"
+        
+        # Log event after successful publishing
+        - setHeader:
+            name: "CamelKameletFlowId"
+            simple: "{{flowId}}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId={{flowId}}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=End MQ publishing - queue: {{mqFileName}}, flowCode: {{flowCode}}, MessageId: ${header.JMSMessageID}&level=INFO"
+            pattern: "InOnly"

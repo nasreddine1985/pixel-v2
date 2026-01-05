@@ -17,6 +17,7 @@ This service acts as the central configuration repository for the PIXEL-V2 syste
 - **Framework**: Spring Boot 3.4.1
 - **Java Version**: Java 21
 - **Database**: PostgreSQL with JPA/Hibernate
+- **Database Migration**: Liquibase 4.25.1 for automatic schema initialization
 - **Build Tool**: Maven 3.9+
 - **Containerization**: Docker with multi-stage builds
 - **Architecture**: Microservice with RESTful API
@@ -30,6 +31,16 @@ The service uses the `tib_audit_tec` schema in PostgreSQL with the following mai
 - `ref_flow_partner` - Flow-partner configurations
 - `ref_flow_rules` - Business rules per flow
 - `ref_charset_encoding` - Character encoding definitions
+
+## Database Initialization
+
+The service uses **Liquibase** for automatic database schema initialization. On application startup:
+
+1. Creates the TIB_AUDIT_TEC schema and required tables
+2. Inserts sample ICHSIC flow data
+3. Tracks changes to prevent duplicate execution
+
+For detailed information about Liquibase configuration, see [README-LIQUIBASE.md](README-LIQUIBASE.md).
 
 ## API Endpoints
 

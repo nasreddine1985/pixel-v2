@@ -1,178 +1,220 @@
-# K-Identification Kamelet
+# k-identification-interne
+
+Spring Cache-based internal identification kamelet for PIXEL-V2 payment processing system.
 
 ## Overview
 
-The k-identification kamelet is a specialized Apache Camel Kamelet that provides Redis-based reference data identification and caching for CH payment processing in the PIXEL-V2 framework. It handles flow configuration retrieval from Redis cache with automatic fallback to the referentiel service when cache misses occur.
+The `k-identification-interne` module provides a memory-based alternative to the Redis-based `k-identification` module. It uses Spring Boot's internal caching framework with Caffeine cache provider for high-performance, low-latency reference data identification and caching.
 
 ## Features
 
-- **Redis Caching**: Automatic caching of flow configuration data with configurable TTL
-- **Cache Fallback**: Seamless fallback to referentiel service on cache miss
-- **Body Preservation**: Maintains original message body throughout the identification process
-- **Cache Refresh**: Kafka-based cache invalidation for real-time updates
-- **Error Handling**: Robust error handling with graceful degradation
+- **Spring Cache Integration**: Uses Spring Boot's caching abstraction with Caffeine cache provider
+- **Memory-Only Caching**: No external dependencies like Redis - all caching is done in application memory
+- **High Performance**: Caffeine cache provides superior performance with TTL, size limits, and statistics
+- **Fallback Support**: Automatic fallback to ConcurrentMap cache if Caffeine is not available
+- **Referentiel Integration**: Automatic fetching from referentiel service with cache population
+- **Cache Management**: Full cache lifecycle management with eviction, clearing, and statistics
 
 ## Architecture
 
 ```
-Input Message
-     ↓
-Cache Lookup (Redis)
-     ↓
-Cache HIT? → YES → Return Cached Config
-     ↓                        ↓
-    NO                 Original Message
-     ↓                        ↓
-Referentiel Service    Continue Processing
-     ↓
-Cache Update
-     ↓
-Original Message
-     ↓
-Continue Processing
+Camel Route → k-identification-interne kamelet → Spring Cache → Referentiel Service (fallback)
 ```
 
-## Configuration Parameters
+## Components
 
-| Parameter               | Description                     | Default                            | Required |
-| ----------------------- | ------------------------------- | ---------------------------------- | -------- |
-| `flowCode`              | Flow code to identify           | -                                  | Yes      |
-| `referentielServiceUrl` | Base URL of referentiel service | `http://pixel-v2-referentiel:8099` | No       |
-| `kafkaBrokers`          | Kafka broker URLs               | `kafka:29092`                      | No       |
-| `cacheTtl`              | Cache TTL in seconds            | `3600`                             | No       |
+### Kamelet
+
+- `k-identification-interne.kamelet.yaml`: Main kamelet definition with Spring cache integration
+
+### Processors
+
+- `SpringCacheProcessor`: Handles cache operations (get, put, evict, clear)
+
+### Services
+
+- `IdentificationCacheService`: High-level cache management service with statistics
+
+### Configuration
+
+- `SpringCacheConfig`: Spring cache configuration with Caffeine and ConcurrentMap providers
+
+## Dependencies
+
+- Spring Boot Starter
+- Spring Cache
+- Apache Camel 4.16.0
+- Caffeine Cache (primary provider)
+- Jackson (JSON processing)
+- Camel HTTP (referentiel service integration)
+- Camel Kafka (cache refresh messaging)
 
 ## Usage
 
 ### Basic Usage
 
 ```yaml
-- to: "kamelet:k-identification?flowCode=ICHSIC"
+- from:
+    uri: "direct:identify-flow"
+    steps:
+      - to: "kamelet:k-identification-interne?flowCode={{header.flowCode}}"
 ```
 
-### Advanced Usage with Custom Configuration
+### With Configuration
 
 ```yaml
-- to: "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl=http://custom-referentiel:8099&cacheTtl=7200"
+- from:
+    uri: "direct:identify-flow"
+    steps:
+      - to: "kamelet:k-identification-interne?flowCode={{header.flowCode}}&referentielServiceUrl=http://pixel-v2-referentiel:8099&springCacheName=flowConfigCache"
 ```
 
-### Java DSL Usage
+## Configuration Parameters
+
+| Parameter               | Description             | Default                            | Required |
+| ----------------------- | ----------------------- | ---------------------------------- | -------- |
+| `flowCode`              | Flow code to identify   | -                                  | Yes      |
+| `referentielServiceUrl` | Referentiel service URL | `http://pixel-v2-referentiel:8099` | No       |
+| `kafkaBrokers`          | Kafka broker URLs       | `kafka:29092`                      | No       |
+| `cacheTtl`              | Cache TTL in seconds    | `3600`                             | No       |
+| `springCacheName`       | Spring cache name       | `flowConfigCache`                  | No       |
+
+## Cache Configuration
+
+The module uses Caffeine cache with the following default settings:
+
+- **TTL**: 1 hour
+- **Maximum Size**: 1000 entries per cache
+- **Statistics**: Enabled
+- **Cache Names**: `flowConfigCache`, `referentielCache`, `identificationCache`
+
+### Custom Configuration
+
+```yaml
+spring:
+  cache:
+    type: caffeine
+    caffeine:
+      spec: expireAfterWrite=1h,maximumSize=1000,recordStats
+    cache-names:
+      - flowConfigCache
+      - referentielCache
+      - identificationCache
+```
+
+## Cache Operations
+
+### Automatic Operations
+
+- **Cache Miss**: Automatically fetches from referentiel service and populates cache
+- **Cache Hit**: Returns cached value immediately
+- **Error Handling**: Graceful degradation on cache or service errors
+
+### Manual Operations
 
 ```java
-// In RouteBuilder
-.to("kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&cacheTtl={{pixel.cache.ttl}}")
+@Autowired
+private IdentificationCacheService cacheService;
+
+// Get flow configuration
+Optional<String> config = cacheService.getFlowConfiguration("PACS008");
+
+// Put flow configuration
+cacheService.putFlowConfiguration("PACS008", configJson);
+
+// Evict specific flow
+cacheService.evictFlowConfiguration("PACS008");
+
+// Clear all flows
+cacheService.clearFlowConfigurations();
+
+// Get statistics
+Map<String, Object> stats = cacheService.getCacheStatistics("flowConfigCache");
 ```
 
 ## Headers
 
-### Input Headers
+The kamelet preserves the original message body and uses headers for cache operations:
 
-- `flowCode`: Flow code for identification (can be set via header instead of parameter)
-
-### Output Headers
-
-- `FlowConfiguration`: Retrieved flow configuration (JSON string)
-- `CacheKey`: Redis cache key used
-- `RedisError`: Error message if Redis operation fails (optional)
-
-## Cache Refresh
-
-The kamelet supports real-time cache invalidation via Kafka messages:
-
-```json
-{
-  "flowCode": "ICHSIC",
-  "action": "refresh"
-}
-```
-
-Send this message to the `ch-refresh` Kafka topic to invalidate specific flow configuration cache.
-
-## Dependencies
-
-- Apache Camel Kamelet
-- Spring Boot Data Redis
-- Camel HTTP Component
-- Camel Jackson
-- Camel Kafka
-
-## Configuration Properties
-
-Add these properties to your `application.properties`:
-
-```properties
-# K-Identification Kamelet Configuration
-pixel.referentiel.service.url=http://pixel-v2-referentiel:8099
-pixel.kafka.brokers=kafka:29092
-pixel.cache.ttl=3600
-
-# Redis Configuration
-spring.data.redis.host=pixel-v2-redis
-spring.data.redis.port=6379
-```
-
-## Integration Example
-
-### ChProcessingRoute Integration
-
-```java
-@Component
-public class ChProcessingRoute extends RouteBuilder {
-
-    private static final String K_IDENTIFICATION_ENDPOINT =
-        "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&cacheTtl={{pixel.cache.ttl}}";
-
-    @Override
-    public void configure() throws Exception {
-        from("direct:process-ch-message")
-            .setHeader("flowCode", constant("ICHSIC"))
-            .to(K_IDENTIFICATION_ENDPOINT)  // Body preserved, FlowConfiguration in header
-            .to("kamelet:k-xsd-validation?xsdFileName=pacs.008.001.02.ch.02.xsd")
-            .to("kamelet:k-xsl-transformation?xslFileName=overall-xslt-ch-pacs008-001-02.xsl");
-    }
-}
-```
+- `FlowConfiguration`: Contains the retrieved flow configuration (JSON)
+- `OriginalMessageBody`: Preserved original message body
+- `CacheKey`: Generated cache key
+- `SpringCacheName`: Cache name for operations
+- `SpringCacheKey`: Cache key for operations
+- `SpringCacheValue`: Cache value for put operations
 
 ## Error Handling
 
-The kamelet provides graceful error handling:
+- **Referentiel Service Unavailable**: Returns error JSON with service unavailable status
+- **Cache Errors**: Logged but do not interrupt message flow
+- **Invalid Parameters**: Logged with appropriate warnings
 
-1. **Redis Connection Issues**: Falls back to referentiel service
-2. **Referentiel Service Unavailable**: Returns error configuration with service status
-3. **Cache Operation Failures**: Continues processing without caching
+## Performance
 
-## Monitoring
+### Cache Statistics
 
-Monitor the kamelet performance through:
+Monitor cache performance using the `IdentificationCacheService`:
 
-- Cache hit/miss ratio logs
-- Redis operation metrics
-- Referentiel service response times
-- Error rates per operation type
+```java
+Map<String, Object> stats = cacheService.getCacheStatistics("flowConfigCache");
+// Returns: hitCount, missCount, hitRate, evictionCount, estimatedSize
+```
+
+### Memory Usage
+
+- Caffeine cache with 1000 entries limit per cache
+- Automatic eviction based on size and TTL
+- Statistics recording for monitoring
+
+## Integration
+
+### With Docker Compose
+
+The module is automatically included in the `pixel-v2-camel` container builds and deployed with the technical framework.
+
+### With Kubernetes
+
+Deploy as part of the PIXEL-V2 technical framework pod with appropriate memory limits for cache sizing.
+
+## Differences from k-identification
+
+| Feature      | k-identification (Redis)   | k-identification-interne (Spring Cache) |
+| ------------ | -------------------------- | --------------------------------------- |
+| Storage      | External Redis             | In-memory (application)                 |
+| Dependencies | Redis server required      | No external dependencies                |
+| Persistence  | Persistent across restarts | Lost on application restart             |
+| Sharing      | Shared across instances    | Instance-specific                       |
+| Performance  | Network latency            | Memory access speed                     |
+| Scalability  | Horizontal scaling         | Vertical scaling                        |
+| Management   | External Redis tools       | Spring Boot actuator                    |
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Cache Always Missing**: Check Redis connectivity and configuration
-2. **Body Lost**: Verify no custom processors modify the message body
-3. **Configuration Not Found**: Verify flowCode and referentiel service availability
-4. **Cache Not Refreshing**: Check Kafka connectivity and topic configuration
+1. **Cache Not Found Warnings**: Check cache configuration and cache names
+2. **Referentiel Service Errors**: Verify service URL and network connectivity
+3. **Memory Issues**: Adjust cache size limits and JVM heap settings
+4. **Statistics Not Available**: Ensure Caffeine cache provider is active
 
-### Debug Logging
+### Logging
 
-Enable debug logging for troubleshooting:
+Enable debug logging for cache operations:
 
-```properties
-logging.level.com.pixel.kcah.identification=DEBUG
+```yaml
+logging:
+  level:
+    com.pixel.v2.identification.interne: DEBUG
+    org.springframework.cache: DEBUG
 ```
 
-## Performance Considerations
+## Build
 
-- **Cache TTL**: Balance between data freshness and performance
-- **Redis Pool**: Configure connection pool based on load
-- **Timeout Settings**: Set appropriate timeouts for Redis and HTTP operations
-- **Async Processing**: Consider async cache refresh for high-throughput scenarios
+```bash
+cd technical-framework/k-identification-interne
+mvn clean install
+```
 
-## Version History
+## Testing
 
-- **1.0.1-SNAPSHOT**: Initial release with Redis caching and referentiel fallback
+The module can be tested using the standard PIXEL-V2 testing framework with cache-specific test scenarios for hit/miss behavior and error handling.

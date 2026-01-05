@@ -1,0 +1,211 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-dynamic-publisher
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-Dynamic Publisher"
+    description: "Dynamic publisher that routes messages to different transport types based on RefFlowData configuration"
+    type: object
+    properties:
+      header-name:
+        title: "Header name"
+        description: "The header name containing the RefFlowData"
+        type: string
+        default: "RefFlowData"
+  dependencies:
+    - "camel:kamelet"
+    - "camel:log"
+    - "camel:jsonpath"
+    - "camel:groovy"
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - log:
+            message: "K-Dynamic-Publisher: Starting dynamic transport routing"
+        
+        - setProperty:
+            name: "originalXmlBody"
+            simple: "${body}"
+        
+        - setProperty:
+            name: "refFlowDataJson"
+            simple: "${header[{{header-name}}]}"
+        
+        - log:
+            message: "K-Dynamic-Publisher: RefFlowDataJson = ${exchangeProperty.refFlowDataJson}"
+        
+        - choice:
+            when:
+              - expression:
+                  simple: "${exchangeProperty.refFlowDataJson} != null"
+                steps:
+                  - log:
+                      message: "K-Dynamic-Publisher: RefFlowData found"
+                  
+                  - script:
+                      groovy: |
+                        // Use basic string manipulation to extract ALL partners
+                        def refFlowJson = exchange.properties['refFlowDataJson']
+                        
+                        // Find all partner blocks using regex
+                        def partnerPattern = /\{\s*"partnerCode":\s*"([^"]+)"[^}]*"transport":\s*\{\s*"type":\s*"([^"]+)"/
+                        def allMatches = refFlowJson.findAll(partnerPattern)
+                        
+                        // Store all partners for processing
+                        def partners = []
+                        
+                        // Extract flow info once
+                        def flowIdMatch = (refFlowJson =~ /"flow":\s*\{[^}]*"FlowID":\s*"([^"]+)"/)
+                        def flowCodeMatch = (refFlowJson =~ /"flow":\s*\{[^}]*"flowCode":\s*"([^"]+)"/)
+                        
+                        def flowId = flowIdMatch.find() ? flowIdMatch.group(1) : "unknown"
+                        def flowCode = flowCodeMatch.find() ? flowCodeMatch.group(1) : "unknown"
+                        
+                        exchange.properties['flowId'] = flowId
+                        exchange.properties['flowCode'] = flowCode
+                        
+                        // Find each partner block manually
+                        def partnerOutStart = refFlowJson.indexOf('"partnerOut":[')
+                        if (partnerOutStart != -1) {
+                          def content = refFlowJson.substring(partnerOutStart)
+                          
+                          // Find each partner object
+                          def partnerCount = 0
+                          def searchPos = 0
+                          
+                          while (true) {
+                            def partnerStart = content.indexOf('{"partnerCode":', searchPos)
+                            if (partnerStart == -1) break
+                            
+                            // Find the partner code
+                            def codeStart = content.indexOf('"partnerCode":"', partnerStart) + 15
+                            def codeEnd = content.indexOf('"', codeStart)
+                            def partnerCode = content.substring(codeStart, codeEnd)
+                            
+                            // Find the transport type
+                            def transportStart = content.indexOf('"transport":{', partnerStart)
+                            def typeStart = content.indexOf('"type":"', transportStart) + 8
+                            def typeEnd = content.indexOf('"', typeStart)
+                            def transportType = content.substring(typeStart, typeEnd)
+                            
+                            println "Found partner: ${partnerCode} with transport: ${transportType}"
+                            
+                            partnerCount++
+                            searchPos = partnerStart + 1
+                            
+                            // Store the first partner info for main routing
+                            if (partnerCount == 1) {
+                              exchange.properties['transportType'] = transportType
+                              exchange.properties['partnerCode'] = partnerCode
+                            }
+                            
+                            // Stop after finding reasonable number
+                            if (partnerCount > 10) break
+                          }
+                          
+                          exchange.properties['partnerCount'] = partnerCount
+                          println "Total partners found: ${partnerCount}"
+                        }
+                        
+                        println "Processing with flow: ${flowCode} (${flowId})"                        
+                  - log:
+                      message: "Found ${exchangeProperty.partnerCount} partners - Processing all partners for routing"
+                  
+                  # Process all transport types sequentially
+                  - script:
+                      groovy: |
+                        def refFlowJson = exchange.properties['refFlowDataJson']
+                        
+                        // Check for MQ partners
+                        def hasMQ = refFlowJson.contains('"type":"MQ"')
+                        def hasKAFKA = refFlowJson.contains('"type":"KAFKA"')
+                        def hasCFT = refFlowJson.contains('"type":"CFT"')
+                        def hasHTTP = refFlowJson.contains('"type":"HTTP"')
+                        
+                        exchange.properties['hasMQ'] = hasMQ
+                        exchange.properties['hasKAFKA'] = hasKAFKA
+                        exchange.properties['hasCFT'] = hasCFT
+                        exchange.properties['hasHTTP'] = hasHTTP
+                        
+                        println "Transport types found - MQ: ${hasMQ}, KAFKA: ${hasKAFKA}, CFT: ${hasCFT}, HTTP: ${hasHTTP}"
+                        
+                        // Set default parameters
+                        exchange.properties['mqFileName'] = 'pixel-mq-output.xml'
+                        exchange.properties['kafkaTopicName'] = 'ch-pixel-output'
+                        exchange.properties['brokers'] = 'kafka:29092'
+                        exchange.properties['directoryPath'] = '/opt/out'
+                        exchange.properties['httpUrl'] = 'http://localhost:8080/default'
+                  
+                  # Route to MQ if MQ partners exist
+                  - choice:
+                      when:
+                        - simple: "${exchangeProperty.hasMQ} == true"
+                          steps:
+                            - log:
+                                message: "Routing to MQ for MQ partners"
+                            - toD: 
+                                uri: "kamelet:k-mq-publisher"
+                                parameters:
+                                  mqFileName: "${exchangeProperty.mqFileName}"
+                                  flowId: "${exchangeProperty.flowId}"
+                                  flowCode: "${exchangeProperty.flowCode}"
+                                  connectionFactory: "jmsConnectionFactory"
+                                  dataSource: "dataSource"
+                  
+                  # Route to KAFKA if KAFKA partners exist  
+                  - choice:
+                      when:
+                        - simple: "${exchangeProperty.hasKAFKA} == true"
+                          steps:
+                            - log:
+                                message: "Routing to Kafka for KAFKA partners"
+                            - toD: 
+                                uri: "kamelet:k-kafka-publisher"
+                                parameters:
+                                  kafkaTopicName: "${exchangeProperty.kafkaTopicName}"
+                                  brokers: "${exchangeProperty.brokers}"
+                  
+                  # Route to CFT if CFT partners exist
+                  - choice:
+                      when:
+                        - simple: "${exchangeProperty.hasCFT} == true"
+                          steps:
+                            - log:
+                                message: "Routing to CFT for CFT partners"
+                            - toD: 
+                                uri: "kamelet:k-cft-publisher"
+                                parameters:
+                                  directoryPath: "${exchangeProperty.directoryPath}"
+                                  flowId: "${exchangeProperty.flowId}"
+                                  flowCode: "${exchangeProperty.flowCode}"
+                                  dataSource: "dataSource"
+                  
+                  # Route to HTTP if HTTP partners exist
+                  - choice:
+                      when:
+                        - simple: "${exchangeProperty.hasHTTP} == true"
+                          steps:
+                            - log:
+                                message: "Routing to HTTP for HTTP partners"
+                            - toD: 
+                                uri: "kamelet:k-http-publisher"
+                                parameters:
+                                  httpUrl: "${exchangeProperty.httpUrl}"
+                                  flowId: "${exchangeProperty.flowId}"
+                                  flowCode: "${exchangeProperty.flowCode}"
+                                  dataSource: "dataSource" 
+            otherwise:
+                steps:
+                  - log:
+                      message: "K-Dynamic-Publisher: No RefFlowData found in header {{header-name}}"        
+        # Restore original message body
+        - setBody:
+            simple: "${exchangeProperty.originalXmlBody}"
+        
+        - log:
+            message: "K-Dynamic-Publisher: Completed"
+        - to: "kamelet:sink"

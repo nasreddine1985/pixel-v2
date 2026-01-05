@@ -8,7 +8,7 @@ spec:
   definition:
     title: "K-MQ Starter"
     description: |-
-      JMS Queue listener that processes messages and forwards to k-log-flow-summary
+      JMS Queue listener that processes messages
     required:
       - mqFileName
       - connectionFactory
