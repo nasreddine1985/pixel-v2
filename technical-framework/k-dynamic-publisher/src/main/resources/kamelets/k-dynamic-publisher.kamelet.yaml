@@ -33,10 +33,16 @@ spec:
         
         - setProperty:
             name: "refFlowDataJson"
-            simple: "${header[{{header-name}}]}"
+            simple: "${header[RefFlowData]}"
         
-        - log:
-            message: "K-Dynamic-Publisher: RefFlowDataJson = ${exchangeProperty.refFlowDataJson}"
+        # Initialize counters
+        - setProperty:
+            name: "successCount"
+            constant: "0"
+        
+        - setProperty:
+            name: "failureCount"
+            constant: "0"
         
         - choice:
             when:
@@ -46,21 +52,14 @@ spec:
                   - log:
                       message: "K-Dynamic-Publisher: RefFlowData found"
                   
+                  # Step 1: Get List of partnerOut enabled Y
                   - script:
                       groovy: |
-                        // Use basic string manipulation to extract ALL partners
                         def refFlowJson = exchange.properties['refFlowDataJson']
                         
-                        // Find all partner blocks using regex
-                        def partnerPattern = /\{\s*"partnerCode":\s*"([^"]+)"[^}]*"transport":\s*\{\s*"type":\s*"([^"]+)"/
-                        def allMatches = refFlowJson.findAll(partnerPattern)
-                        
-                        // Store all partners for processing
-                        def partners = []
-                        
-                        // Extract flow info once
-                        def flowIdMatch = (refFlowJson =~ /"flow":\s*\{[^}]*"FlowID":\s*"([^"]+)"/)
-                        def flowCodeMatch = (refFlowJson =~ /"flow":\s*\{[^}]*"flowCode":\s*"([^"]+)"/)
+                        // Extract flow info using basic string manipulation
+                        def flowIdMatch = (refFlowJson =~ /"FlowID":\s*"([^"]+)"/)
+                        def flowCodeMatch = (refFlowJson =~ /"flowCode":\s*"([^"]+)"/)
                         
                         def flowId = flowIdMatch.find() ? flowIdMatch.group(1) : "unknown"
                         def flowCode = flowCodeMatch.find() ? flowCodeMatch.group(1) : "unknown"
@@ -68,140 +67,213 @@ spec:
                         exchange.properties['flowId'] = flowId
                         exchange.properties['flowCode'] = flowCode
                         
-                        // Find each partner block manually
-                        def partnerOutStart = refFlowJson.indexOf('"partnerOut":[')
-                        if (partnerOutStart != -1) {
-                          def content = refFlowJson.substring(partnerOutStart)
+                        // Extract original partnerOut block for logging
+                        def partnerOutMatch = (refFlowJson =~ /(?s)"partnerOut":\s*(\[.*?\])/)
+                        def originalPartnerOut = partnerOutMatch.find() ? partnerOutMatch.group(1) : "[]"
+                        exchange.properties['originalPartnerOut'] = originalPartnerOut
+                        
+                        // Step 1: Get List of partnerOut enabled Y using enhanced regex with transport details
+                        def enabledPartners = []
+                        
+                        // Match each complete partner object individually
+                        def partnerObjectPattern = /\{\s*"partnerCode":\s*"([^"]+)"[^}]*?"enabled":\s*"([^"]+)"[^}]*?"transport":\s*\{\s*"type":\s*"([^"]+)"[^}]*?\}\s*\}/
+                        def matcher = refFlowJson =~ partnerObjectPattern
+                        
+                        while (matcher.find()) {
+                          def partnerCode = matcher.group(1)
+                          def enabled = matcher.group(2)
+                          def transportType = matcher.group(3)
                           
-                          // Find each partner object
-                          def partnerCount = 0
-                          def searchPos = 0
+                          println "Debug: Found partner ${partnerCode}, enabled=${enabled}, transport=${transportType}"
                           
-                          while (true) {
-                            def partnerStart = content.indexOf('{"partnerCode":', searchPos)
-                            if (partnerStart == -1) break
+                          // Only include if enabled = "Y"
+                          if (enabled == "Y") {
+                            def endpoint = ""
+                            def queueName = "${partnerCode}.output.queue"
                             
-                            // Find the partner code
-                            def codeStart = content.indexOf('"partnerCode":"', partnerStart) + 15
-                            def codeEnd = content.indexOf('"', codeStart)
-                            def partnerCode = content.substring(codeStart, codeEnd)
+                            enabledPartners.add([
+                              partnerCode: partnerCode,
+                              transportType: transportType,
+                              endpoint: endpoint,
+                              queueName: queueName
+                            ])
                             
-                            // Find the transport type
-                            def transportStart = content.indexOf('"transport":{', partnerStart)
-                            def typeStart = content.indexOf('"type":"', transportStart) + 8
-                            def typeEnd = content.indexOf('"', typeStart)
-                            def transportType = content.substring(typeStart, typeEnd)
-                            
-                            println "Found partner: ${partnerCode} with transport: ${transportType}"
-                            
-                            partnerCount++
-                            searchPos = partnerStart + 1
-                            
-                            // Store the first partner info for main routing
-                            if (partnerCount == 1) {
-                              exchange.properties['transportType'] = transportType
-                              exchange.properties['partnerCode'] = partnerCode
-                            }
-                            
-                            // Stop after finding reasonable number
-                            if (partnerCount > 10) break
+                            println "Found enabled partner: ${partnerCode} - Transport: ${transportType} - Endpoint: ${endpoint} - Queue: ${queueName}"
+                          } else {
+                            println "Skipping disabled partner: ${partnerCode} - Transport: ${transportType}"
                           }
-                          
-                          exchange.properties['partnerCount'] = partnerCount
-                          println "Total partners found: ${partnerCount}"
                         }
                         
-                        println "Processing with flow: ${flowCode} (${flowId})"                        
+                        exchange.properties['enabledPartners'] = enabledPartners
+                        exchange.properties['totalPartners'] = enabledPartners.size()
+                        
+                        println "Found ${enabledPartners.size()} enabled partners for processing"
+                  
                   - log:
-                      message: "Found ${exchangeProperty.partnerCount} partners - Processing all partners for routing"
+                      message: "Found ${exchangeProperty.totalPartners} enabled partners for multicast processing: ${exchangeProperty.enabledPartners}. Original partnerOut: ${exchangeProperty.originalPartnerOut}"
                   
-                  # Process all transport types sequentially
-                  - script:
-                      groovy: |
-                        def refFlowJson = exchange.properties['refFlowDataJson']
-                        
-                        // Check for MQ partners
-                        def hasMQ = refFlowJson.contains('"type":"MQ"')
-                        def hasKAFKA = refFlowJson.contains('"type":"KAFKA"')
-                        def hasCFT = refFlowJson.contains('"type":"CFT"')
-                        def hasHTTP = refFlowJson.contains('"type":"HTTP"')
-                        
-                        exchange.properties['hasMQ'] = hasMQ
-                        exchange.properties['hasKAFKA'] = hasKAFKA
-                        exchange.properties['hasCFT'] = hasCFT
-                        exchange.properties['hasHTTP'] = hasHTTP
-                        
-                        println "Transport types found - MQ: ${hasMQ}, KAFKA: ${hasKAFKA}, CFT: ${hasCFT}, HTTP: ${hasHTTP}"
-                        
-                        // Set default parameters
-                        exchange.properties['mqFileName'] = 'pixel-mq-output.xml'
-                        exchange.properties['kafkaTopicName'] = 'ch-pixel-output'
-                        exchange.properties['brokers'] = 'kafka:29092'
-                        exchange.properties['directoryPath'] = '/opt/out'
-                        exchange.properties['httpUrl'] = 'http://localhost:8080/default'
-                  
-                  # Route to MQ if MQ partners exist
+                  # Step 2: Process each enabled partner sequentially
                   - choice:
                       when:
-                        - simple: "${exchangeProperty.hasMQ} == true"
+                        - simple: "${exchangeProperty.totalPartners} > 0"
                           steps:
+                            - script:
+                                groovy: |
+                                  def enabledPartners = exchange.properties['enabledPartners']
+                                  exchange.properties['successCount'] = 0
+                                  exchange.properties['failureCount'] = 0
+                                  exchange.properties['currentPartnerIndex'] = 0
+                                  
+                                  println "Starting to process ${enabledPartners.size()} partners"
+                            
+                            - loop:
+                                expression:
+                                  simple: "${exchangeProperty.totalPartners}"
+                                steps:
+                                  # Set current partner context
+                                  - script:
+                                      groovy: |
+                                        def enabledPartners = exchange.properties['enabledPartners'] as List
+                                        def partnerIndex = exchange.properties['currentPartnerIndex'] as Integer ?: 0
+                                        
+                                        println "Debug: Partner index: ${partnerIndex}, Partners list size: ${enabledPartners?.size()}"
+                                        
+                                        if (enabledPartners != null && partnerIndex >= 0 && partnerIndex < enabledPartners.size()) {
+                                          def partner = enabledPartners.get(partnerIndex)
+                                          
+                                          exchange.properties['currentPartnerCode'] = partner?.partnerCode ?: "unknown"
+                                          exchange.properties['currentTransportType'] = partner?.transportType ?: "unknown"
+                                          exchange.properties['currentEndpoint'] = partner?.endpoint ?: ""
+                                          exchange.properties['currentQueueName'] = partner?.queueName ?: "unknown.queue"
+                                          
+                                          println "Processing partner ${partnerIndex + 1}/${enabledPartners.size()}: ${partner.partnerCode} with transport: ${partner.transportType}"
+                                          
+                                          // Increment index for next iteration
+                                          exchange.properties['currentPartnerIndex'] = partnerIndex + 1
+                                        } else {
+                                          exchange.properties['currentPartnerCode'] = "error"
+                                          exchange.properties['currentTransportType'] = "error"
+                                          exchange.properties['currentEndpoint'] = ""
+                                          exchange.properties['currentQueueName'] = "error.queue"
+                                          println "Error: Invalid partner index ${partnerIndex} or empty partners list (size: ${enabledPartners?.size()})"
+                                        }
+                                  
+                                  # Step 3: Switch case for transport type with actual kamelet calls
+                                  - choice:
+                                      when:
+                                        - simple: "${exchangeProperty.currentTransportType} == 'CFT'"
+                                          steps:
+                                            - log:
+                                                message: "Calling k-cft-publisher for partner: ${exchangeProperty.currentPartnerCode}"
+                                            - doTry:
+                                                steps:
+                                                  - setHeader:
+                                                      name: "PartnerCode"
+                                                      simple: "${exchangeProperty.currentPartnerCode}"
+                                                  - toD: "kamelet:k-cft-publisher?directoryPath=/nas/outgoing/cft&flowCode=${exchangeProperty.flowCode}&flowId=${exchangeProperty.flowId}&dataSource=dataSource"
+                                                  - script:
+                                                      groovy: |
+                                                        def successCount = exchange.properties['successCount'] as Integer ?: 0
+                                                        exchange.properties['successCount'] = successCount + 1
+                                                        println "CFT Publisher SUCCESS for ${exchange.properties['currentPartnerCode']}"
+                                                doCatch:
+                                                  - exception: "java.lang.Exception"
+                                                    steps:
+                                                      - script:
+                                                          groovy: |
+                                                            def failureCount = exchange.properties['failureCount'] as Integer ?: 0
+                                                            exchange.properties['failureCount'] = failureCount + 1
+                                                            println "CFT Publisher FAILED for ${exchange.properties['currentPartnerCode']}: ${exception.message}"
+                                        - simple: "${exchangeProperty.currentTransportType} == 'MQ' || ${exchangeProperty.currentTransportType} == 'MQS'"
+                                          steps:
+                                            - log:
+                                                message: "Calling k-mq-publisher for partner: ${exchangeProperty.currentPartnerCode}"
+                                            - doTry:
+                                                steps:
+                                                  - setHeader:
+                                                      name: "PartnerCode"
+                                                      simple: "${exchangeProperty.currentPartnerCode}"
+                                                  - toD: "kamelet:k-mq-publisher?mqFileName=${exchangeProperty.currentQueueName}&connectionFactory=jmsConnectionFactory&flowCode=${exchangeProperty.flowCode}&flowId=${exchangeProperty.flowId}&dataSource=dataSource"
+                                                  - script:
+                                                      groovy: |
+                                                        def successCount = exchange.properties['successCount'] as Integer ?: 0
+                                                        exchange.properties['successCount'] = successCount + 1
+                                                        println "MQ/MQS Publisher SUCCESS for ${exchange.properties['currentPartnerCode']}"
+                                                doCatch:
+                                                  - exception: "java.lang.Exception"
+                                                    steps:
+                                                      - script:
+                                                          groovy: |
+                                                            def failureCount = exchange.properties['failureCount'] as Integer ?: 0
+                                                            exchange.properties['failureCount'] = failureCount + 1
+                                                            println "MQ/MQS Publisher FAILED for ${exchange.properties['currentPartnerCode']}: ${exception.message}"
+                                        - simple: "${exchangeProperty.currentTransportType} == 'HTTP'"
+                                          steps:
+                                            - log:
+                                                message: "Calling k-http-publisher for partner: ${exchangeProperty.currentPartnerCode}"
+                                            - doTry:
+                                                steps:
+                                                  - setHeader:
+                                                      name: "PartnerCode"
+                                                      simple: "${exchangeProperty.currentPartnerCode}"
+                                                  - toD: "kamelet:k-http-publisher?httpUrl=${exchangeProperty.currentEndpoint}&flowCode=${exchangeProperty.flowCode}&flowId=${exchangeProperty.flowId}&dataSource=dataSource"
+                                                  - script:
+                                                      groovy: |
+                                                        def successCount = exchange.properties['successCount'] as Integer ?: 0
+                                                        exchange.properties['successCount'] = successCount + 1
+                                                        println "HTTP Publisher SUCCESS for ${exchange.properties['currentPartnerCode']}"
+                                                doCatch:
+                                                  - exception: "java.lang.Exception"
+                                                    steps:
+                                                      - script:
+                                                          groovy: |
+                                                            def failureCount = exchange.properties['failureCount'] as Integer ?: 0
+                                                            exchange.properties['failureCount'] = failureCount + 1
+                                                            println "HTTP Publisher FAILED for ${exchange.properties['currentPartnerCode']}: ${exception.message}"
+                                        - simple: "${exchangeProperty.currentTransportType} == 'KAFKA'"
+                                          steps:
+                                            - log:
+                                                message: "Calling k-kafka-publisher for partner: ${exchangeProperty.currentPartnerCode}"
+                                            - doTry:
+                                                steps:
+                                                  - setHeader:
+                                                      name: "PartnerCode"
+                                                      simple: "${exchangeProperty.currentPartnerCode}"
+                                                  - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${exchangeProperty.currentPartnerCode}-topic&brokers=localhost:9092&key=${exchangeProperty.currentPartnerCode}"
+                                                  - script:
+                                                      groovy: |
+                                                        def successCount = exchange.properties['successCount'] as Integer ?: 0
+                                                        exchange.properties['successCount'] = successCount + 1
+                                                        println "Kafka Publisher SUCCESS for ${exchange.properties['currentPartnerCode']}"
+                                                doCatch:
+                                                  - exception: "java.lang.Exception"
+                                                    steps:
+                                                      - script:
+                                                          groovy: |
+                                                            def failureCount = exchange.properties['failureCount'] as Integer ?: 0
+                                                            exchange.properties['failureCount'] = failureCount + 1
+                                                            println "Kafka Publisher FAILED for ${exchange.properties['currentPartnerCode']}: ${exception.message}"
+                                      otherwise:
+                                        steps:
+                                          - script:
+                                              groovy: |
+                                                def failureCount = exchange.properties['failureCount'] as Integer ?: 0
+                                                exchange.properties['failureCount'] = failureCount + 1
+                                                def partnerCode = exchange.properties['currentPartnerCode'] ?: "unknown"
+                                                def transportType = exchange.properties['currentTransportType'] ?: "unknown"
+                                                println "Unsupported transport FAILED for partner: ${partnerCode}, transport: ${transportType}"
+                            # Log final results
                             - log:
-                                message: "Routing to MQ for MQ partners"
-                            - toD: 
-                                uri: "kamelet:k-mq-publisher"
-                                parameters:
-                                  mqFileName: "${exchangeProperty.mqFileName}"
-                                  flowId: "${exchangeProperty.flowId}"
-                                  flowCode: "${exchangeProperty.flowCode}"
-                                  connectionFactory: "jmsConnectionFactory"
-                                  dataSource: "dataSource"
-                  
-                  # Route to KAFKA if KAFKA partners exist  
-                  - choice:
-                      when:
-                        - simple: "${exchangeProperty.hasKAFKA} == true"
-                          steps:
-                            - log:
-                                message: "Routing to Kafka for KAFKA partners"
-                            - toD: 
-                                uri: "kamelet:k-kafka-publisher"
-                                parameters:
-                                  kafkaTopicName: "${exchangeProperty.kafkaTopicName}"
-                                  brokers: "${exchangeProperty.brokers}"
-                  
-                  # Route to CFT if CFT partners exist
-                  - choice:
-                      when:
-                        - simple: "${exchangeProperty.hasCFT} == true"
-                          steps:
-                            - log:
-                                message: "Routing to CFT for CFT partners"
-                            - toD: 
-                                uri: "kamelet:k-cft-publisher"
-                                parameters:
-                                  directoryPath: "${exchangeProperty.directoryPath}"
-                                  flowId: "${exchangeProperty.flowId}"
-                                  flowCode: "${exchangeProperty.flowCode}"
-                                  dataSource: "dataSource"
-                  
-                  # Route to HTTP if HTTP partners exist
-                  - choice:
-                      when:
-                        - simple: "${exchangeProperty.hasHTTP} == true"
-                          steps:
-                            - log:
-                                message: "Routing to HTTP for HTTP partners"
-                            - toD: 
-                                uri: "kamelet:k-http-publisher"
-                                parameters:
-                                  httpUrl: "${exchangeProperty.httpUrl}"
-                                  flowId: "${exchangeProperty.flowId}"
-                                  flowCode: "${exchangeProperty.flowCode}"
-                                  dataSource: "dataSource" 
+                                message: "PROCESSING COMPLETED - Total Partners: ${exchangeProperty.totalPartners}, Successful Calls: ${exchangeProperty.successCount}, Failed Calls: ${exchangeProperty.failureCount}"
+                      otherwise:
+                        steps:
+                          - log:
+                              message: "No enabled partners found for processing"
             otherwise:
                 steps:
                   - log:
-                      message: "K-Dynamic-Publisher: No RefFlowData found in header {{header-name}}"        
+                      message: "K-Dynamic-Publisher: No RefFlowData found in header RefFlowData"
+                      
         # Restore original message body
         - setBody:
             simple: "${exchangeProperty.originalXmlBody}"
