@@ -21,7 +21,7 @@ public class ChRoute extends RouteBuilder {
 
         // Kamelet endpoint for XSD validation
         private static final String K_XSD_VALIDATION_ENDPOINT =
-                        "kamelet:k-xsd-validation?xsdFileName=pacs.008.001.02.ch.02.xsd&validationMode=STRICT";
+                        "kamelet:k-xsd-validation?xsdFileName=pacs.008.001.08.ch.02.xsd&validationMode=STRICT";
 
         // Kamelet endpoint for XSL transformation
         private static final String K_XSL_PACS008_001_08TO_CDM_TRANSFORMATION_ENDPOINT =
