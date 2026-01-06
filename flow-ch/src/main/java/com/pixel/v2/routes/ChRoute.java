@@ -35,11 +35,8 @@ public class ChRoute extends RouteBuilder {
                         "kamelet:k-kafka-publisher?kafkaTopicName=ch-out&brokers={{pixel.kafka.brokers}}";
 
         // Kamelet endpoint for dynamic publisher
-        private static final String K_DYNAMIC_PUBLISHER_ENDPOINT = "kamelet:k-dynamic-publisher?header-name=RefFlowData";
-
-        // Kamelet endpoint for flow summary logging
-        private static final String K_LOG_FLOW_SUMMARY_ENDPOINT =
-                        "kamelet:k-log-flow-summary?step=COMPLETED&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers={{pixel.kafka.brokers}}";
+        private static final String K_DYNAMIC_PUBLISHER_ENDPOINT =
+                        "kamelet:k-dynamic-publisher?header-name=RefFlowData";
 
         // Kamelet endpoint for MQ starter
         private static final String K_MQ_STARTER_ENDPOINT = """
@@ -89,9 +86,16 @@ public class ChRoute extends RouteBuilder {
                                 .to(K_DYNAMIC_PUBLISHER_ENDPOINT)
 
                                 // Step 7: Publish transformed message to ch-out topic
-                                //.to(K_KAFKA_PUBLISHER_ENDPOINT)
+                                // .to(K_KAFKA_PUBLISHER_ENDPOINT)
 
-                                // Step 8: Complete processing
-                                .wireTap(K_LOG_FLOW_SUMMARY_ENDPOINT);
+                                // Step 8: Complete processing - dynamic step based on failure count
+                                .wireTap("direct:log-flow-summary");
+
+                // Dynamic flow summary logging route
+                from("direct:log-flow-summary").choice()
+                                .when(simple("${exchangeProperty.failureCount} == 0"))
+                                .setHeader("stepValue", constant("COMPLETED")).otherwise()
+                                .setHeader("stepValue", constant("FAILURE")).end()
+                                .toD("kamelet:k-log-flow-summary?step=${header.stepValue}&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers={{camel.component.kafka.brokers}}");
         }
 }

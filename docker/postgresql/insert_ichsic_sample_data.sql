@@ -287,7 +287,7 @@ INSERT INTO tib_audit_tec.ref_flow_rules (
 )
 VALUES 
     ('ICHSIC', 'MQ', 'true', 1, 'HIGH', 'false', 100, 'true', 7, 'false', 1024, 'false', 'false')
-ON CONFLICT (flowcode) DO NOTHING;
+ON CONFLICT (flowcode, transporttype) DO NOTHING;
 
 -- ========================================
 -- 17. PROPERTY FLOW DEFINITIONS

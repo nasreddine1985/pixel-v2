@@ -239,7 +239,7 @@ spec:
                                                   - setHeader:
                                                       name: "PartnerCode"
                                                       simple: "${exchangeProperty.currentPartnerCode}"
-                                                  - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${exchangeProperty.currentPartnerCode}-topic&brokers=localhost:9092&key=${exchangeProperty.currentPartnerCode}"
+                                                  - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${exchangeProperty.currentPartnerCode}-topic&brokers=kafka:29092&key=${exchangeProperty.currentPartnerCode}"
                                                   - script:
                                                       groovy: |
                                                         def successCount = exchange.properties['successCount'] as Integer ?: 0
