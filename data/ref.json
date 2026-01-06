@@ -1,0 +1,152 @@
+{
+  "flow": {
+    "FlowID": "1",
+    "flowCode": "ICHSIC",
+    "flowName": "ICHSIC Payment Flow",
+    "flowTypeName": "Payment Processing",
+    "flowDirection": "BID",
+    "flowEnabled": "Y",
+    "application": {
+      "code": "ITL",
+      "name": "Pixel Integration Platform"
+    },
+    "flowFuncPrty": [
+      {
+        "key": "BIC",
+        "type": "Enrichment",
+        "desc": "FP for CH SIC CLEARING Incoming payments",
+        "value": "BPPBCHGGXXX"
+      },
+      {
+        "key": "PcssA2Bank",
+        "type": "Enrichment",
+        "desc": "FP for CH SIC CLEARING Incoming payments",
+        "value": "P01"
+      },
+      {
+        "key": "XmlSchema",
+        "type": "Validation",
+        "desc": "FP for CH SIC CLEARING Incoming payments",
+        "value": "pacs.008.001.08.ch.02.itl.v2.xsd"
+      },
+      {
+        "key": "Application",
+        "type": "Application",
+        "desc": "FP for CH SIC CLEARING Incoming payments",
+        "value": "ITL"
+      }
+    ],
+    "countries": [
+      "Switzerland"
+    ]
+  },
+  "partnerIn": {
+    "partnerCode": "CHSIC",
+    "partnerName": "CH - Switzerland ACH Clearing",
+    "partnerTypeName": "Internal Partner",
+    "charsetCode": "UTF-8",
+    "ruleName": null,
+    "enabled": "Y",
+    "bmsaEnabled": "N",
+    "transport": {
+      "type": "MQS",
+      "mqs": {
+        "qName": "OITARTMI01",
+        "qManager": "FRITL01Z"
+      },
+      "cft": null,
+      "jms": null,
+      "http": null,
+      "email": null,
+      "sftp": null
+    }
+  },
+  "partnerOut": [
+    {
+      "partnerCode": "CHBANK01",
+      "partnerName": "Swiss Bank Partner",
+      "partnerTypeName": "External Bank",
+      "charsetCode": "UTF-8",
+      "ruleName": null,
+      "enabled": "Y",
+      "bmsaEnabled": "N",
+      "transport": {
+        "type": "MQ",
+        "mqs": null,
+        "cft": null,
+        "jms": null,
+        "http": null,
+        "email": null,
+        "sftp": null
+      }
+    },
+    {
+      "partnerCode": "CHSIC",
+      "partnerName": "CH - Switzerland ACH Clearing",
+      "partnerTypeName": "Internal Partner",
+      "charsetCode": "UTF-8",
+      "ruleName": null,
+      "enabled": "Y",
+      "bmsaEnabled": "N",
+      "transport": {
+        "type": "MQ",
+        "mqs": null,
+        "cft": null,
+        "jms": null,
+        "http": null,
+        "email": null,
+        "sftp": null
+      }
+    },
+    {
+      "partnerCode": "CHSIC",
+      "partnerName": "CH - Switzerland ACH Clearing",
+      "partnerTypeName": "Internal Partner",
+      "charsetCode": "UTF-8",
+      "ruleName": null,
+      "enabled": "Y",
+      "bmsaEnabled": "N",
+      "transport": {
+        "type": "KAFKA",
+        "mqs": null,
+        "cft": null,
+        "jms": null,
+        "http": null,
+        "email": null,
+        "sftp": null
+      }
+    }
+  ],
+  "httpTransport": {
+    "in": {
+      "uri": null,
+      "partnerCode": null
+    },
+    "out": {
+      "uri": null,
+      "partnerCode": null
+    }
+  },
+  "virtualAccount": {
+    "format": null,
+    "path": null
+  },
+  "functionalModules": [],
+  "flowRules": [
+    {
+      "flowCode": "ICHSIC",
+      "transportType": "MQ",
+      "isUnitary": true,
+      "priority": 1,
+      "urgency": "HIGH",
+      "flowControlledEnabled": false,
+      "flowMaximum": 100,
+      "flowRetentionEnabled": true,
+      "retentionCyclePeriod": "7",
+      "writeFile": false,
+      "minRequiredFileSize": 1024,
+      "ignoreOutputDupCheck": false,
+      "logAll": false
+    }
+  ]
+}
