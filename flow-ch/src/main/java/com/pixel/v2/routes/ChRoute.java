@@ -19,6 +19,10 @@ public class ChRoute extends RouteBuilder {
         private static final String K_IDENTIFICATION_ENDPOINT =
                         "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
 
+        // Kamelet endpoint for duplicate check
+        private static final String K_DUPLICATE_CHECK_ENDPOINT =
+                        "kamelet:k-duplicate-check?dataSource={{kmq.starter.dataSource}}&disableCheckDB={{pixel.duplicate.check.disable:false}}&disableCheckMaxFileSize={{pixel.duplicate.check.max.file.size.disable:false}}&maxRetryCount={{pixel.duplicate.check.max.retry:3}}&retrySleepPeriod={{pixel.duplicate.check.retry.sleep:1000}}";
+
         // Kamelet endpoint for XSD validation
         private static final String K_XSD_VALIDATION_ENDPOINT =
                         "kamelet:k-xsd-validation?xsdFileName=pacs.008.001.08.ch.02.xsd&validationMode=STRICT";
@@ -72,23 +76,26 @@ public class ChRoute extends RouteBuilder {
                                 // kamelet
                                 .to(K_IDENTIFICATION_ENDPOINT)
 
-                                // Step 3: XSD Validation using
+                                // Step 3: Duplicate check processing
+                                .to(K_DUPLICATE_CHECK_ENDPOINT)
+
+                                // Step 4: XSD Validation using
                                 // k-xsd-validation
                                 .to(K_XSD_VALIDATION_ENDPOINT)
 
-                                // Step 4: XSLT Transformation using k-xsl-transformation
+                                // Step 5: XSLT Transformation using k-xsl-transformation
                                 .to(K_XSL_PACS008_001_08TO_CDM_TRANSFORMATION_ENDPOINT)
 
-                                // Step 5: XSLT Transformation using k-xsl-transformation
+                                // Step 6: XSLT Transformation using k-xsl-transformation
                                 .to(K_XSL_CDM_TO_PACS008_001_02_TRANSFORMATION_ENDPOINT)
 
-                                // Step 6: Dynamic route to destination using k-dynamic-publisher
+                                // Step 7: Dynamic route to destination using k-dynamic-publisher
                                 .to(K_DYNAMIC_PUBLISHER_ENDPOINT)
 
-                                // Step 7: Publish transformed message to ch-out topic
+                                // Step 8: Publish transformed message to ch-out topic
                                 // .to(K_KAFKA_PUBLISHER_ENDPOINT)
 
-                                // Step 8: Complete processing - dynamic step based on failure count
+                                // Step 9: Complete processing - dynamic step based on failure count
                                 .wireTap("direct:log-flow-summary");
 
                 // Dynamic flow summary logging route

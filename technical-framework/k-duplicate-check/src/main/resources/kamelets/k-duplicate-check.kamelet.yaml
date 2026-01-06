@@ -1,0 +1,133 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-duplicate-check
+  labels:
+    camel.apache.org/kamelet.type: "action"
+spec:
+  definition:
+    title: "K-Duplicate Check"
+    description: |-
+      Performs duplicate check processing with file size validation and database operations
+    type: object
+    properties:
+      dataSource:
+        title: "Data Source"
+        description: "JDBC data source name"
+        type: string
+        default: "dataSource"
+      disableCheckDB:
+        title: "Disable DB Check"
+        description: "Global flag to disable duplicate check"
+        type: boolean
+        default: false
+      disableCheckMaxFileSize:
+        title: "Disable Max File Size Check" 
+        description: "Flag to disable maximum file size check"
+        type: boolean
+        default: false
+      maxFileSize:
+        title: "Max File Size"
+        description: "Maximum allowed file size in bytes"
+        type: integer
+        default: 10485760
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # 1. Check if global DB check is disabled
+        - choice:
+            when:
+              - simple: "{{disableCheckDB}} == true"
+                steps:
+                  - log:
+                      message: "DuplicateCheck is disabled. Occ_Id: ${header.flowOccurId}"
+                      loggingLevel: INFO
+            otherwise:
+              steps:
+                # 2. Save original body before any processing
+                - setProperty:
+                    name: "originalBody"
+                    simple: "${body}"
+                
+                # 3. Extract flowId from RefFlowData JSON
+                - setBody:
+                    simple: "${header.RefFlowData}"
+                - setProperty:
+                    name: "flowId"
+                    jsonpath: "$.flow.FlowID"
+                - setProperty:
+                    name: "partnerId"
+                    jsonpath: "$.partnerIn.partnerCode"
+                
+                # 4. Restore original body immediately
+                - setBody:
+                    simple: "${exchangeProperty.originalBody}"
+
+                # 5. Log that duplicate check is enabled
+                - log:
+                    message: "DuplicateCheck is enabled. Occ_Id: ${header.flowOccurId}, FlowId: ${exchangeProperty.flowId} , PartnerId: ${exchangeProperty.partnerId}"
+                    loggingLevel: INFO
+
+                # 6. Compute checksum and file size using Java processor
+                - process:
+                    ref: "duplicateCheckProcessor"
+
+                # 5. File size check
+                - choice:
+                    when:
+                      - simple: "{{disableCheckMaxFileSize}} == false"
+                        steps:
+                          - choice:
+                              when:
+                                - simple: "${exchangeProperty.fileSize} > {{maxFileSize}}"
+                                  steps:
+                                    - log:
+                                        message: "TEC00064: Max file size exceeded. File size: ${exchangeProperty.fileSize} bytes, Max allowed: {{maxFileSize}} bytes"
+                                        loggingLevel: ERROR
+                                    - setHeader:
+                                        name: "DuplicateCheckError"
+                                        simple: "TEC00064"
+
+                # 6. Database duplicate check (only if no file size error)
+                - choice:
+                    when:
+                      - simple: "${header.DuplicateCheckError} == null"
+                        steps:
+                          - log:
+                              message: "Performing duplicate check for flowId: ${exchangeProperty.flowId}, checksum: ${exchangeProperty.checksum} , PartnerId: ${exchangeProperty.partnerId}"
+                              loggingLevel: INFO
+                          
+                          # 6.1 Check for existing duplicates first
+                          - to:
+                              uri: "sql:SELECT COUNT(*) as count FROM pixel_v2.TECH_DUPLICATE_CHECK WHERE FLOWID = :#${exchangeProperty.flowId} AND CHECKSUM = :#${exchangeProperty.checksum}?dataSource={{dataSource}}"
+                          
+                          - choice:
+                              when:
+                                - simple: "${body[0]['count']} > 0"
+                                  steps:
+                                    - log:
+                                        message: "DCH00001: Duplicate flow detected for flowId: ${exchangeProperty.flowId}"
+                                        loggingLevel: ERROR
+                                    - setHeader:
+                                        name: "DuplicateCheckError"
+                                        simple: "DCH00001"
+                              otherwise:
+                                steps:
+                                  # 6.2 Insert new record
+                                  - to:
+                                      uri: "sql:INSERT INTO pixel_v2.TECH_DUPLICATE_CHECK (FLOWOCCUR_ID, PARTNER_ID, CHECKSUM, FLOWID, RECEIPT_DTE) VALUES (:#${header.flowOccurId}, :#${exchangeProperty.partnerId}, :#${exchangeProperty.checksum}, :#${exchangeProperty.flowId}, CURRENT_TIMESTAMP)?dataSource={{dataSource}}"
+                                  
+                                  # 7. Success
+                                  - log:
+                                      message: "DuplicateCheck successfully completed. Occ_Id: ${header.flowOccurId}"
+                                      loggingLevel: INFO
+
+        # Restore original body before continuing
+        - setBody:
+            simple: "${exchangeProperty.originalBody}"
+        - removeProperty:
+            name: "originalBody"
+        
+        # Continue to next step
+        - to: "kamelet:sink"

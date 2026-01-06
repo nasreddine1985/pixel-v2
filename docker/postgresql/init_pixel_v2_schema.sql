@@ -171,6 +171,23 @@ CREATE INDEX IF NOT EXISTS idx_flow_summary_recipient_partner ON pixel_v2.flow_s
 CREATE INDEX IF NOT EXISTS idx_flow_summary_ref_flow_id ON pixel_v2.flow_summary(REF_FLOW_ID);
 CREATE INDEX IF NOT EXISTS idx_flow_summary_region ON pixel_v2.flow_summary(REGION);
 
+-- Create duplicate check table for flow duplicate detection
+CREATE TABLE IF NOT EXISTS pixel_v2.tech_duplicate_check (
+    FLOWOCCUR_ID VARCHAR(255) PRIMARY KEY,
+    PARTNER_ID VARCHAR(255),
+    CHECKSUM VARCHAR(255) NOT NULL,
+    FLOWID VARCHAR(255) NOT NULL,
+    RECEIPT_DTE TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Constraints to ensure data integrity
+    CONSTRAINT unique_flow_checksum UNIQUE (FLOWID, CHECKSUM)
+);
+
+-- Create indexes for duplicate check queries
+CREATE INDEX IF NOT EXISTS idx_tech_duplicate_check_flowid ON pixel_v2.tech_duplicate_check(FLOWID);
+CREATE INDEX IF NOT EXISTS idx_tech_duplicate_check_checksum ON pixel_v2.tech_duplicate_check(CHECKSUM);
+CREATE INDEX IF NOT EXISTS idx_tech_duplicate_check_flowid_checksum ON pixel_v2.tech_duplicate_check(FLOWID, CHECKSUM);
+CREATE INDEX IF NOT EXISTS idx_tech_duplicate_check_receipt_dte ON pixel_v2.tech_duplicate_check(RECEIPT_DTE);
 
 
 -- Create function to update timestamp on record modification

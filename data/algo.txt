@@ -1,0 +1,178 @@
+PROCEDURE DoAction()
+{
+    -----------------------------------------------------------------
+    // 1 – Récupération de l’identifiant d’occurrence du flux
+    -----------------------------------------------------------------
+    flowOccId ← CALL GetFlowOccurrenceID()           // $GetFlowOccurrenceID
+ 
+    -----------------------------------------------------------------
+    // 2 – Lecture du checkpoint « CheckPointDuplicateKey »
+    //    (utilisé pour le contrôle de la taille maximale du fichier)
+    -----------------------------------------------------------------
+    replayedFlag ← CALL GetReplayedValue()           // $GetReplayed
+ 
+    -----------------------------------------------------------------
+    // 3 – Désactivation globale du contrôle DB ?
+    -----------------------------------------------------------------
+    IF (global.disableCheckDB = true OR global.disableCheckDB = '1')
+    {
+        LOG "DuplicateCheck is disabled. Occ_Id: " + flowOccId
+        TERMINATE_SUCCESS
+    }
+ 
+    -----------------------------------------------------------------
+    // 4 – Log d’information : le contrôle DB est activé
+    -----------------------------------------------------------------
+    LOG "DuplicateCheck is enabled. Occ_Id: " + flowOccId
+ 
+    -----------------------------------------------------------------
+    // 5 – Choix du mode de calcul du checksum
+    //    (sur le fichier ou sur le payload)
+    -----------------------------------------------------------------
+    IF (Start.TechPivotRoot.FlowRules.FlowSeparation.UsePayload = true)
+        checksum ← CALL ComputeSHA1ChecksumPayload()
+    ELSE
+        checksum ← CALL ComputeSHA1ChecksumFile()
+ 
+    -----------------------------------------------------------------
+    // 6 – ***Contrôle de la taille maximale du fichier***
+    //    Cette étape n’est exécutée que si les deux conditions suivantes
+    //    sont **fausses** :
+    //      a)  global.disableCheckMaxFileSize = true
+    //      b)  le checkpoint indique que le fichier a déjà été
+    //          « re‑played » (valeur = 'Replayed')
+    -----------------------------------------------------------------
+    skipMaxSizeCheck ← false
+ 
+    // a) désactivation explicite du contrôle de taille
+    IF (global.disableCheckMaxFileSize = true
+        OR string(global.ModuleProps/disableCheckMaxFileSize) = 'true')
+    {
+        skipMaxSizeCheck ← true
+    }
+ 
+    // b) le checkpoint signale « Replayed »
+    IF (count(replayedFlag/output/ns7:Properties/ns7:Property) > 0
+        AND replayedFlag/output/ns7:Properties/ns7:Property[
+                ns7:Key = $_globalVariables/ns4:GlobalVariables/
+                        TEC-FLOW-UTILS/PropertiesKey/CheckPointDuplicateKey.const
+            ]/ns7:Value = 'Replayed')
+    {
+        skipMaxSizeCheck ← true
+    }
+ 
+    IF (skipMaxSizeCheck = false)
+    {
+        // -------------------------------------------------------------
+        // 6.1 – Lecture du MAX_FILE_SIZE paramétré pour le flow
+        // -------------------------------------------------------------
+        maxSize   ← CALL GetMaxFileSizeOfFlow( FlowID )
+        // -------------------------------------------------------------
+        // 6.2 – Lecture de la taille réelle du fichier
+        // -------------------------------------------------------------
+        fileSize  ← CALL GetFileSizeProperties( Start )
+ 
+        LOG "FlowCode : " + Start.TechPivotRoot.Flow.FlowCode
+            + " Max File size : " + maxSize
+            + " Actual File Size : " + fileSize
+ 
+        // -------------------------------------------------------------
+        // 6.3 – Dépassement ?
+        // -------------------------------------------------------------
+        IF (maxSize > 0
+            AND fileSize > maxSize)
+        {
+            // --> erreur générique « max‑file‑size exceeded »
+            CALL GenericError(
+                    module = global.ModuleName,
+                    code   = "TEC00064",
+                    report = concat(
+                               "Max file size exceed. ",
+                               "The size of the file [",
+                               fileSize,
+                               "] bytes is greater than the max file size [",
+                               maxSize,
+                               "] bytes allowed for this flow."
+                             )
+                 )
+            THROW Exception
+        }
+    }
+    ELSE
+    {
+        LOG "Skipping Max File Size Check"
+    }
+ 
+    -----------------------------------------------------------------
+    // 7 – Boucle d’insertion / recherche de duplicata
+    //    (groupe LoopGroup “GroupAddFlowInformation”)
+    -----------------------------------------------------------------
+    nAdd ← 0                                 // compteur d’essais dans le groupe
+    REPEAT
+    {
+        // ---------------------------------------------------------
+        // 7.1 – Insertion du nouveau flux dans la table
+        // ---------------------------------------------------------
+        TRY
+        {
+            EXECUTE INSERT INTO TECH_DUPLICATE_CHECK
+                (FLOWOCCUR_ID, PARTNER_ID, CHECKSUM, FLOWID, RECEIPT_DTE)
+                VALUES (flowOccId, NULL, checksum,
+                        Start.TechPivotRoot.Flow.FlowID,
+                        CURRENT_TIMESTAMP)
+            // aucune exception → on passe à l’étape suivante
+        }
+        CATCH (JDBCSQLException e)
+        {
+            // -------------------------------------------------
+            // 7.2 – Gestion du retry JDBC
+            // -------------------------------------------------
+            CALL JDBCRetryer(
+                    log       = "Error JDBC - AddFlowInfoToDuplicateCheck : " + e.message,
+                    errorClass= e.class,
+                    sleepIn   = global.JDBCErrorTimer.SleepPeriod
+                 )
+            // le sous‑processus JDBCRetryer met à jour VAR.root.retry
+            IF (VAR.root.retry = false)          // maxRetry dépassé
+            {
+                RETHROW e                       // on abandonne le processus
+            }
+            CONTINUE                            // on retente l’insertion
+        }
+ 
+        // ---------------------------------------------------------
+        // 7.3 – Recherche d’un duplicata déjà présent
+        // ---------------------------------------------------------
+        result ← EXECUTE SELECT FLOWOCCUR_ID, CHECKSUM
+                 FROM TECH_DUPLICATE_CHECK
+                 WHERE FLOWID   = Start.TechPivotRoot.Flow.FlowID
+                   AND CHECKSUM = checksum
+ 
+        IF (result NOT EMPTY)
+        {
+            // -------------------------------------------------
+            // 7.4 – Duplicata détecté (déjà inséré)
+            // -------------------------------------------------
+            CALL GenericError(
+                    module = global.ModuleName,
+                    code   = "DCH00001",
+                    report = "Duplicate flow of flow occurrence " +
+                             result[1].FLOWOCCUR_ID
+                 )
+            THROW Exception
+        }
+ 
+        // -------------------------------------------------
+        // 7.5 – Succès : aucune duplication, on sort de la boucle
+ 
+    }
+    WHILE ( VAR.root.retry = true
+            AND nAdd < global.DBAccessRetry.MaxRetry
+            AND nAdd ← nAdd + 1 )
+ 
+    -----------------------------------------------------------------
+    // 8 – Fin normale du processus
+    -----------------------------------------------------------------
+    LOG "DuplicateCheck successfully completed. Occ_Id: " + flowOccId
+    TERMINATE_SUCCESS
+}

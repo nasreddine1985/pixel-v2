@@ -342,6 +342,12 @@
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.pixel.v2</groupId>
+            <artifactId>k-duplicate-check</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+
         <!-- Test Dependencies -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

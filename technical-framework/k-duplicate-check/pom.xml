@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.pixel.v2</groupId>
+        <artifactId>technical-framework</artifactId>
+        <version>1.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>k-duplicate-check</artifactId>
+    <version>1.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>K-Duplicate Check</name>
+    <description>Kamelet for duplicate check processing with database operations</description>
+
+    <dependencies>
+        <!-- Camel Core -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-core</artifactId>
+        </dependency>
+
+        <!-- Camel Kamelet -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-kamelet</artifactId>
+        </dependency>
+
+        <!-- Camel SQL/JDBC -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-sql</artifactId>
+        </dependency>
+
+        <!-- Camel Bean -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-bean</artifactId>
+        </dependency>
+
+        <!-- Camel JSONPath for JSON parsing -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-jsonpath</artifactId>
+        </dependency>
+
+        <!-- Spring Core for Component annotation -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+        </dependency>
+
+        <!-- Test Dependencies -->
+        <dependency>
+            <groupId>org.apache.camel</groupId>
+            <artifactId>camel-test-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

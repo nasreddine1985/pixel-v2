@@ -108,10 +108,7 @@ spec:
                         exchange.properties['totalPartners'] = enabledPartners.size()
                         
                         println "Found ${enabledPartners.size()} enabled partners for processing"
-                  
-                  - log:
-                      message: "Found ${exchangeProperty.totalPartners} enabled partners for multicast processing: ${exchangeProperty.enabledPartners}. Original partnerOut: ${exchangeProperty.originalPartnerOut}"
-                  
+                                    
                   # Step 2: Process each enabled partner sequentially
                   - choice:
                       when:

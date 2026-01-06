@@ -19,6 +19,7 @@
         <module>k-cft-publisher</module>
         <module>k-cft-starter</module>
         <module>k-db-tx</module>
+        <module>k-duplicate-check</module>
         <module>k-http-publisher</module>
         <module>k-http-starter</module>
         <module>k-identification</module>
