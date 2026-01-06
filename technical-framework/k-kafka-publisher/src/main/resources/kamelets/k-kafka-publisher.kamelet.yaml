@@ -60,11 +60,6 @@ spec:
         type: boolean
         description: "Enable idempotent producer to avoid duplicate messages"
         default: false
-      sendHeaders:
-        title: "Send Headers"
-        type: boolean
-        description: "Whether to send Camel exchange headers to Kafka. Set to false to send only the body."
-        default: true
   template:
     from:
       uri: "kamelet:source"
@@ -83,7 +78,32 @@ spec:
         - log:
              message: "[K-KAFKA-PUBLISHER] Publishing message to topic: {{kafkaTopicName}}, Key: ${header.kafka.KEY}, MessageSize: ${body.length()}"
              loggingLevel: DEBUG
+        # Save current headers to exchange properties before removing them
+        - script:
+            groovy: |
+              def savedHeaders = [:]
+              exchange.in.headers.each { key, value ->
+                if (!key.startsWith('kafka.')) {
+                  savedHeaders[key] = value
+                }
+              }
+              exchange.setProperty('savedHeaders', savedHeaders)
+        # Remove all headers except kafka.* for clean Kafka publishing
+        - removeHeaders:
+            pattern: "*"
+            excludePattern: "kafka.*"
+        # Send to Kafka with only body and kafka.* headers
         - to:
             uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&keySerializer={{keySerializer}}&valueSerializer={{valueSerializer}}&requestTimeoutMs={{requestTimeoutMs}}&connectionMaxIdleMs={{connectionMaxIdleMs}}&retries={{retries}}&requestRequiredAcks={{requestRequiredAcks}}&enableIdempotence={{enableIdempotence}}"
+        # Restore saved headers after Kafka publishing
+        - script:
+            groovy: |
+              def savedHeaders = exchange.getProperty('savedHeaders', Map.class)
+              if (savedHeaders != null) {
+                savedHeaders.each { key, value ->
+                  exchange.in.setHeader(key, value)
+                }
+              }
+              exchange.removeProperty('savedHeaders')
         # Continue to next step (validation passed)
         - to: "kamelet:sink"
