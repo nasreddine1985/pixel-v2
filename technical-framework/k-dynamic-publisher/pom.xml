@@ -35,6 +35,11 @@
             <artifactId>camel-jsonpath</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-json</artifactId>
+            <version>3.0.8</version>
+        </dependency>
+        <dependency>
             <groupId>com.pixel.v2</groupId>
             <artifactId>k-mq-publisher</artifactId>
             <version>${project.version}</version>

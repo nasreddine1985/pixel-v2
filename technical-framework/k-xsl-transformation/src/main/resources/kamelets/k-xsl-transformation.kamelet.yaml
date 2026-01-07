@@ -49,7 +49,7 @@ spec:
             simple: "{{transformationMode}}"
         
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start transformation - flowOccurId: ${header.FlowOccurId}, XSL: {{xslFileName}}, Mode: {{transformationMode}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start transformation - flowOccurId: ${header.FlowOccurId}, XSL: {{xslFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
             
         # Transform XML using XSL stylesheet via custom processor

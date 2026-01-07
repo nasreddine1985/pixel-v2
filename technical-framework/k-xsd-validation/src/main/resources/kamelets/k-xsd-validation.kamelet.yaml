@@ -35,10 +35,6 @@ spec:
     from:
       uri: "kamelet:source"
       steps:
-        # Log incoming validation request
-        # - log:
-        #     message: "[XSD-VALIDATION] Starting validation - XSD: {{xsdFileName}}, Mode: {{validationMode}}"
-        #     loggingLevel: INFO
         
         # Set validation headers
             
@@ -55,7 +51,7 @@ spec:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start validation - flowOccurId: ${header.FlowOccurId}, XSD: {{xsdFileName}}, Mode: {{validationMode}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start validation - flowOccurId: ${header.FlowOccurId}, XSD: {{xsdFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
             
         # Validate XML against XSD using custom processor

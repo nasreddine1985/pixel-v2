@@ -109,5 +109,5 @@ spec:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End MQ publishing - queue: {{mqFileName}}, flowCode: ${header.FlowCode}, MessageId: ${header.JMSMessageID}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End MQ publishing - queue: {{mqFileName}}, flowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"

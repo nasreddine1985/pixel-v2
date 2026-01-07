@@ -61,6 +61,9 @@ spec:
               exchange.in.headers['SpringCacheName'] = '{{springCacheName}}'
               exchange.in.headers['SpringCacheKey'] = '{{flowCode}}'
               exchange.in.headers['CamelKameletFlowId'] = new java.text.SimpleDateFormat('yyyyMMddHHmmssSSS').format(new Date())
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - toD:
             uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode={{flowCode}}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
@@ -154,11 +157,11 @@ spec:
         - removeHeader: "OriginalMessageBody"
         
         # Log event after identification
-        - script:
-            groovy: |
-              exchange.in.headers['CamelKameletFlowId'] = new java.text.SimpleDateFormat('yyyyMMddHHmmssSSS').format(new Date())
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode={{flowCode}}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
         
         # Send to sink

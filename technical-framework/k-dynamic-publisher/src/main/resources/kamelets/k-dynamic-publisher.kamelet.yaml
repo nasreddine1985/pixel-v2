@@ -59,55 +59,25 @@ spec:
                   - script:
                       groovy: |
                         def refFlowJson = exchange.properties['refFlowDataJson']
-                        
-                        
-                        
-                        // Extract original partnerOut block for logging
-                        def partnerOutMatch = (refFlowJson =~ /(?s)"partnerOut":\s*(\[.*?\])/)
-                        def originalPartnerOut = partnerOutMatch.find() ? partnerOutMatch.group(1) : "[]"
-                        exchange.properties['originalPartnerOut'] = originalPartnerOut
-                        
-                        
-                        // Get List of partnerOut enabled Y using more flexible regex
+                        def json = new groovy.json.JsonSlurper().parseText(refFlowJson)
                         def enabledPartners = []
-                        
-                        // More flexible pattern that doesn't rely on field order
-                        def partnerPattern = /\{[^}]*?"partnerCode":\s*"([^"]+)"[^}]*?\}/
-                        def partnerMatches = refFlowJson.findAll(partnerPattern)
-                        
-                        partnerMatches.each { partnerJson ->
-                          // Extract individual fields from each partner object
-                          def partnerCodeMatch = (partnerJson =~ /"partnerCode":\s*"([^"]+)"/)
-                          def enabledMatch = (partnerJson =~ /"enabled":\s*"([^"]+)"/)
-                          def transportTypeMatch = (partnerJson =~ /"transport":\s*\{[^}]*?"type":\s*"([^"]+)"[^}]*?\}/)
-                          
-                          def partnerCode = partnerCodeMatch.find() ? partnerCodeMatch.group(1) : "unknown"
-                          def enabled = enabledMatch.find() ? enabledMatch.group(1) : "N"
-                          def transportType = transportTypeMatch.find() ? transportTypeMatch.group(1) : "unknown"
-                          
-                          
-                          // Only include if enabled = "Y"
-                          if (enabled == "Y") {
-                            def endpoint = ""
-                            def queueName = "${partnerCode}.output.queue"
-                            
-                            enabledPartners.add([
-                              partnerCode: partnerCode,
-                              transportType: transportType,
-                              endpoint: endpoint,
-                              queueName: queueName
-                            ])
-                            
-                            println "Found enabled partner: ${partnerCode} - Transport: ${transportType} - Endpoint: ${endpoint} - Queue: ${queueName}"
-                          } else {
-                            println "Skipping disabled partner: ${partnerCode} - Transport: ${transportType}"
-                          }
+
+
+                        // Check partnerOut
+                        json.partnerOut.each { partner ->
+                            if (partner.enabled == "Y") {
+                                enabledPartners.add([
+                                    partnerCode: partner.partnerCode,
+                                    transportType: partner.transport.type,
+                                    endpoint: "",
+                                    queueName: "${partner.partnerCode}.output.queue"
+                                ])
+                            }
                         }
                         
                         exchange.properties['enabledPartners'] = enabledPartners
                         exchange.properties['totalPartners'] = enabledPartners.size()
-                        
-                        println "Found ${enabledPartners.size()} enabled partners for processing"
+                        println "Total enabled partners found: ${enabledPartners.size()}"
                                     
                   # Step 2: Process each enabled partner sequentially
                   - choice:
@@ -236,7 +206,22 @@ spec:
                                                   - setHeader:
                                                       name: "PartnerCode"
                                                       simple: "${exchangeProperty.currentPartnerCode}"
+                                                  - setHeader:
+                                                      name: "ProcessingTimestamp"
+                                                      simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+                                                  - toD:
+                                                      uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start Kafka publishing - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+                                                      pattern: "InOnly"
                                                   - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${exchangeProperty.currentPartnerCode}-topic&brokers=${header.Brokers}&key=${exchangeProperty.currentPartnerCode}"
+                                                  - setHeader:
+                                                      name: "PartnerCode"
+                                                      simple: "${exchangeProperty.currentPartnerCode}"
+                                                  - setHeader:
+                                                      name: "ProcessingTimestamp"
+                                                      simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+                                                  - toD:
+                                                      uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End Kafka publishing - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+                                                      pattern: "InOnly"
                                                   - script:
                                                       groovy: |
                                                         def successCount = exchange.properties['successCount'] as Integer ?: 0
