@@ -1,5 +1,7 @@
 package com.pixel.v2.db;
 
+import java.time.format.DateTimeFormatter;
+
 import org.apache.camel.Body;
 import org.apache.camel.Handler;
 import org.slf4j.Logger;
@@ -9,7 +11,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
 import com.pixel.v2.persistence.model.LogEvent;
 
 import jakarta.persistence.EntityManager;
@@ -34,7 +39,19 @@ public class LogEventPersistenceProcessor {
 
     public LogEventPersistenceProcessor() {
         this.objectMapper = new ObjectMapper();
-        this.objectMapper.registerModule(new JavaTimeModule());
+
+        // Configure JavaTimeModule with custom LocalDateTime format
+        JavaTimeModule javaTimeModule = new JavaTimeModule();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+
+        SimpleModule customModule = new SimpleModule();
+        customModule.addDeserializer(java.time.LocalDateTime.class,
+                new LocalDateTimeDeserializer(formatter));
+        customModule.addSerializer(java.time.LocalDateTime.class,
+                new LocalDateTimeSerializer(formatter));
+
+        this.objectMapper.registerModule(javaTimeModule);
+        this.objectMapper.registerModule(customModule);
         this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
@@ -51,8 +68,7 @@ public class LogEventPersistenceProcessor {
             // Convert JSON to LogEvent entity using our configured ObjectMapper
             LogEvent logEvent = objectMapper.readValue(jsonBody, LogEvent.class);
 
-            logger.debug(
-                    "K-DB-LOG-EVENT: LogEvent entity created - ID: {}, Code: {}, Component: {}",
+            logger.info("K-DB-LOG-EVENT: LogEvent entity created - ID: {}, Code: {}, Component: {}",
                     logEvent.getLogId(), logEvent.getCode(), logEvent.getComponent());
 
             persistLogEvent(logEvent);

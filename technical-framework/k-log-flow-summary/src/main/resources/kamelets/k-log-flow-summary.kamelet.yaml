@@ -27,10 +27,24 @@ spec:
     from:
       uri: "kamelet:source"
       steps:
+        # Recalculate step based on failure count
+        - choice:
+            when:
+              - simple: "${exchangeProperty.failureCount} > 0 && '{{step}}' == 'COMPLETED'"
+                steps:
+                  - setProperty:
+                      name: "actualStep"
+                      simple: "FAILURE"
+            otherwise:
+              steps:
+                - setProperty:
+                    name: "actualStep"
+                    simple: "{{step}}"
+        
         - setHeader:
             name: "logMessage"
             simple: |
-              {"flowOccurId":"${header.flowOccurId}","flowCode":"${header.flowCode}","flowStatusCode":"{{step}}","flowCountryCode":"${header.flowCountryCode}","flowCountryId":"${header.flowCountryId}","flowTypeId":1,"flowComment":"${header.flowCode} payment processing {{step}}","nbOutExpected":1,"nbOutCompleted":0,"nbError":0,"nbRemitance":0,"nbTransaction":1,"nbReplay":0,"issuingPartnerCode":"MQ_ACTIVEMQ","issuingPartnerLink":"tcp://pixel-v2-activemq:61616","recipientPartnerCode":"KAFKA_CLUSTER","recipientPartnerLink":"kafka:29092","lastLogId":"LOG-${date:now:yyyyMMddHHmmssSSS}","lastLogComponent":"pacs008-processing-flow","lastLogDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","lastLogStatusCode":"SUCCESS","lastUpdateDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","lastUpdateUser":"system","inputFilePath":"pacs008.input.queue","inputFileSize":"${bodyAs(String).length()}B","beginFlowDatetime":"${header.beginFlowDateTime}","currentClientDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}","beginFlowDate":"${header.beginFlowDate}","lastUpdateDate":"${date:now:yyyy-MM-dd}","region":"EU"}
+              {"flowOccurId":"${header.flowOccurId}","flowCode":"${header.FlowCode}","flowStatusCode":"${exchangeProperty.actualStep}","flowCountryCode":"${header.flowCountryCode}","flowCountryId":"${header.flowCountryId}","flowTypeId":1,"flowComment":"${header.FlowCode} payment processing ${exchangeProperty.actualStep}","nbOutExpected":1,"nbOutCompleted":0,"nbError":0,"nbRemitance":0,"nbTransaction":1,"nbReplay":0,"issuingPartnerCode":"MQ_ACTIVEMQ","issuingPartnerLink":"tcp://pixel-v2-activemq:61616","recipientPartnerCode":"KAFKA_CLUSTER","recipientPartnerLink":"kafka:29092","lastLogId":"LOG-${date:now:yyyyMMddHHmmssSSS}","lastLogComponent":"processing-flow","lastLogDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","lastLogStatusCode":"SUCCESS","lastUpdateDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","lastUpdateUser":"system","inputFilePath":"inputFilePath","inputFileSize":"${bodyAs(String).length()}B","beginFlowDatetime":"${header.beginFlowDateTime}","currentClientDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","beginFlowDate":"${header.beginFlowDate}","lastUpdateDate":"${date:now:yyyy-MM-dd}","region":"EU"}
         - setHeader:
             name: "kafka.KEY"
             simple: "${header.flowOccurId}"

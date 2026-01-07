@@ -41,9 +41,6 @@ spec:
         #     loggingLevel: INFO
         
         # Set validation headers
-        - setHeader:
-            name: "ValidationStartTime"
-            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
             
         - setHeader:
             name: "XsdFileName"
@@ -55,10 +52,10 @@ spec:
         
         # Log event before XSD validation
         - setHeader:
-            name: "CamelKameletFlowId"
+            name: "ProcessingTimestamp"
             simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start validation - flowOccurId: ${header.flowOccurId}, XSD: {{xsdFileName}}, Mode: {{validationMode}}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start validation - flowOccurId: ${header.FlowOccurId}, XSD: {{xsdFileName}}, Mode: {{validationMode}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
             
         # Validate XML against XSD using custom processor
@@ -67,10 +64,10 @@ spec:
             uri: "class:com.pixel.v2.validation.processor.XsdValidationProcessor"
         # Log event after XSD validation
         - setHeader:
-            name: "CamelKameletFlowId"
+            name: "ProcessingTimestamp"
             simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End validation - flowOccurId: ${header.flowOccurId}, XSD: {{xsdFileName}}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End validation - flowOccurId: ${header.FlowOccurId}, XSD: {{xsdFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
             
         # Log validation success
@@ -78,14 +75,6 @@ spec:
         #     message: "[XSD-VALIDATION] ✅ Validation successful - XSD: {{xsdFileName}}, Scope: ${header.ValidationScope}, Count: ${header.ValidationCount}, Duration: ${header.ValidationDuration}ms"
         #     loggingLevel: INFO
                       
-        # Set success headers
-        - setHeader:
-            name: "ValidationStatus"
-            constant: "SUCCESS"
-            
-        - setHeader:
-            name: "ValidationTimestamp"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
             
         # Continue to next step (validation passed)
         - to: "kamelet:sink"

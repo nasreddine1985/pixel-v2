@@ -35,6 +35,12 @@ spec:
     from:
       uri: "kamelet:source"
       steps:
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start DuplicateCheck - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            pattern: "InOnly"
         # 1. Check if global DB check is disabled
         - choice:
             when:
@@ -46,27 +52,45 @@ spec:
             otherwise:
               steps:
                 # 2. Save original body before any processing
-                - setProperty:
-                    name: "originalBody"
+                - setHeader:
+                    name: "OriginalBody"
                     simple: "${body}"
                 
                 # 3. Extract flowId from RefFlowData JSON
                 - setBody:
                     simple: "${header.RefFlowData}"
-                - setProperty:
-                    name: "flowId"
-                    jsonpath: "$.flow.FlowID"
-                - setProperty:
-                    name: "partnerId"
-                    jsonpath: "$.partnerIn.partnerCode"
+                # Log the RefFlowData content for debugging
+                - log:
+                    message: "RefFlowData content: ${body}"
+                    loggingLevel: DEBUG
+                - doTry:
+                    steps:
+                      - setHeader:
+                          name: "FlowId"
+                          jsonpath: "$.flow.FlowID"
+                      - setHeader:
+                          name: "PartnerId"
+                          jsonpath: "$.partnerIn.partnerCode"
+                    doCatch:
+                      - exception: "com.jayway.jsonpath.PathNotFoundException"
+                        steps:
+                          - log:
+                              message: "JSONPath error - RefFlowData structure may be incorrect: ${exception.message}"
+                              loggingLevel: ERROR
+                          - setHeader:
+                              name: "FlowId"
+                              simple: "UNKNOWN"
+                          - setHeader:
+                              name: "PartnerId"
+                              simple: "UNKNOWN"
                 
                 # 4. Restore original body immediately
                 - setBody:
-                    simple: "${exchangeProperty.originalBody}"
+                    simple: "${header.OriginalBody}"
 
                 # 5. Log that duplicate check is enabled
                 - log:
-                    message: "DuplicateCheck is enabled. Occ_Id: ${header.flowOccurId}, FlowId: ${exchangeProperty.flowId} , PartnerId: ${exchangeProperty.partnerId}"
+                    message: "DuplicateCheck is enabled. Occ_Id: ${header.flowOccurId}, FlowId: ${header.FlowId} , PartnerId: ${header.PartnerId}"
                     loggingLevel: INFO
 
                 # 6. Compute checksum and file size using Java processor
@@ -95,19 +119,19 @@ spec:
                       - simple: "${header.DuplicateCheckError} == null"
                         steps:
                           - log:
-                              message: "Performing duplicate check for flowId: ${exchangeProperty.flowId}, checksum: ${exchangeProperty.checksum} , PartnerId: ${exchangeProperty.partnerId}"
+                              message: "Performing duplicate check for flowId: ${header.flowId}, checksum: ${exchangeProperty.checksum} , PartnerId: ${header.partnerId}"
                               loggingLevel: INFO
                           
                           # 6.1 Check for existing duplicates first
                           - to:
-                              uri: "sql:SELECT COUNT(*) as count FROM pixel_v2.TECH_DUPLICATE_CHECK WHERE FLOWID = :#${exchangeProperty.flowId} AND CHECKSUM = :#${exchangeProperty.checksum}?dataSource={{dataSource}}"
+                              uri: "sql:SELECT COUNT(*) as count FROM pixel_v2.TECH_DUPLICATE_CHECK WHERE FLOWID = :#${header.FlowId} AND CHECKSUM = :#${exchangeProperty.checksum}?dataSource={{dataSource}}"
                           
                           - choice:
                               when:
                                 - simple: "${body[0]['count']} > 0"
                                   steps:
                                     - log:
-                                        message: "DCH00001: Duplicate flow detected for flowId: ${exchangeProperty.flowId}"
+                                        message: "DCH00001: Duplicate flow detected for flowId: ${header.FlowId}"
                                         loggingLevel: ERROR
                                     - setHeader:
                                         name: "DuplicateCheckError"
@@ -116,18 +140,25 @@ spec:
                                 steps:
                                   # 6.2 Insert new record
                                   - to:
-                                      uri: "sql:INSERT INTO pixel_v2.TECH_DUPLICATE_CHECK (FLOWOCCUR_ID, PARTNER_ID, CHECKSUM, FLOWID, RECEIPT_DTE) VALUES (:#${header.flowOccurId}, :#${exchangeProperty.partnerId}, :#${exchangeProperty.checksum}, :#${exchangeProperty.flowId}, CURRENT_TIMESTAMP)?dataSource={{dataSource}}"
+                                      uri: "sql:INSERT INTO pixel_v2.TECH_DUPLICATE_CHECK (FLOWOCCUR_ID, PARTNER_ID, CHECKSUM, FLOWID, RECEIPT_DTE) VALUES (:#${header.flowOccurId}, :#${header.PartnerId}, :#${exchangeProperty.checksum}, :#${header.FlowId}, CURRENT_TIMESTAMP)?dataSource={{dataSource}}"
                                   
                                   # 7. Success
                                   - log:
-                                      message: "DuplicateCheck successfully completed. Occ_Id: ${header.flowOccurId}"
+                                      message: "DuplicateCheck successfully completed. Occ_Id: ${header.FlowOccurId}"
                                       loggingLevel: INFO
 
         # Restore original body before continuing
         - setBody:
-            simple: "${exchangeProperty.originalBody}"
+            simple: "${header.OriginalBody}"
         - removeProperty:
-            name: "originalBody"
+            name: "OriginalBody"
+        # Log completion of DuplicateCheck
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start DuplicateCheck - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            pattern: "InOnly"
         
         # Continue to next step
         - to: "kamelet:sink"

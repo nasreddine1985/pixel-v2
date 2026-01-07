@@ -26,6 +26,9 @@ spec:
       steps:
         - log:
             message: "K-Dynamic-Publisher: Starting dynamic transport routing"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            pattern: "InOnly"
         
         - setProperty:
             name: "originalXmlBody"
@@ -57,34 +60,31 @@ spec:
                       groovy: |
                         def refFlowJson = exchange.properties['refFlowDataJson']
                         
-                        // Extract flow info using basic string manipulation
-                        def flowIdMatch = (refFlowJson =~ /"FlowID":\s*"([^"]+)"/)
-                        def flowCodeMatch = (refFlowJson =~ /"flowCode":\s*"([^"]+)"/)
                         
-                        def flowId = flowIdMatch.find() ? flowIdMatch.group(1) : "unknown"
-                        def flowCode = flowCodeMatch.find() ? flowCodeMatch.group(1) : "unknown"
-                        
-                        exchange.properties['flowId'] = flowId
-                        exchange.properties['flowCode'] = flowCode
                         
                         // Extract original partnerOut block for logging
                         def partnerOutMatch = (refFlowJson =~ /(?s)"partnerOut":\s*(\[.*?\])/)
                         def originalPartnerOut = partnerOutMatch.find() ? partnerOutMatch.group(1) : "[]"
                         exchange.properties['originalPartnerOut'] = originalPartnerOut
                         
-                        // Step 1: Get List of partnerOut enabled Y using enhanced regex with transport details
+                        
+                        // Get List of partnerOut enabled Y using more flexible regex
                         def enabledPartners = []
                         
-                        // Match each complete partner object individually
-                        def partnerObjectPattern = /\{\s*"partnerCode":\s*"([^"]+)"[^}]*?"enabled":\s*"([^"]+)"[^}]*?"transport":\s*\{\s*"type":\s*"([^"]+)"[^}]*?\}\s*\}/
-                        def matcher = refFlowJson =~ partnerObjectPattern
+                        // More flexible pattern that doesn't rely on field order
+                        def partnerPattern = /\{[^}]*?"partnerCode":\s*"([^"]+)"[^}]*?\}/
+                        def partnerMatches = refFlowJson.findAll(partnerPattern)
                         
-                        while (matcher.find()) {
-                          def partnerCode = matcher.group(1)
-                          def enabled = matcher.group(2)
-                          def transportType = matcher.group(3)
+                        partnerMatches.each { partnerJson ->
+                          // Extract individual fields from each partner object
+                          def partnerCodeMatch = (partnerJson =~ /"partnerCode":\s*"([^"]+)"/)
+                          def enabledMatch = (partnerJson =~ /"enabled":\s*"([^"]+)"/)
+                          def transportTypeMatch = (partnerJson =~ /"transport":\s*\{[^}]*?"type":\s*"([^"]+)"[^}]*?\}/)
                           
-                          println "Debug: Found partner ${partnerCode}, enabled=${enabled}, transport=${transportType}"
+                          def partnerCode = partnerCodeMatch.find() ? partnerCodeMatch.group(1) : "unknown"
+                          def enabled = enabledMatch.find() ? enabledMatch.group(1) : "N"
+                          def transportType = transportTypeMatch.find() ? transportTypeMatch.group(1) : "unknown"
+                          
                           
                           // Only include if enabled = "Y"
                           if (enabled == "Y") {
@@ -190,7 +190,7 @@ spec:
                                                   - setHeader:
                                                       name: "PartnerCode"
                                                       simple: "${exchangeProperty.currentPartnerCode}"
-                                                  - toD: "kamelet:k-mq-publisher?mqFileName=${exchangeProperty.currentQueueName}&connectionFactory=jmsConnectionFactory&flowCode=${exchangeProperty.flowCode}&flowId=${exchangeProperty.flowId}&dataSource=dataSource"
+                                                  - toD: "kamelet:k-mq-publisher?mqFileName=${exchangeProperty.currentQueueName}&connectionFactory=jmsConnectionFactory&flowCode=${header.FlowCode}&flowId=${header.FlowId}&dataSource=dataSource"
                                                   - script:
                                                       groovy: |
                                                         def successCount = exchange.properties['successCount'] as Integer ?: 0
@@ -213,7 +213,7 @@ spec:
                                                   - setHeader:
                                                       name: "PartnerCode"
                                                       simple: "${exchangeProperty.currentPartnerCode}"
-                                                  - toD: "kamelet:k-http-publisher?httpUrl=${exchangeProperty.currentEndpoint}&flowCode=${exchangeProperty.flowCode}&flowId=${exchangeProperty.flowId}&dataSource=dataSource"
+                                                  - toD: "kamelet:k-http-publisher?httpUrl=${exchangeProperty.currentEndpoint}&flowCode=${header.FlowCode}&flowId=${header.FlowId}&dataSource=dataSource"
                                                   - script:
                                                       groovy: |
                                                         def successCount = exchange.properties['successCount'] as Integer ?: 0
@@ -236,7 +236,7 @@ spec:
                                                   - setHeader:
                                                       name: "PartnerCode"
                                                       simple: "${exchangeProperty.currentPartnerCode}"
-                                                  - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${exchangeProperty.currentPartnerCode}-topic&brokers=kafka:29092&key=${exchangeProperty.currentPartnerCode}"
+                                                  - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${exchangeProperty.currentPartnerCode}-topic&brokers=${header.Brokers}&key=${exchangeProperty.currentPartnerCode}"
                                                   - script:
                                                       groovy: |
                                                         def successCount = exchange.properties['successCount'] as Integer ?: 0
@@ -277,4 +277,7 @@ spec:
         
         - log:
             message: "K-Dynamic-Publisher: Completed"
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            pattern: "InOnly"
         - to: "kamelet:sink"

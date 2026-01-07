@@ -73,7 +73,7 @@ spec:
             name: "CamelKameletFlowId"
             simple: "{{flowId}}"
         - toD:
-            uri: "kamelet:k-log-events?flowId={{flowId}}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=Start CFT publishing - flowCode: {{flowCode}}, directory: {{directoryPath}}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start CFT publishing - flowCode: ${header.FlowCode}, directory: ${header.CftDirectory}&level=INFO"
             pattern: "InOnly"
         
         # Set publishing metadata
@@ -85,7 +85,7 @@ spec:
             simple: "{{flowId}}"
         - setHeader:
             name: "publishTimestamp"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         - setHeader:
             name: "cftDirectory"
             simple: "{{directoryPath}}"
@@ -126,5 +126,5 @@ spec:
             name: "CamelKameletFlowId"
             simple: "{{flowId}}"
         - toD:
-            uri: "kamelet:k-log-events?flowId={{flowId}}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=End CFT publishing - flowCode: {{flowCode}}, file: ${header.fileName}, path: {{directoryPath}}/${header.fileName}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End CFT publishing - flowCode: ${header.FlowCode}, file: ${header.fileName}, path: ${header.CftDirectory}/${header.fileName}&level=INFO"
             pattern: "InOnly"

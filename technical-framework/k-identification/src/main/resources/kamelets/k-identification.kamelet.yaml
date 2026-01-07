@@ -23,17 +23,14 @@ spec:
         title: Flow Code
         description: The flow code to identify and retrieve configuration for
         type: string
-        example: "PACS008"
       referentielServiceUrl:
         title: Referentiel Service URL
         description: Base URL of the referentiel service for flow configuration retrieval
         type: string
-        default: "http://pixel-v2-referentiel:8099"
       kafkaBrokers:
         title: Kafka Brokers
         description: Kafka broker URLs for cache refresh messaging
         type: string
-        default: "kafka:29092"
       cacheTtl:
         title: Cache TTL
         description: Cache time-to-live in seconds (for future use with TTL-enabled caches)
@@ -64,12 +61,10 @@ spec:
               exchange.in.headers['SpringCacheName'] = '{{springCacheName}}'
               exchange.in.headers['SpringCacheKey'] = '{{flowCode}}'
               exchange.in.headers['CamelKameletFlowId'] = new java.text.SimpleDateFormat('yyyyMMddHHmmssSSS').format(new Date())
-        
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start identification - flowOccurId: ${header.flowOccurId}, FlowCode: ${header.SpringCacheKey}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode={{flowCode}}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
 
-        
         # Try to get from Spring cache using custom processor
         - to: "bean:springCacheProcessorInterne?method=getCachedValue"
         
@@ -84,19 +79,42 @@ spec:
                   # Fetch from referentiel service
                   - doTry:
                       steps:
-                        - log: 
-                            message: "Original message body preserved: ${header.OriginalMessageBody}"
-                            loggingLevel: DEBUG
+                        
+                        
+                        # Save current headers before removing them
+                        - script:
+                            groovy: |
+                              def savedHeaders = [:]
+                              exchange.in.headers.each { key, value ->
+                                if (!key.startsWith('kafka.')) {
+                                  savedHeaders[key] = value
+                                }
+                              }
+                              exchange.setProperty('savedHeaders', savedHeaders)
+                        # Remove all headers for clean HTTP call
+                        - removeHeaders: "*"
                         - setHeader:
                             name: CamelHttpMethod
                             constant: "GET"
                         - setHeader:
                             name: Content-Type
                             constant: "application/json"
+                        
                         - toD: "{{referentielServiceUrl}}/api/referentiel/flows/{{flowCode}}/complete?bridgeEndpoint=true"
+                        # Restore saved headers after HTTP call
+                        - script:
+                            groovy: |
+                              def savedHeaders = exchange.getProperty('savedHeaders', Map.class)
+                              if (savedHeaders != null) {
+                                savedHeaders.each { key, value ->
+                                  exchange.in.setHeader(key, value)
+                                }
+                              }
+                              exchange.removeProperty('savedHeaders')
+                        
                         - convertBodyTo: "java.lang.String"
                         - log: 
-                            message: "Successfully retrieved flow config for ${header.SpringCacheKey} from referentiel service"
+                            message: "Successfully retrieved flow config for ${header.FlowCode} from referentiel service"
                             loggingLevel: DEBUG
                         - script:
                             groovy: |
@@ -140,7 +158,7 @@ spec:
             groovy: |
               exchange.in.headers['CamelKameletFlowId'] = new java.text.SimpleDateFormat('yyyyMMddHHmmssSSS').format(new Date())
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End identification - flowOccurId: ${header.flowOccurId}, FlowCode: ${header.SpringCacheKey}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode={{flowCode}}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
         
         # Send to sink

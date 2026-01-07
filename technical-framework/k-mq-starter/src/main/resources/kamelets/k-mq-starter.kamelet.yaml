@@ -13,8 +13,6 @@ spec:
       - mqFileName
       - connectionFactory
       - nasArchiveUrl
-      - flowCountryCode
-      - flowCountryId
       - dataSource
     type: object
     properties:
@@ -36,39 +34,9 @@ spec:
         title: Flow Code
         description: Flow processing code
         type: string
-        default: "PACS008"
-      messageType:
-        title: Message Type
-        description: Type of message being processed
-        type: string
-        default: "PACS008"
-      kafkaFlowSummaryTopicName:
-        title: Kafka  Flow Summary Topic Name
-        description: Kafka topic for flow summary logs
-        type: string
-        default: "flow-summary"
-      kafkaLogTopicName:
-        title: Kafka  Log Topic Name
-        description: Kafka topic for log events
-        type: string
-        default: "log-events"
-      kafkaDistributionTopicName:
-        title: Kafka  Distribution Topic Name
-        description: Kafka topic for distribution logs
-        type: string
-        default: "distribution"
       brokers:
         title: Kafka Brokers
         description: Kafka brokers for flow summary
-        type: string
-        default: "pixel-v2-kafka:29092"
-      flowCountryCode:
-        title: Flow Country Code
-        description: Country code for flow processing
-        type: string
-      flowCountryId:
-        title: Flow Country ID
-        description: Country ID for flow processing
         type: string
       dataSource:
         title: Data Source
@@ -92,67 +60,7 @@ spec:
         #     message: "[K-MQ-STARTER] - Message received from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}, CorrelationId: ${header.JMSCorrelationID}"
         - setHeader:
             name: "ReceivedTimestamp"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
-        
-        # Log event before starting MQ processing
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
-        - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=Start MQ processing - queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}&level=INFO"
-            pattern: "InOnly"
-        
-        # Store original body before sequence generation
-        - setHeader:
-            name: "originalBody"
-            simple: "${body}"
-        # Generate unique flow occurrence ID from database sequence
-        - to:
-            uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource=#dataSource"
-        - setHeader:
-            name: "flowOccurId"
-            simple: "${body[0][flowOccurId]}"
-        # Restore original body
-        - setBody:
-            simple: "${header.originalBody}"
-        - removeHeader:
-            name: "originalBody"
-        - setHeader:
-            name: "SourceQueue"
-            simple: "{{mqFileName}}"
-        - setHeader:
-            name: "queueName"
-            simple: "{{mqFileName}}"
-        - setHeader:
-            name: "flowCode"
-            constant: "{{flowCode}}"
-        - setHeader:
-            name: "MessageType"
-            constant: "{{messageType}}"
-        - setHeader:
-            name: "ProcessingTimestamp"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
-        - setHeader:
-            name: "step"
-            constant: "IN_PROGRESS"
-        - setHeader:
-            name: "brokers"
-            constant: "{{brokers}}"
-        - setHeader:
-            name: "kafkaFlowSummaryTopicName"
-            constant: "{{kafkaFlowSummaryTopicName}}"
-        - setHeader:
-            name: "kafkaLogTopicName"
-            constant: "{{kafkaLogTopicName}}"
-        - setHeader:
-            name: "kafkaDistributionTopicName"
-            constant: "{{kafkaDistributionTopicName}}"
-        - setHeader:
-            name: "flowCountryCode"
-            simple: "{{flowCountryCode}}"
-        - setHeader:
-            name: "flowCountryId"
-            simple: "{{flowCountryId}}"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         - setHeader:
             name: "MessageId"
             simple: "${header.JMSMessageID}"
@@ -160,14 +68,65 @@ spec:
             name: "CorrelationId"
             simple: "${header.JMSCorrelationID}"
         - setHeader:
-            name: "beginFlowDatetime"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+            name: "MqFileName"
+            simple: "{{mqFileName}}"
         - setHeader:
-            name: "beginFlowDate"
+            name: "FlowCode"
+            simple: "{{flowCode}}"
+        - setHeader:
+            name: "ConnectionFactory"
+            simple: "{{connectionFactory}}"
+        - setHeader:
+            name: "NasArchiveUrl"
+            simple: "{{nasArchiveUrl}}"
+        - setHeader:
+            name: "DataSource"
+            simple: "{{dataSource}}"
+        - setHeader:
+            name: "Brokers"
+            constant: "{{brokers}}"
+        - setHeader:
+            name: "KafkaFlowSummaryTopicName"
+            simple: "{{flowCode}}-flow-summary-topic"
+        - setHeader:
+            name: "KafkaLogTopicName"
+            simple: "{{flowCode}}-log-event-topic"
+        - setHeader:
+            name: "KafkaDistributionTopicName"
+            simple: "{{flowCode}}-distribution-topic"
+
+        # Store original body before sequence generation
+        - setHeader:
+            name: "OriginalBody"
+            simple: "${body}"
+        # Generate unique flow occurrence ID from database sequence
+        - to:
+            uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource=#dataSource"
+        - setHeader:
+            name: "FlowOccurId"
+            simple: "${body[0][flowOccurId]}"
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+
+        # Restore original body
+        - setBody:
+            simple: "${header.OriginalBody}"
+        - removeHeader:
+            name: "OriginalBody"
+        # Log event before starting MQ processing
+        - toD:
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start MQ processing - queue: ${header.MqFileName}, MessageId: ${header.MessageId}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            pattern: "InOnly"
+        - setHeader:
+            name: "BeginFlowDatetime"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
+        - setHeader:
+            name: "BeginFlowDate"
             simple: "${date:now:yyyy-MM-dd}"
         - setHeader:
-            name: "nasArchiveUrl"
-            simple: "{{nasArchiveUrl}}"
+            name: "Step"
+            constant: "IN_PROGRESS"
         # Set charset with proper fallback
         - choice:
             when:
@@ -188,25 +147,24 @@ spec:
         # Archive flowOccurId and timestamp to NAS
         # Store original body before file operation
         - setHeader:
-            name: "originalBodyBeforeArchive"
+            name: "OriginalBody"
             simple: "${body}"
         - toD:
-            uri: "${header.nasArchiveUrl}/IN/${header.flowOccurId}/?fileName=${header.flowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
+            uri: "${header.NasArchiveUrl}/IN/${header.FlowOccurId}/?fileName=${header.FlowCode}_${header.FlowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
         # Restore original body after file operation
         - setBody:
-            simple: "${header.originalBodyBeforeArchive}"
+            simple: "${header.OriginalBody}"
         - removeHeader:
-            name: "originalBodyBeforeArchive"
-        
+            name: "OriginalBody"
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - wireTap:
-            uri: "kamelet:k-log-flow-summary?step=${header.step}&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}"
+            uri: "kamelet:k-log-flow-summary?step=${header.Step}&kafkaTopicName=${header.KafkaFlowSummaryTopicName}&brokers=${header.Brokers}"
         
         # Log event after completing MQ processing
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=End MQ processing - queue: {{mqFileName}}, flowOccurId: ${header.flowOccurId}, archived to: ${header.nasArchiveUrl}/IN/${header.flowOccurId}/&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End MQ processing - queue: ${header.MqFileName}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
         
         - to: "kamelet:sink"

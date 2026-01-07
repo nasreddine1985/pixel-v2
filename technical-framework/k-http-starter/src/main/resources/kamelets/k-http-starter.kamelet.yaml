@@ -90,14 +90,14 @@ spec:
       steps:
         - setHeader:
             name: "ReceivedTimestamp"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         
         # Log event before starting HTTP processing
         - setHeader:
             name: "CamelKameletFlowId"
             simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=Start HTTP processing - path: {{httpPath}}, method: {{httpMethod}}, RemoteAddress: ${header.CamelHttpRemoteAddress}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start HTTP processing - path: {{httpPath}}, method: {{httpMethod}}, RemoteAddress: ${header.CamelHttpRemoteAddress}&level=INFO"
             pattern: "InOnly"
         
         # Store original body before sequence generation
@@ -129,7 +129,7 @@ spec:
             constant: "{{messageType}}"
         - setHeader:
             name: "ProcessingTimestamp"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - setHeader:
             name: "step"
             constant: "IN_PROGRESS"
@@ -159,7 +159,7 @@ spec:
             simple: "${header.CamelHttpUri}-${date:now:yyyyMMddHHmmssSSS}"
         - setHeader:
             name: "beginFlowDatetime"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         - setHeader:
             name: "beginFlowDate"
             simple: "${date:now:yyyy-MM-dd}"
@@ -186,7 +186,7 @@ spec:
             name: "originalBodyBeforeArchive"
             simple: "${body}"
         - toD:
-            uri: "${header.nasArchiveUrl}/IN/${header.flowOccurId}/?fileName=${header.flowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
+            uri: "${header.nasArchiveUrl}/IN/${header.flowOccurId}/?fileName=${header.FlowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
         # Restore original body after file operation
         - setBody:
             simple: "${header.originalBodyBeforeArchive}"
@@ -201,7 +201,7 @@ spec:
             name: "CamelKameletFlowId"
             simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName={{kafkaLogTopicName}}&brokers={{brokers}}&logMessageTxt=End HTTP processing - path: {{httpPath}}, flowOccurId: ${header.flowOccurId}, archived to: ${header.nasArchiveUrl}/IN/${header.flowOccurId}/&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End HTTP processing - path: {{httpPath}}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO"
             pattern: "InOnly"
         
         # Set HTTP response status

@@ -1,7 +1,7 @@
 apiVersion: camel.apache.org/v1alpha1
 kind: Kamelet
 metadata:
-  name: k-identification
+  name: k-identification-with-redis
   annotations:
     camel.apache.org/kamelet.support.level: "Stable"
     camel.apache.org/catalog.version: "1.0.1-SNAPSHOT"
@@ -59,11 +59,9 @@ spec:
             simple: "flow_config_{{flowCode}}"
         
         # Log event before identification
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
+        
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start identification - flowOccurId: ${header.flowOccurId}, FlowCode: {{flowCode}}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start identification - flowOccurId: ${header.FlowOccurId}, FlowCode: {{flowCode}}&level=INFO"
             pattern: "InOnly"
         
         # Try to get from Redis cache
@@ -145,11 +143,8 @@ spec:
         - removeHeader: "OriginalMessageBody"
         
         # Log event after identification
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End identification - flowOccurId: ${header.flowOccurId}, FlowCode: {{flowCode}}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: {{flowCode}}&level=INFO"
             pattern: "InOnly"
         
         # Send to sink

@@ -51,7 +51,7 @@ spec:
         
         - set-header:
             name: "fileProcessingStartTime"
-            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         
         - split:
             tokenize: "\n"
@@ -70,7 +70,7 @@ spec:
                     
                     - set-header:
                         name: "receiptTimestamp"
-                        simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+                        simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
                     
                     - set-header:
                         name: "receiptChannel"

@@ -57,7 +57,7 @@ Camel Route → k-identification-interne kamelet → Spring Cache → Referentie
 - from:
     uri: "direct:identify-flow"
     steps:
-      - to: "kamelet:k-identification-interne?flowCode={{header.flowCode}}"
+      - to: "kamelet:k-identification-interne?flowCode={{header.FlowCode}}"
 ```
 
 ### With Configuration
@@ -66,7 +66,7 @@ Camel Route → k-identification-interne kamelet → Spring Cache → Referentie
 - from:
     uri: "direct:identify-flow"
     steps:
-      - to: "kamelet:k-identification-interne?flowCode={{header.flowCode}}&referentielServiceUrl=http://pixel-v2-referentiel:8099&springCacheName=flowConfigCache"
+      - to: "kamelet:k-identification-interne?flowCode={{header.FlowCode}}&referentielServiceUrl=http://pixel-v2-referentiel:8099&springCacheName=flowConfigCache"
 ```
 
 ## Configuration Parameters

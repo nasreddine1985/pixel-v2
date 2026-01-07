@@ -73,7 +73,7 @@ spec:
 
           - setHeader:
               name: "PersistenceTimestamp"
-              simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+              simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
 
           - setHeader:
               name: "SqlMessageId"

@@ -37,8 +37,8 @@ spec:
       steps:
         # Set transformation headers
         - setHeader:
-            name: "TransformationStartTime"
-            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
             
         - setHeader:
             name: "XslFileName"
@@ -48,35 +48,24 @@ spec:
             name: "TransformationMode"
             simple: "{{transformationMode}}"
         
-        # Log event before XSL transformation
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start transformation - flowOccurId: ${header.flowOccurId}, XSL: {{xslFileName}}, Mode: {{transformationMode}}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start transformation - flowOccurId: ${header.FlowOccurId}, XSL: {{xslFileName}}, Mode: {{transformationMode}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
             
         # Transform XML using XSL stylesheet via custom processor
         # Supports both single String messages and Collection<String> for batch transformation
         - to:
             uri: "bean:xslTransformationProcessor"
-        
-        # Log event after XSL transformation
+          
         - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.CamelKameletFlowId}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=End transformation - flowOccurId: ${header.flowOccurId}, XSL: {{xslFileName}}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End transformation - flowOccurId: ${header.FlowOccurId}, XSL: {{xslFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
             
-        # Set success headers
-        - setHeader:
-            name: "TransformationStatus"
-            constant: "SUCCESS"
-            
-        - setHeader:
-            name: "TransformationTimestamp"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"
+        
             
         # Continue to next step (transformation passed)
         - to: "kamelet:sink"

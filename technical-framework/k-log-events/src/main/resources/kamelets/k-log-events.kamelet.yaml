@@ -38,6 +38,10 @@ spec:
         title: Flow ID
         description: The flow ID for logging context
         type: string
+      processingTimestamp:
+        title: Processing Timestamp
+        description: The processing timestamp for the log event
+        type: string
   template:
     route:
       id: "k_log_event_{{flowId}}"
@@ -54,21 +58,23 @@ spec:
             steps:
               # Store original body before processing
               - setHeader:
-                  name: "originalBody"
+                  name: "OriginalBody"
                   simple: "${body}"
+              # Transform processingTimestamp from compact format to ISO format
               - setHeader:
-                  name: "kafka.KEY"
-                  simple: "${header.flowOccurId}"
+                  name: "FormattedProcessingTimestamp" 
+                  simple: "${bean:com.pixel.v2.util.TimestampConverter?method=convertToISO('{{processingTimestamp}}')}"
+            
               - setHeader:
                   name: "logMessage"
                   simple: |
                     {
                       "logId": "LOG-${date:now:yyyyMMddHHmmssSSS}",
-                      "datats": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
-                      "flowId": "${header.flowOccurId}",
-                      "halfFlowId": "${header.flowOccurId}-HALF",
-                      "flowCode": "${header.flowCode}",
-                      "halfFlowCode": "${header.flowCode}-HALF",
+                      "datats": "${header.FormattedProcessingTimestamp}",
+                      "flowId": "{{flowId}}",
+                      "halfFlowId": "{{flowId}}-HALF",
+                      "flowCode": "{{flowCode}}",
+                      "halfFlowCode": "{{flowCode}}-HALF",
                       "contextId": "${header.CorrelationId}",
                       "clientLogTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
                       "dbLogTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
@@ -77,12 +83,12 @@ spec:
                       "logRole": "{{level}}",
                       "code": "{{level}}",
                       "customStep": "{{logMessageTxt}}",
-                      "component": "pacs008-processing-flow",
-                      "instanceId": "INST-001",
+                      "component": "processing-flow",
+                      "instanceId": "I${date:now:yyMMddHHmmss}",
                       "servicePath": "${header.queueName}",
-                      "processPath": "/pacs008/processing",
-                      "refFlowId": 1,
-                      "beginProcess": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                      "processPath": "/processing",
+                      "refFlowId": 0,
+                      "beginProcess": "${header.FormattedProcessingTimestamp}",
                       "endProcess": null,
                       "contextTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
                       "msgSentTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
@@ -107,8 +113,11 @@ spec:
                   loggingLevel: DEBUG
               - setBody:
                   simple: "${header.logMessage}"
-              - to:
-                  uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer"
+
+              # - to:
+              #     uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&key={{flowId}}&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer"
+
+              - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&key={{flowId}}"
             doCatch:
               - exception: "java.lang.Exception"
                 steps:
@@ -116,7 +125,7 @@ spec:
                       message: "K-LOG-EVENTS ERROR: Failed to process log event - ${exception.message}"
                       loggingLevel: ERROR
                   - setBody:
-                      simple: "${header.originalBody}"
+                      simple: "${header.OriginalBody}"
         # Always restore original body at the end
         - setBody:
-            simple: "${header.originalBody}"
+            simple: "${header.OriginalBody}"

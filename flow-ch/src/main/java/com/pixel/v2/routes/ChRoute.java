@@ -17,7 +17,7 @@ public class ChRoute extends RouteBuilder {
 
         // Kamelet endpoint for identification and Spring internal caching
         private static final String K_IDENTIFICATION_ENDPOINT =
-                        "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
+                        "kamelet:k-identification?flowCode={{pixel.flow.code}}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
 
         // Kamelet endpoint for duplicate check
         private static final String K_DUPLICATE_CHECK_ENDPOINT =
@@ -41,19 +41,16 @@ public class ChRoute extends RouteBuilder {
         // Kamelet endpoint for dynamic publisher
         private static final String K_DYNAMIC_PUBLISHER_ENDPOINT =
                         "kamelet:k-dynamic-publisher?header-name=RefFlowData";
+        // Kamelet endpoint for dynamic publisher
+        private static final String K_LOG_FLOW_SUMMARY_PUBLISHER_ENDPOINT =
+                        "kamelet:k-log-flow-summary?step=COMPLETED&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers={{camel.component.kafka.brokers}}";
 
         // Kamelet endpoint for MQ starter
         private static final String K_MQ_STARTER_ENDPOINT = """
                         kamelet:k-mq-starter?mqFileName={{kmq.starter.mqFileName}}&\
                         connectionFactory={{kmq.starter.connectionFactory}}&\
                         flowCode={{kmq.starter.flowCode}}&\
-                        messageType={{kmq.starter.messageType}}&\
-                        kafkaFlowSummaryTopicName={{kmq.starter.kafkaFlowSummaryTopicName}}&\
-                        kafkaLogTopicName={{kmq.starter.kafkaLogTopicName}}&\
-                        kafkaDistributionTopicName={{kmq.starter.kafkaDistributionTopicName}}&\
                         brokers={{kmq.starter.brokers}}&\
-                        flowCountryCode={{kmq.starter.flowCountryCode}}&\
-                        flowCountryId={{kmq.starter.flowCountryId}}&\
                         dataSource={{kmq.starter.dataSource}}&\
                         nasArchiveUrl={{nas.archive.url}}""";
 
@@ -96,13 +93,7 @@ public class ChRoute extends RouteBuilder {
                                 // .to(K_KAFKA_PUBLISHER_ENDPOINT)
 
                                 // Step 9: Complete processing - dynamic step based on failure count
-                                .wireTap("direct:log-flow-summary");
+                                .wireTap(K_LOG_FLOW_SUMMARY_PUBLISHER_ENDPOINT);
 
-                // Dynamic flow summary logging route
-                from("direct:log-flow-summary").choice()
-                                .when(simple("${exchangeProperty.failureCount} == 0"))
-                                .setHeader("stepValue", constant("COMPLETED")).otherwise()
-                                .setHeader("stepValue", constant("FAILURE")).end()
-                                .toD("kamelet:k-log-flow-summary?step=${header.stepValue}&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers={{camel.component.kafka.brokers}}");
         }
 }

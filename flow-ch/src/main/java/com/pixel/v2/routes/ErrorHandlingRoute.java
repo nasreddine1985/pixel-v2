@@ -32,8 +32,8 @@ public class ErrorHandlingRoute extends RouteBuilder {
                 })
                 // Log error event to Kafka with explicit headers
                 .wireTap(
-                        "kamelet:k-log-events?level=ERROR&logMessageTxt=[ERROR] ${header.MessageType}: ${header.ShortErrorReason}&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}")
+                        "kamelet:k-log-events?flowId=${header.FlowId}&flowCode=${header.FlowCode}&level=ERROR&logMessageTxt=[ERROR] ${header.MessageType}: ${header.ShortErrorReason}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}")
                 .log("Error headers: ${headers}").setHeader("step", constant("ERROR")).wireTap(
-                        "kamelet:k-log-flow-summary?kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}");
+                        "kamelet:k-log-flow-summary?kafkaTopicName=${header.KafkaFlowSummaryTopicName}&brokers=${header.Brokers}");
     }
 }

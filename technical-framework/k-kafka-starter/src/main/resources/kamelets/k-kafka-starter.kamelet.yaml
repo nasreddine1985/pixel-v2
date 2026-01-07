@@ -99,7 +99,7 @@ spec:
             constant: "KAFKA_TOPIC"
         - setHeader:
             name: receiptTimestamp
-            simple: "${date:now:yyyy-MM-dd HH:mm:ss.SSS}"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         - setHeader:
             name: receiptChannel
             constant: "KAFKA_CONSUMER"

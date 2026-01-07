@@ -1,5 +1,8 @@
 package com.pixel.v2.routes;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.camel.CamelContext;
 import org.apache.camel.EndpointInject;
 import org.apache.camel.Exchange;
@@ -17,9 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Unit test for ChRoute Tests the complete CH payment processing pipeline including MQ consumption,
@@ -209,14 +209,14 @@ public class ChRouteTest {
             @Override
             public void configure() throws Exception {
                 from("direct:test-input").routeId("test-identification-flow")
-                        .setHeader("flowCode", constant("PACS008"))
-                        .setHeader("CacheKey", simple("flow_config_${header.flowCode}"))
+                        .setHeader("FlowCode", constant("PACS008"))
+                        .setHeader("CacheKey", simple("flow_config_${header.FlowCode}"))
 
                         // Simulate cache miss and referentiel call
                         .choice().when(header("SimulateCacheHit").isEqualTo(true))
                         .setBody(constant(FLOW_CONFIG_RESPONSE))
                         .setHeader("CacheResult", constant("HIT"))
-                        .log("Cache HIT for flow ${header.flowCode}").otherwise()
+                        .log("Cache HIT for flow ${header.FlowCode}").otherwise()
                         .setBody(constant(FLOW_CONFIG_RESPONSE))
                         .setHeader("CacheResult", constant("MISS"))
                         .log("Cache MISS - fetched from referentiel service").end()
