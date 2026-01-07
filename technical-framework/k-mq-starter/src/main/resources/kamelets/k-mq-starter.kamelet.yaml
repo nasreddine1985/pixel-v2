@@ -100,11 +100,28 @@ spec:
             name: "OriginalBody"
             simple: "${body}"
         # Generate unique flow occurrence ID from database sequence
-        - to:
-            uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource=#dataSource"
-        - setHeader:
-            name: "FlowOccurId"
-            simple: "${body[0][flowOccurId]}"
+        - doTry:
+            steps:
+              - to:
+                  uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource=#dataSource"
+              - setHeader:
+                  name: "FlowOccurId"
+                  simple: "${body[0][flowOccurId]}"
+              - setHeader:
+                  name: "Level"
+                  simple: "INFO"
+            doCatch:
+              - exception: "java.lang.Exception"
+                steps:
+                  - log:
+                      message: "Database sequence failed, generating UUID fallback: ${exception.message}"
+                      loggingLevel: WARN
+                  - setHeader:
+                      name: "Level"
+                      simple: "ERROR"
+                  - setHeader:
+                      name: "FlowOccurId"
+                      simple: "${uuid()}"
         - setHeader:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
@@ -116,7 +133,7 @@ spec:
             name: "OriginalBody"
         # Log event before starting MQ processing
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start MQ processing - queue: ${header.MqFileName}, MessageId: ${header.MessageId}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start MQ processing - queue: ${header.MqFileName}, MessageId: ${header.MessageId}&level=${header.Level}&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
         - setHeader:
             name: "BeginFlowDatetime"
