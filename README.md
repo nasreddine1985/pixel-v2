@@ -262,7 +262,7 @@ This script will:
 mvn clean install -DskipTests
 cp technical-framework/*/target/*.jar flow-ch/technical-jars/
 cd flow-ch && mvn clean install -DskipTests
-cp target/pixel-camel-app-1.0.0.jar ../docker/camel-runtime-spring/pixel-v2-app-spring-1-1.0.0.jar
+cp target/pixel-ch-app-1.0.0.jar ../docker/camel-runtime-spring/pixel-v2-app-spring-1-1.0.0.jar
 
 # Deploy to Docker
 cd ../docker

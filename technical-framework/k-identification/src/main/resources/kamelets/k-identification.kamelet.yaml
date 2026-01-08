@@ -14,7 +14,7 @@ spec:
     description: |-
       Spring cache-based reference data identification and caching kamelet for payment processing.
       Uses Spring Boot application's memory cache instead of external Redis.
-      Fetches flow configuration from Spring memory cache or referentiel service with automatic cache population.
+      Fetches flow configuration from Spring memory cache or referential service with automatic cache population.
     required:
       - flowCode
     type: object
@@ -23,9 +23,9 @@ spec:
         title: Flow Code
         description: The flow code to identify and retrieve configuration for
         type: string
-      referentielServiceUrl:
-        title: Referentiel Service URL
-        description: Base URL of the referentiel service for flow configuration retrieval
+      referentialServiceUrl:
+        title: Referential Service URL
+        description: Base URL of the referential service for flow configuration retrieval
         type: string
       kafkaBrokers:
         title: Kafka Brokers
@@ -77,9 +77,9 @@ spec:
               - simple: "${body} == null"
                 steps:
                   - log: 
-                      message: "Spring Cache MISS: Fetching flow config for ${header.SpringCacheKey} from referentiel service"
+                      message: "Spring Cache MISS: Fetching flow config for ${header.SpringCacheKey} from referential service"
                       loggingLevel: DEBUG
-                  # Fetch from referentiel service
+                  # Fetch from referential service
                   - doTry:
                       steps:
                         
@@ -103,7 +103,7 @@ spec:
                             name: Content-Type
                             constant: "application/json"
                         
-                        - toD: "{{referentielServiceUrl}}/api/referentiel/flows/{{flowCode}}/complete?bridgeEndpoint=true"
+                        - toD: "{{referentialServiceUrl}}/api/referential/flows/{{flowCode}}/complete?bridgeEndpoint=true"
                         # Restore saved headers after HTTP call
                         - script:
                             groovy: |
@@ -117,7 +117,7 @@ spec:
                         
                         - convertBodyTo: "java.lang.String"
                         - log: 
-                            message: "Successfully retrieved flow config for ${header.FlowCode} from referentiel service"
+                            message: "Successfully retrieved flow config for ${header.FlowCode} from referential service"
                             loggingLevel: DEBUG
                         - script:
                             groovy: |
@@ -134,11 +134,11 @@ spec:
                         - exception: "java.lang.Exception"
                           steps:
                             - log: 
-                                message: "Failed to retrieve flow config for ${header.SpringCacheKey} from referentiel service: ${exception.message}"
+                                message: "Failed to retrieve flow config for ${header.SpringCacheKey} from referential service: ${exception.message}"
                                 loggingLevel: ERROR
                             - setHeader:
                                 name: "RefFlowData"
-                                simple: '{"error":"referentiel_service_unavailable","flowCode":"${header.SpringCacheKey}"}'
+                                simple: '{"error":"referential_service_unavailable","flowCode":"${header.SpringCacheKey}"}'
                             - setBody:
                                 simple: "${header.OriginalMessageBody}"
             otherwise:

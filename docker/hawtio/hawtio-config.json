@@ -10,22 +10,8 @@
     "copyright": ""
   },
   "disabledRoutes": [],
-  "urls": [
-    {
-      "name": "PIXEL-V2 Camel Instance 1",
-      "url": "http://pixel-v2-app-1:8080/observe/jolokia",
-      "scheme": "http",
-      "host": "pixel-v2-app-1",
-      "port": 8080,
-      "path": "/observe/jolokia"
-    },
-    {
-      "name": "PIXEL-V2 Camel Instance 2",
-      "url": "http://pixel-v2-app-2:8080/observe/jolokia",
-      "scheme": "http", 
-      "host": "pixel-v2-app-2",
-      "port": 8080,
-      "path": "/observe/jolokia"
-    }
-  ]
+  "connect": {
+    "url": "http://pixel-v2-nginx-proxy:8080/actuator/jolokia",
+    "name": "PIXEL-V2 Routes"
+  }
 }

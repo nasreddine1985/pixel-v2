@@ -2,12 +2,12 @@
 
 ## Overview
 
-The k-identification kamelet is a specialized Apache Camel Kamelet that provides Redis-based reference data identification and caching for CH payment processing in the PIXEL-V2 framework. It handles flow configuration retrieval from Redis cache with automatic fallback to the referentiel service when cache misses occur.
+The k-identification kamelet is a specialized Apache Camel Kamelet that provides Redis-based reference data identification and caching for CH payment processing in the PIXEL-V2 framework. It handles flow configuration retrieval from Redis cache with automatic fallback to the referential service when cache misses occur.
 
 ## Features
 
 - **Redis Caching**: Automatic caching of flow configuration data with configurable TTL
-- **Cache Fallback**: Seamless fallback to referentiel service on cache miss
+- **Cache Fallback**: Seamless fallback to referential service on cache miss
 - **Body Preservation**: Maintains original message body throughout the identification process
 - **Cache Refresh**: Kafka-based cache invalidation for real-time updates
 - **Error Handling**: Robust error handling with graceful degradation
@@ -23,7 +23,7 @@ Cache HIT? → YES → Return Cached Config
      ↓                        ↓
     NO                 Original Message
      ↓                        ↓
-Referentiel Service    Continue Processing
+Referential Service    Continue Processing
      ↓
 Cache Update
      ↓
@@ -37,7 +37,7 @@ Continue Processing
 | Parameter               | Description                     | Default                            | Required |
 | ----------------------- | ------------------------------- | ---------------------------------- | -------- |
 | `flowCode`              | Flow code to identify           | -                                  | Yes      |
-| `referentielServiceUrl` | Base URL of referentiel service | `http://pixel-v2-referentiel:8099` | No       |
+| `referentialServiceUrl` | Base URL of referential service | `http://pixel-v2-referential:8099` | No       |
 | `kafkaBrokers`          | Kafka broker URLs               | `kafka:29092`                      | No       |
 | `cacheTtl`              | Cache TTL in seconds            | `3600`                             | No       |
 
@@ -52,14 +52,14 @@ Continue Processing
 ### Advanced Usage with Custom Configuration
 
 ```yaml
-- to: "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl=http://custom-referentiel:8099&cacheTtl=7200"
+- to: "kamelet:k-identification?flowCode=${header.flowCode}&referentialServiceUrl=http://custom-referential:8099&cacheTtl=7200"
 ```
 
 ### Java DSL Usage
 
 ```java
 // In RouteBuilder
-.to("kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&cacheTtl={{pixel.cache.ttl}}")
+.to("kamelet:k-identification?flowCode=${header.flowCode}&referentialServiceUrl={{pixel.referential.service.url}}&cacheTtl={{pixel.cache.ttl}}")
 ```
 
 ## Headers
@@ -101,7 +101,7 @@ Add these properties to your `application.properties`:
 
 ```properties
 # K-Identification Kamelet Configuration
-pixel.referentiel.service.url=http://pixel-v2-referentiel:8099
+pixel.referential.service.url=http://pixel-v2-referential:8099
 pixel.kafka.brokers=kafka:29092
 pixel.cache.ttl=3600
 
@@ -119,7 +119,7 @@ spring.data.redis.port=6379
 public class ChProcessingRoute extends RouteBuilder {
 
     private static final String K_IDENTIFICATION_ENDPOINT =
-        "kamelet:k-identification?flowCode=${header.flowCode}&referentielServiceUrl={{pixel.referentiel.service.url}}&cacheTtl={{pixel.cache.ttl}}";
+        "kamelet:k-identification?flowCode=${header.flowCode}&referentialServiceUrl={{pixel.referential.service.url}}&cacheTtl={{pixel.cache.ttl}}";
 
     @Override
     public void configure() throws Exception {
@@ -136,8 +136,8 @@ public class ChProcessingRoute extends RouteBuilder {
 
 The kamelet provides graceful error handling:
 
-1. **Redis Connection Issues**: Falls back to referentiel service
-2. **Referentiel Service Unavailable**: Returns error configuration with service status
+1. **Redis Connection Issues**: Falls back to referential service
+2. **Referential Service Unavailable**: Returns error configuration with service status
 3. **Cache Operation Failures**: Continues processing without caching
 
 ## Monitoring
@@ -146,7 +146,7 @@ Monitor the kamelet performance through:
 
 - Cache hit/miss ratio logs
 - Redis operation metrics
-- Referentiel service response times
+- Referential service response times
 - Error rates per operation type
 
 ## Troubleshooting
@@ -155,7 +155,7 @@ Monitor the kamelet performance through:
 
 1. **Cache Always Missing**: Check Redis connectivity and configuration
 2. **Body Lost**: Verify no custom processors modify the message body
-3. **Configuration Not Found**: Verify flowCode and referentiel service availability
+3. **Configuration Not Found**: Verify flowCode and referential service availability
 4. **Cache Not Refreshing**: Check Kafka connectivity and topic configuration
 
 ### Debug Logging
@@ -175,4 +175,4 @@ logging.level.com.pixel.kcah.identification=DEBUG
 
 ## Version History
 
-- **1.0.1-SNAPSHOT**: Initial release with Redis caching and referentiel fallback
+- **1.0.1-SNAPSHOT**: Initial release with Redis caching and referential fallback

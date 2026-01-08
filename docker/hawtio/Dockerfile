@@ -4,7 +4,7 @@
 FROM eclipse-temurin:21-jdk-alpine
 
 # Set Hawt.io version
-ENV HAWTIO_VERSION=2.17.7
+ENV HAWTIO_VERSION=4.3.0
 ENV HAWTIO_PORT=8080
 
 # Install required packages
@@ -13,8 +13,9 @@ RUN apk add --no-cache curl bash wget unzip
 # Create application directory
 RUN mkdir -p /opt/hawtio
 
-# Download Hawt.io application
-RUN wget https://repo1.maven.org/maven2/io/hawt/hawtio-app/2.17.7/hawtio-app-2.17.7.jar -O /opt/hawtio/hawtio-app.jar
+# Download Hawt.io WAR with compatible Jetty version
+RUN wget https://repo1.maven.org/maven2/io/hawt/hawtio-war/4.3.0/hawtio-war-4.3.0.war -O /opt/hawtio/hawtio.war && \
+    wget https://repo1.maven.org/maven2/org/eclipse/jetty/jetty-runner/11.0.15/jetty-runner-11.0.15.jar -O /opt/hawtio/jetty-runner.jar
 
 # Copy Hawt.io startup script and configuration
 COPY start-hawtio.sh /opt/hawtio/
@@ -33,7 +34,7 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/hawtio/ || exit 1
+    CMD curl -f http://localhost:8080/ || exit 1
 
 # Switch to non-root user
 USER hawtio

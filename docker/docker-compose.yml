@@ -183,80 +183,80 @@ services:
       retries: 3
 
   # PIXEL-V2 Camel Runtime Application - Instance 1
-  pixel-v2-app-1:
-    build:
-      context: ./camel-runtime-jbang
-      dockerfile: Dockerfile
-    hostname: pixel-v2-app-1
-    container_name: pixel-v2-camel-1
-    depends_on:
-      - postgresql
-      - kafka
-    ports:
-      - "8080:8080"    # HTTP/REST API
-      - "8778:8778"    # JMX
-      - "9779:9779"    # Metrics
-    environment:
-      PIXEL_ENV: production
-      PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
-      PIXEL_DB_USERNAME: pixelv2
-      PIXEL_DB_PASSWORD: pixelv2_secure_password
-      PIXEL_MQ_URL: tcp://pixel-v2-activemq:61616
-      PIXEL_MQ_USERNAME: admin
-      PIXEL_MQ_PASSWORD: admin
-      PIXEL_KAFKA_BOOTSTRAP: kafka:29092
-      ROUTE_FILE: "pacs008-complete.yaml"
-      JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
-    volumes:
-      - ./routes:/opt/pixel-v2/routes:ro
-      - app_logs_1:/opt/pixel-v2/logs
-    networks:
-      - pixel-v2-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/observe/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+  # pixel-v2-app-1:
+  #   build:
+  #     context: ./camel-runtime-jbang
+  #     dockerfile: Dockerfile
+  #   hostname: pixel-v2-app-1
+  #   container_name: pixel-v2-camel-1
+  #   depends_on:
+  #     - postgresql
+  #     - kafka
+  #   ports:
+  #     - "8080:8080"    # HTTP/REST API
+  #     - "8778:8778"    # JMX
+  #     - "9779:9779"    # Metrics
+  #   environment:
+  #     PIXEL_ENV: production
+  #     PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
+  #     PIXEL_DB_USERNAME: pixelv2
+  #     PIXEL_DB_PASSWORD: pixelv2_secure_password
+  #     PIXEL_MQ_URL: tcp://pixel-v2-activemq:61616
+  #     PIXEL_MQ_USERNAME: admin
+  #     PIXEL_MQ_PASSWORD: admin
+  #     PIXEL_KAFKA_BOOTSTRAP: kafka:29092
+  #     ROUTE_FILE: "pacs008-complete.yaml"
+  #     JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+  #   volumes:
+  #     - ./routes:/opt/pixel-v2/routes:ro
+  #     - app_logs_1:/opt/pixel-v2/logs
+  #   networks:
+  #     - pixel-v2-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/observe/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 60s
 
   # PIXEL-V2 Camel Runtime Application - Instance 2
-  pixel-v2-app-2:
-    build:
-      context: ./camel-runtime-jbang
-      dockerfile: Dockerfile
-    hostname: pixel-v2-app-2
-    container_name: pixel-v2-camel-2
-    depends_on:
-      - postgresql
-      - kafka
-    ports:
-      - "8081:8080"    # HTTP/REST API
-      - "8781:8778"    # JMX
-      - "9781:9779"    # Metrics
-    environment:
-      PIXEL_ENV: production
-      PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
-      PIXEL_DB_USERNAME: pixelv2
-      PIXEL_DB_PASSWORD: pixelv2_secure_password
-      PIXEL_MQ_URL: tcp://pixel-v2-activemq:61616
-      PIXEL_MQ_USERNAME: admin
-      PIXEL_MQ_PASSWORD: admin
-      PIXEL_KAFKA_BOOTSTRAP: kafka:29092
-      ROUTE_FILE: "pacs008-log.yaml"
-      JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
-    volumes:
-      - ./routes:/opt/pixel-v2/routes:ro
-      - app_logs_2:/opt/pixel-v2/logs
-    networks:
-      - pixel-v2-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/observe/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+  # pixel-v2-app-2:
+  #   build:
+  #     context: ./camel-runtime-jbang
+  #     dockerfile: Dockerfile
+  #   hostname: pixel-v2-app-2
+  #   container_name: pixel-v2-camel-2
+  #   depends_on:
+  #     - postgresql
+  #     - kafka
+  #   ports:
+  #     - "8081:8080"    # HTTP/REST API
+  #     - "8781:8778"    # JMX
+  #     - "9781:9779"    # Metrics
+  #   environment:
+  #     PIXEL_ENV: production
+  #     PIXEL_DB_URL: jdbc:postgresql://postgresql:5432/pixelv2
+  #     PIXEL_DB_USERNAME: pixelv2
+  #     PIXEL_DB_PASSWORD: pixelv2_secure_password
+  #     PIXEL_MQ_URL: tcp://pixel-v2-activemq:61616
+  #     PIXEL_MQ_USERNAME: admin
+  #     PIXEL_MQ_PASSWORD: admin
+  #     PIXEL_KAFKA_BOOTSTRAP: kafka:29092
+  #     ROUTE_FILE: "pacs008-log.yaml"
+  #     JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
+  #   volumes:
+  #     - ./routes:/opt/pixel-v2/routes:ro
+  #     - app_logs_2:/opt/pixel-v2/logs
+  #   networks:
+  #     - pixel-v2-network
+  #   restart: unless-stopped
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8080/observe/health"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #     start_period: 60s
 
   # PIXEL-V2 Camel Spring Boot Application
   pixel-v2-app-spring-1:
@@ -299,7 +299,7 @@ services:
       # Redis Configuration for k-identification kamelet
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
-      PIXEL_REFERENTIEL_SERVICE_URL: http://pixel-v2-referentiel:8099
+      PIXEL_REFERENTIAL_SERVICE_URL: http://pixel-v2-referential:8099
       PIXEL_KAFKA_BROKERS: kafka:29092
       PIXEL_CACHE_TTL: 3600
       
@@ -375,22 +375,37 @@ services:
       dockerfile: Dockerfile
     container_name: pixel-v2-hawtio
     depends_on:
-      - pixel-v2-app-1
       - pixel-v2-app-spring-1
     ports:
       - "8090:8080"
     environment:
-      HAWTIO_PROXYWHITELIST: "pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-spring-1,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.*"
-      HAWTIO_PROXY_HOST: pixel-v2-app-1
-      HAWTIO_PROXY_PORT: 8080
       HAWTIO_AUTH_ENABLED: "false"
       HAWTIO_LOCAL_ADDRESS_PROBING: "false"
-      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.proxyAllowlist=pixel-v2-app-1,pixel-v2-app-2,pixel-v2-app-spring-1,localhost,127.0.0.1,172.19.0.*,172.20.0.*,172.21.0.* -Dhawtio.authenticationEnabled=false -Dhawtio.localAddressProbing=false"
+      HAWTIO_PROXY_ALLOWLIST: "172.19.0.*,pixel-v2-app-spring-1,localhost,127.0.0.1"
+      HAWTIO_PROXY_WHITELIST: "172.19.0.*,pixel-v2-app-spring-1,localhost,127.0.0.1"
+      JAVA_OPTS: "-Xms128m -Xmx256m -Dhawtio.authenticationEnabled=false -Dhawtio.authenticationContainerEnabled=false -Dhawtio.keycloakEnabled=false -Dhawtio.oidcEnabled=false -Dhawtio.disableProxy=true -Dhawtio.localAddressProbing=false -Dhawtio.sessionTimeout=86400 -Dhawtio.realm=public -Dhawtio.role=viewer -Dhawtio.contextPath= -Dhawtio.offline=false"
     networks:
       - pixel-v2-network
     restart: unless-stopped
     profiles:
       - tools
+
+  # Nginx Proxy for Hawtio-Spring connectivity
+  nginx-proxy:
+    image: nginx:alpine
+    hostname: pixel-v2-nginx-proxy
+    container_name: pixel-v2-nginx-proxy
+    ports:
+      - "8083:8080"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    profiles:
+      - tools
+    depends_on:
+      - pixel-v2-app-spring-1
 
   # NAS (Network Attached Storage) - Samba File Share
   nas:

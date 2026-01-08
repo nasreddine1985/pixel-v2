@@ -11,29 +11,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class ErrorHandlingRoute extends RouteBuilder {
 
-    @Override
-    public void configure() throws Exception {
+        @Override
+        public void configure() throws Exception {
 
-        // Error handling route
-        from("direct:error-handling").routeId("error-handler")
-                .log("Error processing message: ${exception.message}")
-                .setHeader("ErrorTimestamp", simple("${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSZ}"))
-                .setHeader("ErrorReason", simple("${exception.message}"))
-                .setHeader("ShortErrorReason",
-                        simple("${exception.class.simpleName}: ${exception.message}"))
-                .process(exchange -> {
-                    // Truncate ShortErrorReason to fit varchar(128) constraint
-                    String shortReason =
-                            exchange.getIn().getHeader("ShortErrorReason", String.class);
-                    if (shortReason != null && shortReason.length() > 120) {
-                        exchange.getIn().setHeader("ShortErrorReason",
-                                shortReason.substring(0, 120) + "...");
-                    }
-                })
-                // Log error event to Kafka with explicit headers
-                .wireTap(
-                        "kamelet:k-log-events?flowId=${header.FlowId}&flowCode=${header.FlowCode}&level=ERROR&logMessageTxt=[ERROR] ${header.MessageType}: ${header.ShortErrorReason}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}")
-                .log("Error headers: ${headers}").setHeader("step", constant("ERROR")).wireTap(
-                        "kamelet:k-log-flow-summary?kafkaTopicName=${header.KafkaFlowSummaryTopicName}&brokers=${header.Brokers}");
-    }
+                // Error handling route
+                from("direct:error-handling").routeId("error-handler").log(
+                                "Error processing message. Headers: ErrorType=${header.ErrorType}, ErrorReason=${header.ErrorReason}")
+                                .process(exchange -> {
+                                        String errorReason = exchange.getIn()
+                                                        .getHeader("ErrorReason", String.class);
+
+                                        if (errorReason != null && errorReason.length() > 128) {
+                                                errorReason = errorReason.substring(0, 125) + "...";
+                                        }
+                                        exchange.getIn().setHeader("ShortErrorReason", errorReason);
+                                })
+                                // Log error event to Kafka with explicit headers
+                                .toD("kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=[ERROR] ${header.FlowOccurId}: ${header.ShortErrorReason}&level=ERROR&processingTimestamp=${header.ProcessingTimestamp}")
+                                .wireTap("kamelet:k-log-flow-summary?step=ERROR&kafkaTopicName=${header.KafkaFlowSummaryTopicName}&brokers=${header.Brokers}");
+        }
 }

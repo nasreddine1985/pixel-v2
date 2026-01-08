@@ -14,50 +14,52 @@ import org.springframework.context.annotation.Primary;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
- * Spring Cache Configuration for k-identification-interne module
- * Configures memory-based caching using Caffeine with fallback to ConcurrentMap
+ * Spring Cache Configuration for k-identification-interne module Configures memory-based caching
+ * using Caffeine with fallback to ConcurrentMap
  */
 @Configuration
 @EnableCaching
 public class SpringCacheConfig {
 
     /**
-     * Primary cache manager using Caffeine for better performance and features
-     * Includes TTL, maximum size limits, and statistics
+     * Primary cache manager using Caffeine for better performance and features Includes TTL,
+     * maximum size limits, and statistics
      */
     @Bean
     @Primary
     @ConditionalOnMissingBean(CacheManager.class)
     public CacheManager caffeineCacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        
+
         // Configure Caffeine cache with TTL and size limits
-        cacheManager.setCaffeine(Caffeine.newBuilder()
-            .expireAfterWrite(1, TimeUnit.HOURS)     // 1 hour TTL
-            .maximumSize(1000)                        // Max 1000 entries per cache
-            .recordStats());                         // Enable statistics
-        
+        cacheManager.setCaffeine(Caffeine.newBuilder().expireAfterWrite(1, TimeUnit.HOURS) // 1 hour
+                                                                                           // TTL
+                .maximumSize(1000) // Max 1000 entries per cache
+                .recordStats()); // Enable statistics
+
         // Pre-configure common cache names
-        cacheManager.setCacheNames(java.util.List.of("flowConfigCache", "referentielCache", "identificationCache"));
-        
+        cacheManager.setCacheNames(
+                java.util.List.of("flowConfigCache", "referentialCache", "identificationCache"));
+
         return cacheManager;
     }
 
     /**
-     * Fallback cache manager using ConcurrentMap (simple memory cache)
-     * Used when Caffeine is not available or as secondary cache
+     * Fallback cache manager using ConcurrentMap (simple memory cache) Used when Caffeine is not
+     * available or as secondary cache
      */
     @Bean("concurrentMapCacheManager")
     @ConditionalOnMissingBean(name = "caffeineCacheManager")
     public CacheManager concurrentMapCacheManager() {
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager();
-        
+
         // Pre-configure common cache names
-        cacheManager.setCacheNames(java.util.List.of("flowConfigCache", "referentielCache", "identificationCache"));
-        
+        cacheManager.setCacheNames(
+                java.util.List.of("flowConfigCache", "referentialCache", "identificationCache"));
+
         // Allow dynamic cache creation
         cacheManager.setAllowNullValues(false);
-        
+
         return cacheManager;
     }
 
@@ -76,7 +78,8 @@ public class SpringCacheConfig {
         private int ttlHours = 1;
         private int maximumSize = 1000;
         private boolean recordStats = true;
-        private String[] cacheNames = {"flowConfigCache", "referentielCache", "identificationCache"};
+        private String[] cacheNames =
+                {"flowConfigCache", "referentialCache", "identificationCache"};
 
         // Getters and setters
         public int getTtlHours() {

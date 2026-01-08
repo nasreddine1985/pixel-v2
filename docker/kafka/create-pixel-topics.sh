@@ -47,15 +47,16 @@ if wait_for_kafka; then
     echo "Creating PIXEL-V2 topics..."
     
     # Switzerland (CH) Flow Topics
-    create_topic "ch-flow-summary" 1 1
-    create_topic "ch-log-events" 1 1
-    create_topic "ch-out" 1 1
-    create_topic "ch-refresh-ref" 1 1
+    create_topic "ICHSIC-flow-summary-topic" 1 1
+    create_topic "ICHSIC-log-event-topic" 1 1
+    create_topic "ICHSIC-out-topic" 1 1
+    create_topic "ICHSIC-in-topic" 1 1
+    create_topic "ICHSIC-exception-topic" 1 1
     
     # General PIXEL-V2 Topics
-    create_topic "transaction-audit" 1 1
-    create_topic "transaction-correlation" 1 1
-    create_topic "pixel-v2-dlq" 1 1
+    create_topic "pixel-v2transaction-audit-topic" 1 1
+    create_topic "pixel-v2refresh-referential-topic" 1 1
+    create_topic "pixel-v2-dlq-topic" 1 1
     
     echo "PIXEL-V2 topics creation completed!"
     

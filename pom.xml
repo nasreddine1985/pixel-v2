@@ -13,7 +13,7 @@
 
     <modules>
         <module>technical-framework</module>
-        <module>referentiel</module>
+        <module>referential</module>
         <module>flow-ch</module>
     </modules>
 

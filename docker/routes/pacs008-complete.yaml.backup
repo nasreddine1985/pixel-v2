@@ -32,7 +32,7 @@
 # //DEPS com.pixel.v2:k-message-split:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-db-tx:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-log-tx:1.0.1-SNAPSHOT
-# //DEPS com.pixel.v2:k-referentiel-data-loader:1.0.1-SNAPSHOT
+# //DEPS com.pixel.v2:k-referential-data-loader:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-xsd-validation:1.0.1-SNAPSHOT
 # //DEPS com.pixel.v2:k-xsl-transformation:1.0.1-SNAPSHOT
 

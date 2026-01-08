@@ -39,7 +39,7 @@
             <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
 
-        <!-- HTTP client for referentiel service -->
+        <!-- HTTP client for referential service -->
         <dependency>
             <groupId>org.apache.camel</groupId>
             <artifactId>camel-http</artifactId>

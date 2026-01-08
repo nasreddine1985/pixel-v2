@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.pixel.v2</groupId>
-    <artifactId>pixel-camel-app</artifactId>
+    <artifactId>pixel-ch-app</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>PIXEL-V2 Camel Application</name>
+    <name>PIXEL-V2 CH Application</name>
     <description>Standalone Spring Boot Camel application for PIXEL-V2 payment processing</description>
 
     <properties>
@@ -209,11 +209,11 @@
             <artifactId>hibernate-core</artifactId>
         </dependency>
 
-        <!-- Monitoring -->
+        <!-- Monitoring & JMX - Hawtio 4.x for Spring Boot 3 -->
         <dependency>
-            <groupId>org.jolokia</groupId>
-            <artifactId>jolokia-core</artifactId>
-            <version>1.7.2</version>
+            <groupId>io.hawt</groupId>
+            <artifactId>hawtio-springboot</artifactId>
+            <version>4.4.1</version>
         </dependency>
 
         <dependency>

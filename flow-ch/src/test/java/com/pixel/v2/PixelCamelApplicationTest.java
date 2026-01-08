@@ -19,7 +19,7 @@ import org.springframework.test.context.TestPropertySource;
         "spring.datasource.driver-class-name=org.h2.Driver",
         "spring.jpa.hibernate.ddl-auto=create-drop",
         "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
-        "pixel.referentiel.service.url=http://mock-referentiel:8080",
+        "pixel.referential.service.url=http://mock-referential:8080",
         "pixel.kafka.brokers=mock-kafka:9092", "pixel.cache.ttl=3600",
         "kmq.starter.mqFileName=TEST.QUEUE", "kmq.starter.connectionFactory=mockConnectionFactory",
         "kmq.starter.flowCode=TESTFLOW", "kmq.starter.messageType=test.message",

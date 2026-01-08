@@ -24,7 +24,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
 /**
- * Unit test for k-identification-interne kamelet Tests Spring cache operations, referentiel service
+ * Unit test for k-identification-interne kamelet Tests Spring cache operations, referential service
  * integration, and flow configuration caching
  */
 @CamelSpringBootTest
@@ -50,8 +50,8 @@ public class KIdentificationInterneKameletTest {
     @EndpointInject("mock:log-events")
     private MockEndpoint mockLogEvents;
 
-    @EndpointInject("mock:referentiel-service")
-    private MockEndpoint mockReferentielService;
+    @EndpointInject("mock:referential-service")
+    private MockEndpoint mockReferentialService;
 
     private static final String TEST_MESSAGE = """
             <?xml version="1.0" encoding="UTF-8"?>
@@ -81,7 +81,7 @@ public class KIdentificationInterneKameletTest {
         // Reset all mock endpoints
         mockSink.reset();
         mockLogEvents.reset();
-        mockReferentielService.reset();
+        mockReferentialService.reset();
 
         // Clear cache before each test
         Cache cache = cacheManager.getCache("flowConfigCache");
@@ -93,37 +93,33 @@ public class KIdentificationInterneKameletTest {
     }
 
     /**
-     * Test basic Spring cache operations - cache miss and fetch from referentiel
+     * Test basic Spring cache operations - cache miss and fetch from referential
      */
     @Test
-    public void testCacheMissAndReferentielFetch() throws Exception {
+    public void testCacheMissAndReferentialFetch() throws Exception {
         // Create test-specific route for cache miss scenario
         camelContext.addRoutes(new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                from("direct:test-input")
-                    .routeId("test-cache-miss")
-                    .log("Processing identification with cache miss")
-                    .setHeader("SpringCacheName", constant("flowConfigCache"))
-                    .setHeader("SpringCacheKey", constant("PACS008"))
-                    .setHeader("flowOccurId", constant("TEST-001"))
-                    // Store original message body
-                    .setHeader("OriginalBody", simple("${body}"))
-                    // Simulate cache miss - set body to null to trigger referentiel call
-                    .setBody(constant(null))
-                    // Simulate referentiel service call
-                    .choice()
-                        .when(body().isNull())
-                            .setHeader("FlowConfiguration", constant(FLOW_CONFIG_RESPONSE))
-                            .log("Fetched config from referentiel service")
-                        .end()
-                    // Restore original body
-                    .setBody(simple("${header.OriginalBody}"))
-                    .removeHeader("OriginalBody")
-                    .to("mock:sink");
+                from("direct:test-input").routeId("test-cache-miss")
+                        .log("Processing identification with cache miss")
+                        .setHeader("SpringCacheName", constant("flowConfigCache"))
+                        .setHeader("SpringCacheKey", constant("PACS008"))
+                        .setHeader("flowOccurId", constant("TEST-001"))
+                        // Store original message body
+                        .setHeader("OriginalBody", simple("${body}"))
+                        // Simulate cache miss - set body to null to trigger referential call
+                        .setBody(constant(null))
+                        // Simulate referential service call
+                        .choice().when(body().isNull())
+                        .setHeader("FlowConfiguration", constant(FLOW_CONFIG_RESPONSE))
+                        .log("Fetched config from referential service").end()
+                        // Restore original body
+                        .setBody(simple("${header.OriginalBody}")).removeHeader("OriginalBody")
+                        .to("mock:sink");
 
                 // Remove the HTTP consumer route as HTTP endpoints can't be consumers
-                // Instead we'll mock the referentiel call directly in the main route
+                // Instead we'll mock the referential call directly in the main route
             }
         });
 
@@ -142,7 +138,8 @@ public class KIdentificationInterneKameletTest {
 
         // Verify flow configuration was set
         Exchange sinkExchange = mockSink.getReceivedExchanges().get(0);
-        assertEquals(FLOW_CONFIG_RESPONSE.trim(), sinkExchange.getIn().getHeader("FlowConfiguration", String.class).trim());
+        assertEquals(FLOW_CONFIG_RESPONSE.trim(),
+                sinkExchange.getIn().getHeader("FlowConfiguration", String.class).trim());
         assertEquals(TEST_MESSAGE.trim(), sinkExchange.getIn().getBody(String.class).trim());
     }
 
@@ -160,22 +157,19 @@ public class KIdentificationInterneKameletTest {
         camelContext.addRoutes(new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                from("direct:test-input")
-                    .routeId("test-cache-hit")
-                    .log("Processing identification with cache hit")
-                    .setHeader("SpringCacheName", constant("flowConfigCache"))
-                    .setHeader("SpringCacheKey", constant("PACS008"))
-                    // Simulate cache hit
-                    .process(exchange -> {
-                        Cache testCache = cacheManager.getCache("flowConfigCache");
-                        Cache.ValueWrapper value = testCache.get("PACS008");
-                        if (value != null) {
-                            exchange.getIn().setBody(value.get());
-                            exchange.getIn().setHeader("FlowConfiguration", value.get());
-                        }
-                    })
-                    .log("Using cached configuration")
-                    .to("mock:sink");
+                from("direct:test-input").routeId("test-cache-hit")
+                        .log("Processing identification with cache hit")
+                        .setHeader("SpringCacheName", constant("flowConfigCache"))
+                        .setHeader("SpringCacheKey", constant("PACS008"))
+                        // Simulate cache hit
+                        .process(exchange -> {
+                            Cache testCache = cacheManager.getCache("flowConfigCache");
+                            Cache.ValueWrapper value = testCache.get("PACS008");
+                            if (value != null) {
+                                exchange.getIn().setBody(value.get());
+                                exchange.getIn().setHeader("FlowConfiguration", value.get());
+                            }
+                        }).log("Using cached configuration").to("mock:sink");
             }
         });
 
@@ -187,7 +181,8 @@ public class KIdentificationInterneKameletTest {
 
         // Verify cached configuration was used
         Exchange sinkExchange = mockSink.getReceivedExchanges().get(0);
-        assertEquals(FLOW_CONFIG_RESPONSE.trim(), sinkExchange.getIn().getHeader("FlowConfiguration", String.class).trim());
+        assertEquals(FLOW_CONFIG_RESPONSE.trim(),
+                sinkExchange.getIn().getHeader("FlowConfiguration", String.class).trim());
     }
 
     /**
@@ -198,30 +193,29 @@ public class KIdentificationInterneKameletTest {
         camelContext.addRoutes(new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                from("direct:test-input")
-                    .routeId("test-cache-processor")
-                    .setHeader("SpringCacheName", constant("flowConfigCache"))
-                    .setHeader("SpringCacheKey", constant("PACS008"))
-                    .setHeader("SpringCacheValue", constant(FLOW_CONFIG_RESPONSE))
-                    // Test cache PUT operation
-                    .process(exchange -> {
-                        Cache cache = cacheManager.getCache("flowConfigCache");
-                        String key = exchange.getIn().getHeader("SpringCacheKey", String.class);
-                        String value = exchange.getIn().getHeader("SpringCacheValue", String.class);
-                        cache.put(key, value);
-                        exchange.getIn().setHeader("CacheOperation", "PUT");
-                    })
-                    // Test cache GET operation
-                    .process(exchange -> {
-                        Cache cache = cacheManager.getCache("flowConfigCache");
-                        String key = exchange.getIn().getHeader("SpringCacheKey", String.class);
-                        Cache.ValueWrapper wrapper = cache.get(key);
-                        if (wrapper != null) {
-                            exchange.getIn().setHeader("CachedValue", wrapper.get());
-                            exchange.getIn().setHeader("CacheOperation", "GET");
-                        }
-                    })
-                    .to("mock:sink");
+                from("direct:test-input").routeId("test-cache-processor")
+                        .setHeader("SpringCacheName", constant("flowConfigCache"))
+                        .setHeader("SpringCacheKey", constant("PACS008"))
+                        .setHeader("SpringCacheValue", constant(FLOW_CONFIG_RESPONSE))
+                        // Test cache PUT operation
+                        .process(exchange -> {
+                            Cache cache = cacheManager.getCache("flowConfigCache");
+                            String key = exchange.getIn().getHeader("SpringCacheKey", String.class);
+                            String value =
+                                    exchange.getIn().getHeader("SpringCacheValue", String.class);
+                            cache.put(key, value);
+                            exchange.getIn().setHeader("CacheOperation", "PUT");
+                        })
+                        // Test cache GET operation
+                        .process(exchange -> {
+                            Cache cache = cacheManager.getCache("flowConfigCache");
+                            String key = exchange.getIn().getHeader("SpringCacheKey", String.class);
+                            Cache.ValueWrapper wrapper = cache.get(key);
+                            if (wrapper != null) {
+                                exchange.getIn().setHeader("CachedValue", wrapper.get());
+                                exchange.getIn().setHeader("CacheOperation", "GET");
+                            }
+                        }).to("mock:sink");
             }
         });
 
@@ -234,30 +228,26 @@ public class KIdentificationInterneKameletTest {
         // Verify cache operations
         Exchange sinkExchange = mockSink.getReceivedExchanges().get(0);
         assertEquals("GET", sinkExchange.getIn().getHeader("CacheOperation"));
-        assertEquals(FLOW_CONFIG_RESPONSE.trim(), sinkExchange.getIn().getHeader("CachedValue", String.class).trim());
+        assertEquals(FLOW_CONFIG_RESPONSE.trim(),
+                sinkExchange.getIn().getHeader("CachedValue", String.class).trim());
     }
 
     /**
-     * Test referentiel service error handling
+     * Test referential service error handling
      */
     @Test
-    public void testReferentielServiceError() throws Exception {
+    public void testReferentialServiceError() throws Exception {
         camelContext.addRoutes(new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                from("direct:test-input")
-                    .routeId("test-service-error")
-                    .setHeader("SpringCacheKey", constant("INVALID_FLOW"))
-                    // Simulate service error
-                    .doTry()
-                        .throwException(new RuntimeException("Service unavailable"))
-                    .doCatch(Exception.class)
-                        .log("Caught exception: ${exception.message}")
-                        .setHeader("FlowConfiguration", 
-                            simple("{\"error\":\"referentiel_service_unavailable\",\"flowCode\":\"${header.SpringCacheKey}\"}"))
-                        .setHeader("ErrorHandled", constant(true))
-                    .end()
-                    .to("mock:sink");
+                from("direct:test-input").routeId("test-service-error")
+                        .setHeader("SpringCacheKey", constant("INVALID_FLOW"))
+                        // Simulate service error
+                        .doTry().throwException(new RuntimeException("Service unavailable"))
+                        .doCatch(Exception.class).log("Caught exception: ${exception.message}")
+                        .setHeader("FlowConfiguration", simple(
+                                "{\"error\":\"referential_service_unavailable\",\"flowCode\":\"${header.SpringCacheKey}\"}"))
+                        .setHeader("ErrorHandled", constant(true)).end().to("mock:sink");
             }
         });
 
@@ -271,7 +261,7 @@ public class KIdentificationInterneKameletTest {
         Exchange sinkExchange = mockSink.getReceivedExchanges().get(0);
         assertTrue((Boolean) sinkExchange.getIn().getHeader("ErrorHandled"));
         String errorConfig = sinkExchange.getIn().getHeader("FlowConfiguration", String.class);
-        assertTrue(errorConfig.contains("referentiel_service_unavailable"));
+        assertTrue(errorConfig.contains("referential_service_unavailable"));
         assertTrue(errorConfig.contains("INVALID_FLOW"));
     }
 
@@ -283,19 +273,17 @@ public class KIdentificationInterneKameletTest {
         camelContext.addRoutes(new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                from("direct:test-input")
-                    .routeId("test-body-preservation")
-                    // Store original body
-                    .setHeader("OriginalMessageBody", simple("${body}"))
-                    .log("Original body preserved: ${header.OriginalMessageBody}")
-                    // Simulate cache/service operations that might change body
-                    .setBody(constant("{\"someServiceResponse\": \"data\"}"))
-                    .log("Body changed during processing: ${body}")
-                    // Restore original body
-                    .setBody(simple("${header.OriginalMessageBody}"))
-                    .removeHeader("OriginalMessageBody")
-                    .log("Body restored: ${body}")
-                    .to("mock:sink");
+                from("direct:test-input").routeId("test-body-preservation")
+                        // Store original body
+                        .setHeader("OriginalMessageBody", simple("${body}"))
+                        .log("Original body preserved: ${header.OriginalMessageBody}")
+                        // Simulate cache/service operations that might change body
+                        .setBody(constant("{\"someServiceResponse\": \"data\"}"))
+                        .log("Body changed during processing: ${body}")
+                        // Restore original body
+                        .setBody(simple("${header.OriginalMessageBody}"))
+                        .removeHeader("OriginalMessageBody").log("Body restored: ${body}")
+                        .to("mock:sink");
             }
         });
 
@@ -318,28 +306,26 @@ public class KIdentificationInterneKameletTest {
         camelContext.addRoutes(new RouteBuilder() {
             @Override
             public void configure() throws Exception {
-                from("direct:test-input")
-                    .routeId("test-multiple-flows")
-                    .choice()
+                from("direct:test-input").routeId("test-multiple-flows").choice()
                         .when(header("flowCode").isEqualTo("PACS008"))
-                            .setHeader("SpringCacheKey", constant("PACS008"))
-                            .setHeader("FlowConfiguration", constant("{\"flowCode\":\"PACS008\"}"))
+                        .setHeader("SpringCacheKey", constant("PACS008"))
+                        .setHeader("FlowConfiguration", constant("{\"flowCode\":\"PACS008\"}"))
                         .when(header("flowCode").isEqualTo("PACS004"))
-                            .setHeader("SpringCacheKey", constant("PACS004"))
-                            .setHeader("FlowConfiguration", constant("{\"flowCode\":\"PACS004\"}"))
+                        .setHeader("SpringCacheKey", constant("PACS004"))
+                        .setHeader("FlowConfiguration", constant("{\"flowCode\":\"PACS004\"}"))
                         .otherwise()
-                            .setHeader("FlowConfiguration", constant("{\"error\":\"unknown_flow\"}"))
-                    .end()
-                    // Cache the configuration
-                    .process(exchange -> {
-                        String key = exchange.getIn().getHeader("SpringCacheKey", String.class);
-                        String config = exchange.getIn().getHeader("FlowConfiguration", String.class);
-                        if (key != null && config != null) {
-                            Cache cache = cacheManager.getCache("flowConfigCache");
-                            cache.put(key, config);
-                        }
-                    })
-                    .to("mock:sink");
+                        .setHeader("FlowConfiguration", constant("{\"error\":\"unknown_flow\"}"))
+                        .end()
+                        // Cache the configuration
+                        .process(exchange -> {
+                            String key = exchange.getIn().getHeader("SpringCacheKey", String.class);
+                            String config =
+                                    exchange.getIn().getHeader("FlowConfiguration", String.class);
+                            if (key != null && config != null) {
+                                Cache cache = cacheManager.getCache("flowConfigCache");
+                                cache.put(key, config);
+                            }
+                        }).to("mock:sink");
             }
         });
 
@@ -361,12 +347,14 @@ public class KIdentificationInterneKameletTest {
         Cache cache = cacheManager.getCache("flowConfigCache");
         assertNotNull(cache.get("PACS008"));
         assertNotNull(cache.get("PACS004"));
-        
+
         // Verify configurations
         Exchange pacs008Exchange = mockSink.getReceivedExchanges().get(0);
         Exchange pacs004Exchange = mockSink.getReceivedExchanges().get(1);
-        
-        assertTrue(pacs008Exchange.getIn().getHeader("FlowConfiguration", String.class).contains("PACS008"));
-        assertTrue(pacs004Exchange.getIn().getHeader("FlowConfiguration", String.class).contains("PACS004"));
+
+        assertTrue(pacs008Exchange.getIn().getHeader("FlowConfiguration", String.class)
+                .contains("PACS008"));
+        assertTrue(pacs004Exchange.getIn().getHeader("FlowConfiguration", String.class)
+                .contains("PACS004"));
     }
 }

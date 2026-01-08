@@ -141,4 +141,12 @@ public class CamelConfiguration {
         return template;
     }
 
+    /**
+     * UUID Generator bean for Camel routes
+     */
+    @Bean
+    public org.apache.camel.spi.UuidGenerator uuidGenerator() {
+        return new org.apache.camel.support.DefaultUuidGenerator();
+    }
+
 }

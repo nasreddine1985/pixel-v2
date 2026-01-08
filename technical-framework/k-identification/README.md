@@ -12,13 +12,13 @@ The `k-identification-interne` module provides a memory-based alternative to the
 - **Memory-Only Caching**: No external dependencies like Redis - all caching is done in application memory
 - **High Performance**: Caffeine cache provides superior performance with TTL, size limits, and statistics
 - **Fallback Support**: Automatic fallback to ConcurrentMap cache if Caffeine is not available
-- **Referentiel Integration**: Automatic fetching from referentiel service with cache population
+- **Referential Integration**: Automatic fetching from referential service with cache population
 - **Cache Management**: Full cache lifecycle management with eviction, clearing, and statistics
 
 ## Architecture
 
 ```
-Camel Route → k-identification-interne kamelet → Spring Cache → Referentiel Service (fallback)
+Camel Route → k-identification-interne kamelet → Spring Cache → Referential Service (fallback)
 ```
 
 ## Components
@@ -46,7 +46,7 @@ Camel Route → k-identification-interne kamelet → Spring Cache → Referentie
 - Apache Camel 4.16.0
 - Caffeine Cache (primary provider)
 - Jackson (JSON processing)
-- Camel HTTP (referentiel service integration)
+- Camel HTTP (referential service integration)
 - Camel Kafka (cache refresh messaging)
 
 ## Usage
@@ -66,7 +66,7 @@ Camel Route → k-identification-interne kamelet → Spring Cache → Referentie
 - from:
     uri: "direct:identify-flow"
     steps:
-      - to: "kamelet:k-identification-interne?flowCode={{header.FlowCode}}&referentielServiceUrl=http://pixel-v2-referentiel:8099&springCacheName=flowConfigCache"
+      - to: "kamelet:k-identification-interne?flowCode={{header.FlowCode}}&referentialServiceUrl=http://pixel-v2-referential:8099&springCacheName=flowConfigCache"
 ```
 
 ## Configuration Parameters
@@ -74,7 +74,7 @@ Camel Route → k-identification-interne kamelet → Spring Cache → Referentie
 | Parameter               | Description             | Default                            | Required |
 | ----------------------- | ----------------------- | ---------------------------------- | -------- |
 | `flowCode`              | Flow code to identify   | -                                  | Yes      |
-| `referentielServiceUrl` | Referentiel service URL | `http://pixel-v2-referentiel:8099` | No       |
+| `referentialServiceUrl` | Referential service URL | `http://pixel-v2-referential:8099` | No       |
 | `kafkaBrokers`          | Kafka broker URLs       | `kafka:29092`                      | No       |
 | `cacheTtl`              | Cache TTL in seconds    | `3600`                             | No       |
 | `springCacheName`       | Spring cache name       | `flowConfigCache`                  | No       |
@@ -86,7 +86,7 @@ The module uses Caffeine cache with the following default settings:
 - **TTL**: 1 hour
 - **Maximum Size**: 1000 entries per cache
 - **Statistics**: Enabled
-- **Cache Names**: `flowConfigCache`, `referentielCache`, `identificationCache`
+- **Cache Names**: `flowConfigCache`, `referentialCache`, `identificationCache`
 
 ### Custom Configuration
 
@@ -98,7 +98,7 @@ spring:
       spec: expireAfterWrite=1h,maximumSize=1000,recordStats
     cache-names:
       - flowConfigCache
-      - referentielCache
+      - referentialCache
       - identificationCache
 ```
 
@@ -106,7 +106,7 @@ spring:
 
 ### Automatic Operations
 
-- **Cache Miss**: Automatically fetches from referentiel service and populates cache
+- **Cache Miss**: Automatically fetches from referential service and populates cache
 - **Cache Hit**: Returns cached value immediately
 - **Error Handling**: Graceful degradation on cache or service errors
 
@@ -145,7 +145,7 @@ The kamelet preserves the original message body and uses headers for cache opera
 
 ## Error Handling
 
-- **Referentiel Service Unavailable**: Returns error JSON with service unavailable status
+- **Referential Service Unavailable**: Returns error JSON with service unavailable status
 - **Cache Errors**: Logged but do not interrupt message flow
 - **Invalid Parameters**: Logged with appropriate warnings
 
@@ -193,7 +193,7 @@ Deploy as part of the PIXEL-V2 technical framework pod with appropriate memory l
 ### Common Issues
 
 1. **Cache Not Found Warnings**: Check cache configuration and cache names
-2. **Referentiel Service Errors**: Verify service URL and network connectivity
+2. **Referential Service Errors**: Verify service URL and network connectivity
 3. **Memory Issues**: Adjust cache size limits and JVM heap settings
 4. **Statistics Not Available**: Ensure Caffeine cache provider is active
 

@@ -28,7 +28,7 @@ import org.springframework.test.context.TestPropertySource;
 @CamelSpringBootTest
 @SpringBootTest(classes = ChRouteTestApplication.class)
 @TestPropertySource(properties = {"camel.component.kamelet.location=classpath:kamelets",
-        "pixel.referentiel.service.url=http://mock-referentiel:8080",
+        "pixel.referential.service.url=http://mock-referential:8080",
         "pixel.kafka.brokers=mock-kafka:9092", "pixel.cache.ttl=3600",
         "kmq.starter.mqFileName=CH.REQUEST.QUEUE",
         "kmq.starter.connectionFactory=mockConnectionFactory", "kmq.starter.flowCode=PACS008",
@@ -212,14 +212,14 @@ public class ChRouteTest {
                         .setHeader("FlowCode", constant("PACS008"))
                         .setHeader("CacheKey", simple("flow_config_${header.FlowCode}"))
 
-                        // Simulate cache miss and referentiel call
+                        // Simulate cache miss and referential call
                         .choice().when(header("SimulateCacheHit").isEqualTo(true))
                         .setBody(constant(FLOW_CONFIG_RESPONSE))
                         .setHeader("CacheResult", constant("HIT"))
                         .log("Cache HIT for flow ${header.FlowCode}").otherwise()
                         .setBody(constant(FLOW_CONFIG_RESPONSE))
                         .setHeader("CacheResult", constant("MISS"))
-                        .log("Cache MISS - fetched from referentiel service").end()
+                        .log("Cache MISS - fetched from referential service").end()
 
                         .setHeader("FlowConfiguration", simple("${body}")).to("mock:sink");
             }

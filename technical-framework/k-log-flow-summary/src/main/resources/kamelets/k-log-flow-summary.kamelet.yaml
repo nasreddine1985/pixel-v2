@@ -53,12 +53,6 @@ spec:
             simple: "${body}"
         - setBody:
             simple: "${header.logMessage}"
-        - log:
-            message: "K-LOG-FLOW-SUMMARY: logMessage=${header.logMessage}"
-            loggingLevel: DEBUG
-        - log:
-            message: "K-LOG-FLOW-SUMMARY: body=${body}"
-            loggingLevel: DEBUG
         - to:
             uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer"
         - setBody:

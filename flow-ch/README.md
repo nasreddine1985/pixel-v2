@@ -56,7 +56,7 @@ JMS Queue → k-mq-starter → k-identification → k-xsd-validation → k-xsl-t
 ```properties
 # Server Configuration
 server.port=8080
-spring.application.name=pixel-camel-app
+spring.application.name=pixel-ch-app
 
 # Database Configuration
 spring.datasource.url=jdbc:postgresql://localhost:5432/pixelv2
@@ -92,7 +92,7 @@ kmq.starter.kafkaLogTopicName=ch-log-events
 kmq.starter.kafkaDistributionTopicName=ch-distribution
 
 # Referential Service Configuration
-pixel.referentiel.service.url=http://pixel-v2-referentiel:8099
+pixel.referential.service.url=http://pixel-v2-referential:8099
 pixel.cache.ttl=3600
 ```
 

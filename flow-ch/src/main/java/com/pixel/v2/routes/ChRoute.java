@@ -17,7 +17,7 @@ public class ChRoute extends RouteBuilder {
 
         // Kamelet endpoint for identification and Spring internal caching
         private static final String K_IDENTIFICATION_ENDPOINT =
-                        "kamelet:k-identification?flowCode={{pixel.flow.code}}&referentielServiceUrl={{pixel.referentiel.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
+                        "kamelet:k-identification?flowCode={{pixel.flow.code}}&referentialServiceUrl={{pixel.referential.service.url}}&kafkaBrokers={{pixel.kafka.brokers}}&cacheTtl={{pixel.cache.ttl}}";
 
         // Kamelet endpoint for duplicate check
         private static final String K_DUPLICATE_CHECK_ENDPOINT =
@@ -57,16 +57,7 @@ public class ChRoute extends RouteBuilder {
         @Override
         public void configure() throws Exception {
 
-                // Global exception handler
-                onException(Exception.class)
-                                .setHeader("ErrorType", simple("${exception.class.simpleName}"))
-                                .setHeader("ErrorReason", simple("${exception.message}"))
-                                .to("direct:error-handling").handled(true);
-
-                // Error handler configuration
-                errorHandler(defaultErrorHandler().maximumRedeliveries(0));
-
-                // Step 1: Receive Payement Message
+                // Step 1: Receive Payment Message
                 from(K_MQ_STARTER_ENDPOINT)
 
                                 // Step 2: Fetch reference data using k-identification-interne

@@ -210,7 +210,7 @@ from(K_MQ_STARTER_ENDPOINT)
 
 ```yaml
 # application.properties
-kamelet.k-identification.referentielServiceUrl=http://referentiel:8099
+kamelet.k-identification.referentialServiceUrl=http://referential:8099
 kamelet.k-identification.cacheTtl=3600
 kamelet.k-mq-starter.nasArchiveUrl=file:///opt/nas/CH
 ```

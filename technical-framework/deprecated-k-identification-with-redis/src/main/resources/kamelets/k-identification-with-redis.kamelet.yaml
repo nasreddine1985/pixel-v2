@@ -13,7 +13,7 @@ spec:
     title: "PIXEL-V2 Identification Kamelet"
     description: |-
       Redis-based reference data identification and caching kamelet for payment processing.
-      Fetches flow configuration from Redis cache or referentiel service with automatic cache population.
+      Fetches flow configuration from Redis cache or referential service with automatic cache population.
     required:
       - flowCode
     type: object
@@ -23,11 +23,11 @@ spec:
         description: The flow code to identify and retrieve configuration for
         type: string
         example: "PACS008"
-      referentielServiceUrl:
-        title: Referentiel Service URL
-        description: Base URL of the referentiel service for flow configuration retrieval
+      referentialServiceUrl:
+        title: Referential Service URL
+        description: Base URL of the referential service for flow configuration retrieval
         type: string
-        default: "http://pixel-v2-referentiel:8099"
+        default: "http://pixel-v2-referential:8099"
       kafkaBrokers:
         title: Kafka Brokers
         description: Kafka broker URLs for cache refresh messaging
@@ -76,9 +76,9 @@ spec:
               - simple: "${body} == null"
                 steps:
                   - log: 
-                      message: "Cache MISS: Fetching flow config for {{flowCode}} from referentiel service"
+                      message: "Cache MISS: Fetching flow config for {{flowCode}} from referential service"
                       loggingLevel: DEBUG
-                  # Fetch from referentiel service
+                  # Fetch from referential service
                   - doTry:
                       steps:
                         - log: 
@@ -90,10 +90,10 @@ spec:
                         - setHeader:
                             name: Content-Type
                             constant: "application/json"
-                        - toD: "{{referentielServiceUrl}}/api/flows/referentiel/{{flowCode}}/complete?bridgeEndpoint=true"
+                        - toD: "{{referentialServiceUrl}}/api/flows/referential/{{flowCode}}/complete?bridgeEndpoint=true"
                         - convertBodyTo: "java.lang.String"
                         - log: 
-                            message: "Successfully retrieved flow config for {{flowCode}} from referentiel service"
+                            message: "Successfully retrieved flow config for {{flowCode}} from referential service"
                             loggingLevel: DEBUG
                         - setHeader:
                             name: FlowConfiguration
@@ -118,10 +118,10 @@ spec:
                         - exception: "java.lang.Exception"
                           steps:
                             - log: 
-                                message: "Failed to retrieve flow config for {{flowCode}} from referentiel service: ${exception.message}"
+                                message: "Failed to retrieve flow config for {{flowCode}} from referential service: ${exception.message}"
                                 loggingLevel: DEBUG
                             - setBody:
-                                constant: '{"error":"referentiel_service_unavailable","flowCode":"{{flowCode}}"}'
+                                constant: '{"error":"referential_service_unavailable","flowCode":"{{flowCode}}"}'
                             - setHeader:
                                 name: FlowConfiguration
                                 simple: "${body}"

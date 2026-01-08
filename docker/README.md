@@ -41,7 +41,7 @@ graph TB
         POSTGRES[pixel-v2-postgresql<br/>PostgreSQL Database<br/>:5432]
         REDIS[pixel-v2-redis<br/>Redis Cache<br/>:6379]
         NAS[pixel-v2-nas<br/>Samba NAS<br/>:445, :139]
-        REFERENTIEL[pixel-v2-referentiel<br/>Referentiel Service<br/>:8099]
+        REFERENTIAL[pixel-v2-referential<br/>Referential Service<br/>:8099]
     end
 
     subgraph "Management & Monitoring"
@@ -83,7 +83,7 @@ graph TB
     APP1 --> AMQ
     APP1 --> KAFKA
     APP1 --> NAS
-    APP1 --> REFERENTIEL
+    APP1 --> REFERENTIAL
     APP1 --> CFT
     APP1 --> TCP
 
@@ -92,7 +92,7 @@ graph TB
     APP2 --> AMQ
     APP2 --> KAFKA
     APP2 --> NAS
-    APP2 --> REFERENTIEL
+    APP2 --> REFERENTIAL
     APP2 --> CFT
     APP2 --> TCP
 
@@ -101,7 +101,7 @@ graph TB
     APPN --> AMQ
     APPN --> KAFKA
     APPN --> NAS
-    APPN --> REFERENTIEL
+    APPN --> REFERENTIAL
     APPN --> CFT
     APPN --> TCP
 
@@ -109,7 +109,7 @@ graph TB
     CAMEL1 --> REDIS
     CAMEL1 --> AMQ
     CAMEL1 --> KAFKA
-    CAMEL1 --> REFERENTIEL
+    CAMEL1 --> REFERENTIAL
     CAMEL1 --> CFT
     CAMEL1 --> TCP
 
@@ -117,7 +117,7 @@ graph TB
     CAMEL2 --> REDIS
     CAMEL2 --> AMQ
     CAMEL2 --> KAFKA
-    CAMEL2 --> REFERENTIEL
+    CAMEL2 --> REFERENTIAL
     CAMEL2 --> CFT
     CAMEL2 --> TCP
 
@@ -125,7 +125,7 @@ graph TB
     CAMELN --> REDIS
     CAMELN --> AMQ
     CAMELN --> KAFKA
-    CAMELN --> REFERENTIEL
+    CAMELN --> REFERENTIAL
     CAMELN --> CFT
     CAMELN --> TCP
 
@@ -160,7 +160,7 @@ graph TB
     classDef volumeLayer fill:#fafafa
 
     class APP1,APP2,APPN,CAMEL1,CAMEL2,CAMELN appLayer
-    class POSTGRES,REDIS,NAS,REFERENTIEL dataLayer
+    class POSTGRES,REDIS,NAS,REFERENTIAL dataLayer
     class KAFKA,ZOO brokerLayer
     class AMQ,CFT,TCP msgProviderLayer
     class PGADMIN,KAFDROP,HAWTIO mgmtLayer
@@ -202,7 +202,7 @@ graph TB
 | **postgresql**  | pixel-v2-postgresql  | PostgreSQL database      | 5432:5432        | None         |
 | **redis**       | pixel-v2-redis       | Redis cache              | 6379:6379        | None         |
 | **nas**         | pixel-v2-nas         | Samba NAS file server    | 445:445, 139:139 | None         |
-| **referentiel** | pixel-v2-referentiel | Referentiel data service | 8099:8099        | PostgreSQL   |
+| **referential** | pixel-v2-referential | Referential data service | 8099:8099        | PostgreSQL   |
 
 ### Management & Monitoring
 
@@ -236,7 +236,7 @@ docker/
 ├── camel-runtime-jbang/
 │   ├── Dockerfile                  # JBang Camel runtime
 │   └── entrypoint.sh              # Container startup script
-├── referentiel-runtime/
+├── referential-runtime/
 │   └── Dockerfile                  # Referential service
 └── hawtio/
     └── Dockerfile                  # HawtIO management console
@@ -260,7 +260,7 @@ Services communicate using container names as hostnames:
 - `pixel-v2-kafka:29092` - Kafka internal communication
 - `pixel-v2-activemq:61616` - JMS messaging
 - `pixel-v2-nas:445` - File sharing (SMB/CIFS)
-- `pixel-v2-referentiel:8099` - Referential data service
+- `pixel-v2-referential:8099` - Referential data service
 - `pixel-v2-cft:8080` - CFT payment service (HTTP)
 - `pixel-v2-cft:21` - CFT file transfer (FTP)
 - `pixel-v2-tcp:9999` - TCP payment listener (Socket)

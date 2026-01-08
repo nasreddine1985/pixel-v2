@@ -121,7 +121,7 @@ spec:
                       simple: "ERROR"
                   - setHeader:
                       name: "FlowOccurId"
-                      simple: "${uuid()}"
+                      simple: "${bean:uuidGenerator.generateUuid}"
         - setHeader:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"

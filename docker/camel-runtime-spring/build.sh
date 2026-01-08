@@ -39,13 +39,13 @@ mvn clean package -DskipTests
 # Build Docker image using project root as context
 echo "Building Docker image..."
 cd "$PROJECT_ROOT"
-docker build -f docker/camel-runtime-spring/Dockerfile -t pixel-camel-app:latest .
+docker build -f docker/camel-runtime-spring/Dockerfile -t pixel-ch-app:latest .
 
 echo "Application built successfully!"
 echo ""
 echo "To run the application:"
 echo "1. cd ../  # Go to docker directory"  
-echo "2. docker-compose up pixel-camel-app -d"
+echo "2. docker-compose up pixel-ch-app -d"
 echo ""
 echo "Available endpoints:"
 echo "- Application: http://localhost:8082"
