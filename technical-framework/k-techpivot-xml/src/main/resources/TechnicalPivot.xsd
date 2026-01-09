@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:tech="http://bnpp.com/TechPivot"
+    xmlns:func="http://bnpp.com/TEC/FlowCatalog"
+    targetNamespace="http://bnpp.com/TechPivot"
+    elementFormDefault="qualified"
+    attributeFormDefault="unqualified">
+    <xs:import namespace="http://bnpp.com/TEC/FlowCatalog" />
+    <xs:complexType name="TechnicalPivot">
+        <xs:sequence>
+            <xs:element name="FileName" type="xs:string" minOccurs="0" />
+            <xs:element name="FileContent" type="xs:string" minOccurs="0" />
+            <xs:element name="Flow" type="tech:Flow" minOccurs="0" />
+            <xs:element name="Input" type="tech:Partner" minOccurs="0" />
+            <xs:element name="Output" type="tech:Partner" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element ref="func:Properties" minOccurs="0" />
+            <xs:element ref="tech:Split" minOccurs="0" />
+            <xs:element name="Generic" type="xs:anyType" minOccurs="0" />
+            <xs:element name="ParentFlow" type="tech:TechnicalPivot" minOccurs="0" />
+            <xs:element ref="tech:Parking" minOccurs="0" />
+            <xs:element ref="tech:FlowRules" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:element name="TechPivotRoot" type="tech:TechnicalPivot" />
+    <xs:complexType name="Flow">
+        <xs:sequence>
+            <xs:element name="FlowID" type="xs:int" minOccurs="0" />
+            <xs:element name="FlowCode" type="xs:string" minOccurs="0" />
+            <xs:element name="FlowName" type="xs:string" minOccurs="0" />
+            <xs:element name="FlowTypeName" type="xs:string" minOccurs="0" />
+            <xs:element name="FlowDirection" type="xs:string" minOccurs="0" />
+            <xs:element name="FlowEnabled" type="xs:string" minOccurs="0" />
+            <xs:element name="FlowFuncPrty" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Key" type="xs:string" />
+                        <xs:element name="Value" type="xs:string" />
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Countries" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Country" type="xs:string" maxOccurs="unbounded" />
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element ref="tech:ExternalServices" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:element name="ExternalServices">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="ExternalService" type="tech:ExternalService" maxOccurs="unbounded" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="ExternalService">
+        <xs:sequence>
+            <xs:element name="ServiceCode" type="xs:string" />
+            <xs:element name="SnapshotKey" type="xs:string" minOccurs="0" />
+            <xs:element name="Request" type="tech:RequestReply" />
+            <xs:element name="Reply" type="tech:RequestReply" minOccurs="0" />
+            <xs:element name="LateReply" type="tech:RequestReply" minOccurs="0" />
+            <xs:element name="FeedbackReply" type="tech:RequestReply" minOccurs="0" />
+            <xs:element name="TimeoutSoft" type="xs:int" minOccurs="0" />
+            <xs:element name="TimeoutHard" type="xs:int" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="RequestReply">
+        <xs:sequence>
+            <xs:element name="Transport" type="tech:JMS" minOccurs="0" />
+            <xs:element name="Content" type="xs:anyType" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="JMS">
+        <xs:sequence>
+            <xs:element name="QName" type="xs:string" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Partner">
+        <xs:sequence>
+            <xs:element name="FileName" type="xs:string" minOccurs="0" />
+            <xs:element name="PartnerCode" type="xs:string" minOccurs="0" />
+            <xs:element name="PartnerName" type="xs:string" minOccurs="0" />
+            <xs:element name="PartnerTypeName" type="xs:string" minOccurs="0" />
+            <xs:element name="CharsetCode" type="xs:string" minOccurs="0" />
+            <xs:element name="Transport" minOccurs="0">
+                <xs:complexType>
+                    <xs:choice minOccurs="0">
+                        <xs:element name="CFT">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="IDF" type="xs:string" minOccurs="0" />
+                                    <xs:element name="PartnerCode" type="xs:string" minOccurs="0" />
+                                    <xs:element name="DirectoryName" type="xs:string" minOccurs="0" />
+                                    <xs:element name="PrefFileName" type="xs:string" minOccurs="0" />
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="MQS">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="QManager" type="xs:string" minOccurs="0" />
+                                    <xs:element name="QName" type="xs:string" minOccurs="0" />
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="JMS" type="tech:JMS" />
+                        <xs:element name="HTTP">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="URI" type="xs:string" minOccurs="0" />
+                                    <xs:element name="PartnerCode" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ClientPORT" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ClientHOST" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ClientMETHOD" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ClientBODY" type="xs:string" minOccurs="0" />
+                                    <xs:element name="isSecure" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ExpectedCodeSucces" type="xs:string"
+                                        minOccurs="0" />
+                                    <xs:element name="ApigeeHOST" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ApigeePORT" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ApigeeURI" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ApigeeMETHOD" type="xs:string" minOccurs="0" />
+                                    <xs:element name="throughput_Max" type="xs:string" minOccurs="0" />
+                                    <xs:element name="nb_retry" type="xs:string" minOccurs="0" />
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="EMAIL">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="email_name" type="xs:string" minOccurs="0" />
+                                    <xs:element name="from" type="xs:string" minOccurs="0" />
+                                    <xs:element name="to" type="xs:string" minOccurs="0" />
+                                    <xs:element name="cc" type="xs:string" minOccurs="0" />
+                                    <xs:element name="subject" type="xs:string" minOccurs="0" />
+                                    <xs:element name="body" type="xs:string" minOccurs="0" />
+                                    <xs:element name="signature" type="xs:string" minOccurs="0" />
+                                    <xs:element name="attachement" type="xs:boolean" minOccurs="0" />
+                                    <xs:element name="OwnerApp" type="xs:string" minOccurs="0" />
+                                    <xs:element name="Param" type="xs:string" minOccurs="0" />
+                                    <xs:element name="ReplacementContent" minOccurs="0">
+                                        <xs:complexType>
+                                            <xs:sequence>
+                                                <xs:element name="Properties" minOccurs="0">
+                                                    <xs:complexType>
+                                                        <xs:sequence>
+                                                            <xs:element name="SimpleProperty"
+                                                                minOccurs="0" maxOccurs="unbounded">
+                                                                <xs:complexType>
+                                                                    <xs:sequence>
+                                                                        <xs:element name="Value"
+                                                                            type="xs:string" />
+                                                                        <xs:element name="Key"
+                                                                            type="xs:string" />
+                                                                    </xs:sequence>
+                                                                </xs:complexType>
+                                                            </xs:element>
+                                                            <xs:element name="ComplexProperty"
+                                                                minOccurs="0" maxOccurs="unbounded">
+                                                                <xs:complexType>
+                                                                    <xs:sequence>
+                                                                        <xs:element name="lines"
+                                                                            minOccurs="0"
+                                                                            maxOccurs="unbounded">
+                                                                            <xs:complexType>
+                                                                                <xs:sequence>
+                                                                                    <xs:element
+                                                                                        name="columns"
+                                                                                        minOccurs="0"
+                                                                                        maxOccurs="unbounded">
+                                                                                        <xs:complexType>
+                                                                                            <xs:sequence>
+                                                                                                <xs:element
+                                                                                                    name="data"
+                                                                                                    type="xs:string"
+                                                                                                    minOccurs="0" />
+                                                                                            </xs:sequence>
+                                                                                        </xs:complexType>
+                                                                                    </xs:element>
+                                                                                    <xs:element
+                                                                                        name="isHeader"
+                                                                                        type="xs:boolean" />
+                                                                                </xs:sequence>
+                                                                            </xs:complexType>
+                                                                        </xs:element>
+                                                                        <xs:element name="key"
+                                                                            type="xs:string" />
+                                                                    </xs:sequence>
+                                                                </xs:complexType>
+                                                            </xs:element>
+                                                        </xs:sequence>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="attachments" minOccurs="0">
+                                                    <xs:complexType>
+                                                        <xs:sequence>
+                                                            <xs:element name="attachment"
+                                                                minOccurs="0" maxOccurs="unbounded">
+                                                                <xs:complexType>
+                                                                    <xs:sequence>
+                                                                        <xs:element
+                                                                            name="attachmentName"
+                                                                            type="xs:string"
+                                                                            minOccurs="0" />
+                                                                        <xs:element
+                                                                            name="contentType"
+                                                                            type="xs:string" />
+                                                                        <xs:choice>
+                                                                            <xs:element
+                                                                                name="textAttachmentContent"
+                                                                                type="xs:string"
+                                                                                minOccurs="0" />
+                                                                            <xs:element
+                                                                                name="binaryAttachmentContent"
+                                                                                type="xs:string"
+                                                                                minOccurs="0" />
+                                                                        </xs:choice>
+                                                                    </xs:sequence>
+                                                                </xs:complexType>
+                                                            </xs:element>
+                                                        </xs:sequence>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                            </xs:sequence>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="SFTP">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="DirectoryName" type="xs:string" minOccurs="0" />
+                                    <xs:element name="PrefFileName" type="xs:string" minOccurs="0" />
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:choice>
+                </xs:complexType>
+            </xs:element>
+            <xs:element ref="func:Rule" minOccurs="0" />
+            <xs:element name="PartnerEnabled" type="xs:string" minOccurs="0" />
+            <xs:element name="BMSAEnabled" type="xs:string" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="Split">
+        <xs:sequence>
+            <xs:element name="ElementIndex" type="xs:int" />
+            <xs:element name="IsLast" type="xs:boolean" />
+            <xs:element name="ParentIndex" type="xs:long" minOccurs="0" />
+            <xs:element name="Type" type="xs:short" />
+            <xs:element name="PayLoad" type="xs:string" minOccurs="0" />
+            <xs:element name="FuncKey" type="xs:string" minOccurs="0" />
+            <xs:element name="ParentSplit" type="tech:Split" minOccurs="0" />
+            <xs:element name="IsDummy" type="xs:boolean" minOccurs="0" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:element name="Split" type="tech:Split" />
+    <xs:complexType name="Delay">
+        <xs:choice>
+            <xs:element name="DelayInSeconds" type="xs:int" />
+            <xs:element name="DelayInMinutes" type="xs:int" />
+            <xs:element name="DelayInHours" type="xs:int" />
+            <xs:element name="DelayInDays" type="xs:int" />
+        </xs:choice>
+    </xs:complexType>
+    <xs:element name="Parking">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="SnapshotKey" type="xs:string" />
+                <xs:element name="Restart">
+                    <xs:complexType>
+                        <xs:choice>
+                            <xs:element name="Delay" type="tech:Delay" maxOccurs="unbounded" />
+                            <xs:element name="Timestamp" type="xs:dateTime" />
+                        </xs:choice>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="IgnoreSnapshotNotFound" type="xs:string" minOccurs="0" />
+                <xs:element name="PostParking" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="UnparkWithNewOccurrenceId" type="xs:boolean"
+                                minOccurs="0" />
+                            <xs:element name="RemoveProperties" type="func:Properties" minOccurs="0" />
+                            <xs:element name="AddProperties" type="func:Properties" minOccurs="0" />
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="FlowRules">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="tech:FlowSeparation" minOccurs="0" />
+                <xs:element ref="tech:FlowControl" minOccurs="0" />
+                <xs:element ref="tech:FlowRetention" minOccurs="0" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Priority" type="xs:string" />
+    <xs:element name="IsUnitary" type="xs:boolean" />
+    <xs:element name="Urgency" type="xs:string" />
+    <xs:element name="MaxThroughput" type="xs:string" />
+    <xs:element name="FlowSeparation">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="tech:JMSPriority" minOccurs="0" />
+                <xs:element ref="tech:UsePayload" minOccurs="0" />
+                <xs:element ref="tech:Urgency" minOccurs="0" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="JMSPriority" type="xs:integer" />
+    <xs:element name="UsePayload" type="xs:boolean" />
+    <xs:element name="FlowControl">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="tech:FlowControlEnabled" minOccurs="0" />
+                <xs:element ref="tech:FlowMaximum" minOccurs="0" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="FlowControlEnabled" type="xs:string" />
+    <xs:element name="FlowMaximum" type="xs:integer" />
+    <xs:element name="flowRetentionEnabled" type="xs:string" />
+    <xs:element name="FlowRetention">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="tech:FlowRetentionEnabled" minOccurs="0" />
+                <xs:element ref="tech:RetentionCyclePeriod" minOccurs="0" />
+                <xs:element ref="tech:FlowStatus" minOccurs="0" />
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="FlowRetentionEnabled" type="xs:string" />
+    <xs:element name="RetentionCyclePeriod" type="xs:integer" />
+    <xs:element name="FlowStatus" type="xs:string" />
+    <xs:element name="RetentionPeriod" type="xs:integer" />
+</xs:schema>

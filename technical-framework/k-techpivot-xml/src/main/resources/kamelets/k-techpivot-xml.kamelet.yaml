@@ -1,0 +1,364 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-techpivot-xml
+  labels:
+    camel.apache.org/kamelet.type: "action"
+
+spec:
+  definition:
+    title: "TechPivot XML Generator/Updater"
+    description: |-
+      Génère un nouveau XML TechnicalPivot OU met à jour un XML existant
+      à partir des variables dans les headers Camel, notamment FlowDataJson
+    type: object
+    properties:
+      operation:
+        title: Operation
+        description: "Type d'opération: generate (nouveau XML) ou update (mettre à jour XML existant)"
+        type: string
+        enum: ["generate", "update"]
+        default: "generate"
+      
+      xmlOutputHeader:
+        title: XML Output Header
+        description: "Nom du header où placer le XML généré/mis à jour"
+        type: string
+        default: "techPivotXml"
+        
+      existingXmlHeader:
+        title: Existing XML Header
+        description: "Nom du header contenant le XML existant (pour operation=update)"
+        type: string
+        default: "existingTechPivotXml"
+
+  dependencies:
+    - "camel:groovy"
+    - "camel:kamelet"
+
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        # Log du démarrage avec l'opération
+        - log:
+            message: "TechPivot XML {{operation}} operation started"
+
+        # Script principal pour génération/mise à jour XML
+        - script:
+            groovy: |
+              import groovy.json.JsonSlurper
+              import groovy.xml.MarkupBuilder
+              import groovy.xml.XmlSlurper
+              
+              def operation = "{{operation}}"
+              def xmlOutputHeader = "{{xmlOutputHeader}}"
+              def existingXmlHeader = "{{existingXmlHeader}}"
+              
+              println("Processing operation: ${operation}")
+              
+              try {
+                  // Récupération des variables depuis les headers
+                  def flowDataJsonText = headers.get("FlowDataJson") ?: headers.get("flowDataJson") ?: headers.get("RefFlowDataJson") ?: headers.get("refFlowDataJson")
+                  def flowOccurId = headers.get("flowOccurId") ?: headers.get("FlowOccurId")
+                  def receivedTimestamp = headers.get("ReceivedTimestamp") ?: headers.get("receivedTimestamp")
+                  def messageId = headers.get("MessageId") ?: headers.get("messageId") 
+                  def correlationId = headers.get("CorrelationId") ?: headers.get("correlationId")
+                  def processingMode = headers.get("ProcessingMode") ?: headers.get("processingMode") ?: "NORMAL"
+                  def businessStatus = headers.get("BusinessStatus") ?: headers.get("businessStatus") ?: "PENDING"
+                  def technicalStatus = headers.get("TechnicalStatus") ?: headers.get("technicalStatus") ?: "PROCESSING"
+                  
+                  println("Found FlowDataJson: ${flowDataJsonText != null}")
+                  println("Found flowOccurId: ${flowOccurId}")
+                  
+                  def flowDataJson = null
+                  if (flowDataJsonText) {
+                      def jsonSlurper = new JsonSlurper()
+                      flowDataJson = jsonSlurper.parseText(flowDataJsonText.toString())
+                  }
+                  
+                  def writer = new StringWriter()
+                  def xml = new MarkupBuilder(writer)
+                  
+                  if (operation == "update") {
+                      // Mode UPDATE: mettre à jour XML existant
+                      def existingXmlText = headers.get(existingXmlHeader)
+                      if (!existingXmlText) {
+                          throw new IllegalArgumentException("Update operation requires existing XML in header '${existingXmlHeader}'")
+                      }
+                      
+                      println("Updating existing XML...")
+                      
+                      // Parse le XML existant et le met à jour
+                      def existingXml = new XmlSlurper().parseText(existingXmlText.toString())
+                      
+                      xml.TechnicalPivot {
+                          // Garder UNIQUEMENT les valeurs existantes (pas de flowDataJson en mode update)
+                          FlowID(existingXml.FlowID?.text() ?: "")
+                          FlowCode(existingXml.FlowCode?.text() ?: "")
+                          FlowName(existingXml.FlowName?.text() ?: "")
+                          FlowDirection(existingXml.FlowDirection?.text() ?: "")
+                          FlowTypeName(existingXml.FlowTypeName?.text() ?: "")
+                          FlowEnabled(existingXml.FlowEnabled?.text() ?: "")
+                          
+                          // Informations de traitement mises à jour UNIQUEMENT depuis headers
+                          FlowOccurId(flowOccurId ?: existingXml.FlowOccurId?.text() ?: "")
+                          ProcessingTimestamp(receivedTimestamp ?: new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSS"))
+                          MessageId(messageId ?: existingXml.MessageId?.text() ?: "")
+                          CorrelationId(correlationId ?: existingXml.CorrelationId?.text() ?: "")
+                          ProcessingMode(processingMode)
+                          BusinessStatus(businessStatus)
+                          TechnicalStatus(technicalStatus)
+                          
+                          // Application info - garder valeurs existantes uniquement
+                          if (existingXml.Application?.size() > 0) {
+                              Application {
+                                  Code(existingXml.Application.Code?.text() ?: "")
+                                  Name(existingXml.Application.Name?.text() ?: "")
+                              }
+                          }
+                          
+                          // Copier les autres éléments existants sans modification
+                          if (existingXml.Countries?.size() > 0) {
+                              Countries {
+                                  existingXml.Countries.Country.each { country ->
+                                      Country(country.text())
+                                  }
+                              }
+                          }
+                          
+                          if (existingXml.FlowFunctionalProperties?.size() > 0) {
+                              FlowFunctionalProperties {
+                                  existingXml.FlowFunctionalProperties.Property.each { prop ->
+                                      Property {
+                                          Key(prop.Key?.text() ?: "")
+                                          Type(prop.Type?.text() ?: "")
+                                          Description(prop.Description?.text() ?: "")
+                                          Value(prop.Value?.text() ?: "")
+                                      }
+                                  }
+                              }
+                          }
+                          
+                          if (existingXml.PartnerIn?.size() > 0) {
+                              PartnerIn {
+                                  PartnerCode(existingXml.PartnerIn.PartnerCode?.text() ?: "")
+                                  PartnerName(existingXml.PartnerIn.PartnerName?.text() ?: "")
+                                  PartnerTypeName(existingXml.PartnerIn.PartnerTypeName?.text() ?: "")
+                                  CharsetCode(existingXml.PartnerIn.CharsetCode?.text() ?: "")
+                                  
+                                  if (existingXml.PartnerIn.Transport?.size() > 0) {
+                                      Transport {
+                                          Type(existingXml.PartnerIn.Transport.Type?.text() ?: "")
+                                          
+                                          if (existingXml.PartnerIn.Transport.MQS?.size() > 0) {
+                                              MQS {
+                                                  QName(existingXml.PartnerIn.Transport.MQS.QName?.text() ?: "")
+                                                  QManager(existingXml.PartnerIn.Transport.MQS.QManager?.text() ?: "")
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          
+                          if (existingXml.PartnersOut?.size() > 0) {
+                              PartnersOut {
+                                  existingXml.PartnersOut.PartnerOut.each { partner ->
+                                      PartnerOut {
+                                          PartnerCode(partner.PartnerCode?.text() ?: "")
+                                          PartnerName(partner.PartnerName?.text() ?: "")
+                                          PartnerTypeName(partner.PartnerTypeName?.text() ?: "")
+                                          CharsetCode(partner.CharsetCode?.text() ?: "")
+                                          RuleName(partner.RuleName?.text() ?: "")
+                                          Enabled(partner.Enabled?.text() ?: "")
+                                          BMSAEnabled(partner.BMSAEnabled?.text() ?: "")
+                                          
+                                          if (partner.Transport?.size() > 0) {
+                                              Transport {
+                                                  Type(partner.Transport.Type?.text() ?: "")
+                                                  
+                                                  if (partner.Transport.MQS?.size() > 0) {
+                                                      MQS {
+                                                          QName(partner.Transport.MQS.QName?.text() ?: "")
+                                                          QManager(partner.Transport.MQS.QManager?.text() ?: "")
+                                                      }
+                                                  }
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          
+                          if (existingXml.FlowRules?.size() > 0) {
+                              FlowRules {
+                                  existingXml.FlowRules.FlowRule.each { rule ->
+                                      FlowRule {
+                                          FlowCode(rule.FlowCode?.text() ?: "")
+                                          TransportType(rule.TransportType?.text() ?: "")
+                                          IsUnitary(rule.IsUnitary?.text() ?: "false")
+                                          Priority(rule.Priority?.text() ?: "")
+                                          Urgency(rule.Urgency?.text() ?: "")
+                                          FlowControlledEnabled(rule.FlowControlledEnabled?.text() ?: "false")
+                                          FlowMaximum(rule.FlowMaximum?.text() ?: "")
+                                          FlowRetentionEnabled(rule.FlowRetentionEnabled?.text() ?: "false")
+                                          WriteFile(rule.WriteFile?.text() ?: "false")
+                                          IgnoreOutputDupCheck(rule.IgnoreOutputDupCheck?.text() ?: "false")
+                                          LogAll(rule.LogAll?.text() ?: "false")
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                      
+                  } else {
+                      // Mode GENERATE: créer nouveau XML
+                      println("Generating new XML...")
+                      
+                      xml.TechnicalPivot {
+                          // Informations de base du flow
+                          if (flowDataJson?.flow) {
+                              def flow = flowDataJson.flow
+                              FlowID(flow.FlowID ?: "")
+                              FlowCode(flow.flowCode ?: "")
+                              FlowName(flow.flowName ?: "")
+                              FlowDirection(flow.flowDirection ?: "")
+                              FlowTypeName(flow.flowTypeName ?: "")
+                              FlowEnabled(flow.flowEnabled ?: "")
+                              
+                              // Application info
+                              if (flow.application) {
+                                  Application {
+                                      Code(flow.application.code ?: "")
+                                      Name(flow.application.name ?: "")
+                                  }
+                              }
+                              
+                              // Countries
+                              if (flow.countries) {
+                                  Countries {
+                                      flow.countries.each { country ->
+                                          Country(country)
+                                      }
+                                  }
+                              }
+                              
+                              // Flow Functional Properties
+                              if (flow.flowFuncPrty) {
+                                  FlowFunctionalProperties {
+                                      flow.flowFuncPrty.each { prop ->
+                                          Property {
+                                              Key(prop.key ?: "")
+                                              Type(prop.type ?: "")
+                                              Description(prop.desc ?: "")
+                                              Value(prop.value ?: "")
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          
+                          // Informations de traitement depuis headers
+                          FlowOccurId(flowOccurId ?: "OCCUR-${System.currentTimeMillis()}")
+                          ProcessingTimestamp(receivedTimestamp ?: new Date().format("yyyy-MM-dd'T'HH:mm:ss.SSS"))
+                          MessageId(messageId ?: "")
+                          CorrelationId(correlationId ?: "")
+                          ProcessingMode(processingMode)
+                          BusinessStatus(businessStatus)
+                          TechnicalStatus(technicalStatus)
+                          
+                          // Partner In
+                          if (flowDataJson?.partnerIn) {
+                              def partnerIn = flowDataJson.partnerIn
+                              PartnerIn {
+                                  PartnerCode(partnerIn.partnerCode ?: "")
+                                  PartnerName(partnerIn.partnerName ?: "")
+                                  PartnerTypeName(partnerIn.partnerTypeName ?: "")
+                                  CharsetCode(partnerIn.charsetCode ?: "")
+                                  
+                                  if (partnerIn.transport) {
+                                      Transport {
+                                          Type(partnerIn.transport.type ?: "")
+                                          
+                                          if (partnerIn.transport.mqs) {
+                                              MQS {
+                                                  QName(partnerIn.transport.mqs.qName ?: "")
+                                                  QManager(partnerIn.transport.mqs.qManager ?: "")
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          
+                          // Partner Out (can be array)
+                          if (flowDataJson?.partnerOut) {
+                              def partnerOut = flowDataJson.partnerOut
+                              PartnersOut {
+                                  (partnerOut instanceof List ? partnerOut : [partnerOut]).each { partner ->
+                                      PartnerOut {
+                                          PartnerCode(partner.partnerCode ?: "")
+                                          PartnerName(partner.partnerName ?: "")
+                                          PartnerTypeName(partner.partnerTypeName ?: "")
+                                          CharsetCode(partner.charsetCode ?: "")
+                                          RuleName(partner.ruleName ?: "")
+                                          Enabled(partner.enabled ?: "")
+                                          BMSAEnabled(partner.bmsaEnabled ?: "")
+                                          
+                                          if (partner.transport) {
+                                              Transport {
+                                                  Type(partner.transport.type ?: "")
+                                                  
+                                                  if (partner.transport.mqs) {
+                                                      MQS {
+                                                          QName(partner.transport.mqs.qName ?: "")
+                                                          QManager(partner.transport.mqs.qManager ?: "")
+                                                      }
+                                                  }
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                          
+                          // Flow Rules
+                          if (flowDataJson?.flowRules) {
+                              FlowRules {
+                                  flowDataJson.flowRules.each { rule ->
+                                      FlowRule {
+                                          FlowCode(rule.flowCode ?: "")
+                                          TransportType(rule.transportType ?: "")
+                                          IsUnitary(rule.isUnitary?.toString() ?: "false")
+                                          Priority(rule.priority?.toString() ?: "")
+                                          Urgency(rule.urgency ?: "")
+                                          FlowControlledEnabled(rule.flowControlledEnabled?.toString() ?: "false")
+                                          FlowMaximum(rule.flowMaximum?.toString() ?: "")
+                                          FlowRetentionEnabled(rule.flowRetentionEnabled?.toString() ?: "false")
+                                          WriteFile(rule.writeFile?.toString() ?: "false")
+                                          IgnoreOutputDupCheck(rule.ignoreOutputDupCheck?.toString() ?: "false")
+                                          LogAll(rule.logAll?.toString() ?: "false")
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+                  
+                  def xmlContent = writer.toString()
+                  
+                  // Mettre le XML dans le body et le header spécifié
+                  exchange.in.setBody(xmlContent)
+                  exchange.in.setHeader(xmlOutputHeader, xmlContent)
+                  
+                  println("${operation} operation completed, XML placed in header '${xmlOutputHeader}'")
+                  
+              } catch (Exception e) {
+                  println("ERROR: Failed to ${operation} TechnicalPivot XML: ${e.getMessage()}")
+                  throw new RuntimeException("Failed to ${operation} TechnicalPivot XML", e)
+              }
+
+        # Log de fin
+        - log:
+            message: "TechPivot XML generated successfully"

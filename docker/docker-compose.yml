@@ -391,21 +391,21 @@ services:
       - tools
 
   # Nginx Proxy for Hawtio-Spring connectivity
-  nginx-proxy:
-    image: nginx:alpine
-    hostname: pixel-v2-nginx-proxy
-    container_name: pixel-v2-nginx-proxy
-    ports:
-      - "8083:8080"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-    networks:
-      - pixel-v2-network
-    restart: unless-stopped
-    profiles:
-      - tools
-    depends_on:
-      - pixel-v2-app-spring-1
+  # nginx-proxy:
+  #   image: nginx:alpine
+  #   hostname: pixel-v2-nginx-proxy
+  #   container_name: pixel-v2-nginx-proxy
+  #   ports:
+  #     - "8083:8080"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #   networks:
+  #     - pixel-v2-network
+  #   restart: unless-stopped
+  #   profiles:
+  #     - tools
+  #   depends_on:
+  #     - pixel-v2-app-spring-1
 
   # NAS (Network Attached Storage) - Samba File Share
   nas:
