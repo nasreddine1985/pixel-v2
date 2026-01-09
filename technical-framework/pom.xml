@@ -16,6 +16,7 @@
     <description>Collection of Apache Camel Kamelets for PIXEL-V2 technical framework</description>
 
     <modules>
+        <module>common-utilities</module>
         <module>k-cft-publisher</module>
         <module>k-cft-starter</module>
         <module>k-db-tx</module>
@@ -34,6 +35,7 @@
         <module>k-mq-starter</module>
         <module>k-dynamic-publisher</module>
         <module>k-techpivot</module>
+        <module>k-techpivot-xml</module>
         <module>k-xsd-validation</module>
         <module>k-xsl-transformation</module>
     </modules>

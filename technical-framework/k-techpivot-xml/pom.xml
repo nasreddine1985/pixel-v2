@@ -15,6 +15,13 @@
     <description>Kamelet pour générer/mettre à jour des fichiers XML TechnicalPivot valides</description>
 
     <dependencies>
+        <!-- Common Utilities -->
+        <dependency>
+            <groupId>com.pixel.v2</groupId>
+            <artifactId>common-utilities</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- Camel Kamelet -->
         <dependency>
             <groupId>org.apache.camel</groupId>

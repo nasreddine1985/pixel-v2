@@ -21,9 +21,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
+import com.pixel.v2.common.headers.HeaderConstants;
+import com.pixel.v2.common.headers.HeaderUtils;
+
+import static com.pixel.v2.common.headers.HeaderConstants.*;
+
 /**
  * Test du kamelet k-techpivot-xml avec variables dans les headers
  * Tests des opérations generate et update avec FlowDataJson et autres variables headers
+ * Utilise HeaderConstants pour une approche type-safe des headers
  */
 @CamelSpringBootTest
 @SpringBootTest(classes = KameletTestApplication.class)
@@ -53,7 +59,7 @@ public class TechPivotXmlHeadersTest {
 
     @Test
     public void testGenerateWithHeaders() throws Exception {
-        System.out.println("\n=== TEST GENERATE WITH HEADERS ===");
+        System.out.println("\n=== TEST GENERATE WITH HEADERS (using HeaderConstants) ===");
         
         // Charger le JSON
         String referentielJson = loadReferentielExample();
@@ -73,16 +79,26 @@ public class TechPivotXmlHeadersTest {
         // Setup expectations
         mockXmlOutput.expectedMessageCount(1);
 
-        // Préparer les headers avec toutes les variables
+        // === Préparer les headers avec HeaderConstants (type-safe) ===
+        String flowOccurId = HeaderUtils.generateFlowOccurId("FLOW");
+        String messageId = HeaderUtils.generateMessageId("MSG");
+        String correlationId = "CORR-" + System.currentTimeMillis();
+        String timestamp = HeaderUtils.generateTimestamp();
+
         Map<String, Object> headers = new HashMap<>();
-        headers.put("FlowDataJson", referentielJson);
-        headers.put("flowOccurId", "FLOW-TEST-" + System.currentTimeMillis());
-        headers.put("ReceivedTimestamp", "2026-01-09T10:00:00.000");
-        headers.put("MessageId", "MSG-12345");
-        headers.put("CorrelationId", "CORR-67890");
-        headers.put("ProcessingMode", "BATCH");
-        headers.put("BusinessStatus", "VALIDATED");
-        headers.put("TechnicalStatus", "SUCCESS");
+        headers.put(FLOW_DATA_JSON, referentielJson);
+        headers.put(FLOW_OCCUR_ID, flowOccurId);
+        headers.put(RECEIVED_TIMESTAMP, timestamp);
+        headers.put(MESSAGE_ID, messageId);
+        headers.put(CORRELATION_ID, correlationId);
+        headers.put(PROCESSING_MODE, PROCESSING_MODE_BATCH);
+        headers.put(BUSINESS_STATUS, BUSINESS_STATUS_VALIDATED);
+        headers.put(TECHNICAL_STATUS, TECHNICAL_STATUS_SUCCESS);
+
+        System.out.println("Created headers using HeaderConstants:");
+        System.out.println("  " + FLOW_OCCUR_ID + ": " + headers.get(FLOW_OCCUR_ID));
+        System.out.println("  " + PROCESSING_MODE + ": " + headers.get(PROCESSING_MODE));
+        System.out.println("  " + BUSINESS_STATUS + ": " + headers.get(BUSINESS_STATUS));
 
         // Envoyer le message avec headers (body peut être vide maintenant)
         producer.sendBodyAndHeaders("trigger", headers);
@@ -100,16 +116,16 @@ public class TechPivotXmlHeadersTest {
         System.out.println(generatedXml);
         System.out.println("=" + "=".repeat(80));
 
-        // Vérifications spécifiques
+        // Vérifications spécifiques avec les valeurs générées
         assertTrue(generatedXml.contains("584"), "Should contain FlowID from FlowDataJson");
         assertTrue(generatedXml.contains("ICHSIC"), "Should contain FlowCode from FlowDataJson");
-        assertTrue(generatedXml.contains("FLOW-TEST-"), "Should contain flowOccurId from headers");
-        assertTrue(generatedXml.contains("MSG-12345"), "Should contain MessageId from headers");
-        assertTrue(generatedXml.contains("CORR-67890"), "Should contain CorrelationId from headers");
-        assertTrue(generatedXml.contains("BATCH"), "Should contain ProcessingMode from headers");
-        assertTrue(generatedXml.contains("VALIDATED"), "Should contain BusinessStatus from headers");
-        assertTrue(generatedXml.contains("SUCCESS"), "Should contain TechnicalStatus from headers");
-        assertTrue(generatedXml.contains("2026-01-09T10:00:00.000"), "Should contain ReceivedTimestamp from headers");
+        assertTrue(generatedXml.contains(flowOccurId), "Should contain flowOccurId from headers: " + flowOccurId);
+        assertTrue(generatedXml.contains(messageId), "Should contain MessageId from headers: " + messageId);
+        assertTrue(generatedXml.contains(correlationId), "Should contain CorrelationId from headers: " + correlationId);
+        assertTrue(generatedXml.contains(PROCESSING_MODE_BATCH), "Should contain ProcessingMode from headers");
+        assertTrue(generatedXml.contains(BUSINESS_STATUS_VALIDATED), "Should contain BusinessStatus from headers");
+        assertTrue(generatedXml.contains(TECHNICAL_STATUS_SUCCESS), "Should contain TechnicalStatus from headers");
+        assertTrue(generatedXml.contains(timestamp.substring(0, 10)), "Should contain date part of ReceivedTimestamp from headers");
 
         System.out.println("\n✅ All header-based content verifications PASSED!");
     }

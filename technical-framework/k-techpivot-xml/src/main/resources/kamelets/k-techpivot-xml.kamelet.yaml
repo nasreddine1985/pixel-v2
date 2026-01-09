@@ -50,6 +50,7 @@ spec:
               import groovy.json.JsonSlurper
               import groovy.xml.MarkupBuilder
               import groovy.xml.XmlSlurper
+              import static com.pixel.v2.common.headers.HeaderConstants.*
               
               def operation = "{{operation}}"
               def xmlOutputHeader = "{{xmlOutputHeader}}"
@@ -58,15 +59,29 @@ spec:
               println("Processing operation: ${operation}")
               
               try {
-                  // Récupération des variables depuis les headers
-                  def flowDataJsonText = headers.get("FlowDataJson") ?: headers.get("flowDataJson") ?: headers.get("RefFlowDataJson") ?: headers.get("refFlowDataJson")
-                  def flowOccurId = headers.get("flowOccurId") ?: headers.get("FlowOccurId")
-                  def receivedTimestamp = headers.get("ReceivedTimestamp") ?: headers.get("receivedTimestamp")
-                  def messageId = headers.get("MessageId") ?: headers.get("messageId") 
-                  def correlationId = headers.get("CorrelationId") ?: headers.get("correlationId")
-                  def processingMode = headers.get("ProcessingMode") ?: headers.get("processingMode") ?: "NORMAL"
-                  def businessStatus = headers.get("BusinessStatus") ?: headers.get("businessStatus") ?: "PENDING"
-                  def technicalStatus = headers.get("TechnicalStatus") ?: headers.get("technicalStatus") ?: "PROCESSING"
+                  // === Récupération des variables depuis les headers avec HeaderConstants ===
+                  def flowDataJsonText = headers.get(FLOW_DATA_JSON) ?: 
+                                       headers.get(FLOW_DATA_JSON_LC) ?: 
+                                       headers.get(REF_FLOW_DATA_JSON) ?: 
+                                       headers.get(REF_FLOW_DATA_JSON_LC)
+                  
+                  def flowOccurId = headers.get(FLOW_OCCUR_ID) ?: headers.get(FLOW_OCCUR_ID_CC)
+                  def receivedTimestamp = headers.get(RECEIVED_TIMESTAMP) ?: headers.get(RECEIVED_TIMESTAMP_LC)
+                  def messageId = headers.get(MESSAGE_ID) ?: headers.get(MESSAGE_ID_LC)
+                  def correlationId = headers.get(CORRELATION_ID) ?: headers.get(CORRELATION_ID_LC)
+                  
+                  // Valeurs par défaut utilisant HeaderConstants
+                  def processingMode = headers.get(PROCESSING_MODE) ?: 
+                                    headers.get(PROCESSING_MODE_LC) ?: 
+                                    PROCESSING_MODE_NORMAL
+                                    
+                  def businessStatus = headers.get(BUSINESS_STATUS) ?: 
+                                     headers.get(BUSINESS_STATUS_LC) ?: 
+                                     BUSINESS_STATUS_PENDING
+                                     
+                  def technicalStatus = headers.get(TECHNICAL_STATUS) ?: 
+                                      headers.get(TECHNICAL_STATUS_LC) ?: 
+                                      TECHNICAL_STATUS_PROCESSING
                   
                   println("Found FlowDataJson: ${flowDataJsonText != null}")
                   println("Found flowOccurId: ${flowOccurId}")
