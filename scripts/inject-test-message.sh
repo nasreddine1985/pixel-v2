@@ -14,7 +14,7 @@ MESSAGE_BODY='<?xml version="1.0" encoding="UTF-8"?>
 			<MsgId>1717480887/1XXXX</MsgId>
 			<CreDtTm>2024-11-22T15:43:01+01:00</CreDtTm>
 			<NbOfTxs>1</NbOfTxs>
-			<TtlIntrBkSttlmAmt Ccy="CHF">1267</TtlIntrBkSttlmAmt>
+			<TtlIntrBkSttlmAmt Ccy="CHF">1003</TtlIntrBkSttlmAmt>
 			<SttlmInf>
 				<SttlmMtd>CLRG</SttlmMtd>
 				<ClrSys>
@@ -120,7 +120,7 @@ MESSAGE_BODY='<?xml version="1.0" encoding="UTF-8"?>
 								<Prtry>QRR</Prtry>
 							</CdOrPrtry>
 						</Tp>
-						<Ref>000000000000000069000002806</Ref>
+						<Ref>000000000000000069000002809</Ref>
 					</CdtrRefInf>
 					<AddtlRmtInf>28.10.2024 38739388</AddtlRmtInf>
 				</Strd>

@@ -27,7 +27,7 @@ The kamelet monitors a specified directory for new files matching a pattern, rea
 - from:
     uri: "kamelet:k-file-receipt?directoryPath=/nas/payments&filePattern=payment_*.xml&delay=10000"
     steps:
-      - log: "File processing completed: ${header.CamelFileName}"
+      - log: "File processing completed: ${header.FileName}"
 ```
 
 ## File Processing

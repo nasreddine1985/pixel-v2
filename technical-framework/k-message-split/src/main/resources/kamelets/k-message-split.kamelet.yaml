@@ -69,7 +69,7 @@ spec:
       uri: "kamelet:source"
       steps:
         - setHeader:
-            name: "correlationId"
+            name: "CorrelationId"
             simple: "{{correlationId:}}"
         - setHeader:
             name: "size"

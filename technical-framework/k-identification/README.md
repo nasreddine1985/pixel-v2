@@ -137,7 +137,7 @@ Map<String, Object> stats = cacheService.getCacheStatistics("flowConfigCache");
 The kamelet preserves the original message body and uses headers for cache operations:
 
 - `FlowConfiguration`: Contains the retrieved flow configuration (JSON)
-- `OriginalMessageBody`: Preserved original message body
+- `OriginalBody`: Preserved original message body
 - `CacheKey`: Generated cache key
 - `SpringCacheName`: Cache name for operations
 - `SpringCacheKey`: Cache key for operations

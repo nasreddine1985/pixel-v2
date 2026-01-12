@@ -31,6 +31,18 @@ spec:
         description: "Nom du header contenant le XML existant (pour operation=update)"
         type: string
         default: "existingTechPivotXml"
+        
+      useFlowDataJson:
+        title: Use FlowData JSON
+        description: "Whether to use FlowData JSON from headers for generation"
+        type: boolean
+        default: true
+        
+      flowDataJsonHeader:
+        title: FlowData JSON Header
+        description: "Nom du header contenant le FlowData JSON"
+        type: string
+        default: "RefFlowData"
 
   dependencies:
     - "camel:groovy"
@@ -50,25 +62,27 @@ spec:
               import groovy.json.JsonSlurper
               import groovy.xml.MarkupBuilder
               import groovy.xml.XmlSlurper
-              import static com.pixel.v2.common.headers.HeaderConstants.*
               
               def operation = "{{operation}}"
               def xmlOutputHeader = "{{xmlOutputHeader}}"
               def existingXmlHeader = "{{existingXmlHeader}}"
+              def useFlowDataJson = "{{useFlowDataJson}}" == "true"
+              def flowDataJsonHeader = "{{flowDataJsonHeader}}"
               
               println("Processing operation: ${operation}")
               
               try {
-                  // === Récupération des variables depuis les headers avec HeaderConstants ===
-                  def flowDataJsonText = headers.get(FLOW_DATA_JSON) ?: 
-                                       headers.get(FLOW_DATA_JSON_LC) ?: 
-                                       headers.get(REF_FLOW_DATA_JSON) ?: 
-                                       headers.get(REF_FLOW_DATA_JSON_LC)
+                  // === Récupération des variables depuis les headers ===
+                  def flowDataJsonText = null
+                  if (useFlowDataJson) {
+                      // Use the configurable header name first, then fallback to defaults
+                      flowDataJsonText = headers.get("RefFlowData") 
+                  }
                   
-                  def flowOccurId = headers.get(FLOW_OCCUR_ID) ?: headers.get(FLOW_OCCUR_ID_CC)
-                  def receivedTimestamp = headers.get(RECEIVED_TIMESTAMP) ?: headers.get(RECEIVED_TIMESTAMP_LC)
-                  def messageId = headers.get(MESSAGE_ID) ?: headers.get(MESSAGE_ID_LC)
-                  def correlationId = headers.get(CORRELATION_ID) ?: headers.get(CORRELATION_ID_LC)
+                  def flowOccurId = headers.get("FlowOccurId") ?: headers.get("flowOccurId")
+                  def receivedTimestamp = headers.get("ReceivedTimestamp") ?: headers.get("receivedTimestamp")
+                  def messageId = headers.get("MessageId") ?: headers.get("messageId")
+                  def correlationId = headers.get("CorrelationId") ?: headers.get("correlationId")
                   
                   // Valeurs par défaut utilisant HeaderConstants
                   def processingMode = headers.get(PROCESSING_MODE) ?: 

@@ -4,16 +4,21 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+
     <parent>
         <groupId>com.pixel.v2</groupId>
-        <artifactId>pixel-v2</artifactId>
+        <artifactId>technical-framework</artifactId>
         <version>1.0.1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>k-log-tx</artifactId>
+    <version>1.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+
     <name>K-Log Transaction Kamelet</name>
     <description>Kamelet for centralized log management and persistence</description>
+
 
     <dependencies>
         <!-- Spring Boot Starter -->

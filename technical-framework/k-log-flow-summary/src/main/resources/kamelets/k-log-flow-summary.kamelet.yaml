@@ -42,17 +42,17 @@ spec:
                     simple: "{{step}}"
         
         - setHeader:
-            name: "logMessage"
+            name: "LogMessage"
             simple: |
-              {"flowOccurId":"${header.flowOccurId}","flowCode":"${header.FlowCode}","flowStatusCode":"${exchangeProperty.actualStep}","flowCountryCode":"${header.flowCountryCode}","flowCountryId":"${header.flowCountryId}","flowTypeId":1,"flowComment":"${header.FlowCode} payment processing ${exchangeProperty.actualStep}","nbOutExpected":1,"nbOutCompleted":0,"nbError":0,"nbRemitance":0,"nbTransaction":1,"nbReplay":0,"issuingPartnerCode":"MQ_ACTIVEMQ","issuingPartnerLink":"tcp://pixel-v2-activemq:61616","recipientPartnerCode":"KAFKA_CLUSTER","recipientPartnerLink":"kafka:29092","lastLogId":"LOG-${date:now:yyyyMMddHHmmssSSS}","lastLogComponent":"processing-flow","lastLogDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","lastLogStatusCode":"SUCCESS","lastUpdateDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","lastUpdateUser":"system","inputFilePath":"inputFilePath","inputFileSize":"${bodyAs(String).length()}B","beginFlowDatetime":"${header.beginFlowDateTime}","currentClientDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","beginFlowDate":"${header.beginFlowDate}","lastUpdateDate":"${date:now:yyyy-MM-dd}","region":"EU"}
+              {"flowOccurId":"${header.FlowOccurId}","flowCode":"${header.FlowCode}","flowStatusCode":"${exchangeProperty.actualStep}","flowCountryCode":"${header.FlowCountryCode}","flowCountryId":"${header.FlowCountryId}","flowTypeId":1,"flowComment":"${header.FlowCode} payment processing ${exchangeProperty.actualStep}","nbOutExpected":1,"nbOutCompleted":0,"nbError":0,"nbRemitance":0,"nbTransaction":1,"nbReplay":0,"issuingPartnerCode":"MQ_ACTIVEMQ","issuingPartnerLink":"tcp://pixel-v2-activemq:61616","recipientPartnerCode":"KAFKA_CLUSTER","recipientPartnerLink":"kafka:29092","lastLogId":"LOG-${date:now:yyyyMMddHHmmssSSS}","lastLogComponent":"processing-flow","lastLogDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","lastLogStatusCode":"SUCCESS","lastUpdateDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","lastUpdateUser":"system","inputFilePath":"inputFilePath","inputFileSize":"${bodyAs(String).length()}B","beginFlowDatetime":"${header.BeginFlowDateTime}","currentClientDatetime":"${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}","beginFlowDate":"${header.BeginFlowDate}","lastUpdateDate":"${date:now:yyyy-MM-dd}","region":"EU"}
         - setHeader:
-            name: "kafka.KEY"
-            simple: "${header.flowOccurId}"
+            name: "KafkaKey"
+            simple: "${header.FlowOccurId}"
         - setHeader:
             name: "originalBody"
             simple: "${body}"
         - setBody:
-            simple: "${header.logMessage}"
+            simple: "${header.LogMessage}"
         - to:
             uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer"
         - setBody:

@@ -13,7 +13,7 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.pixel.v2"})
-@EntityScan(basePackages = {"com.pixel.v2.persistence.model"})
+@EntityScan(basePackages = {"com.pixel.v2.persistence.model", "com.pixel.v2.model"})
 public class PixelCamelApplication {
 
     public static void main(String[] args) {

@@ -102,27 +102,27 @@ spec:
         
         # Store original body before sequence generation
         - setHeader:
-            name: "originalBody"
+            name: "OriginalBody"
             simple: "${body}"
         # Generate unique flow occurrence ID from database sequence
         - to:
             uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource=#dataSource"
         - setHeader:
-            name: "flowOccurId"
+            name: "FlowOccurId"
             simple: "${body[0][flowOccurId]}"
         # Restore original body
         - setBody:
-            simple: "${header.originalBody}"
+            simple: "${header.OriginalBody}"
         - removeHeader:
-            name: "originalBody"
+            name: "OriginalBody"
         - setHeader:
             name: "SourceEndpoint"
             simple: "{{httpPath}}"
         - setHeader:
-            name: "httpPath"
+            name: "HttpPath"
             simple: "{{httpPath}}"
         - setHeader:
-            name: "flowCode"
+            name: "FlowCode"
             constant: "{{flowCode}}"
         - setHeader:
             name: "MessageType"
@@ -131,10 +131,10 @@ spec:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - setHeader:
-            name: "step"
+            name: "Step"
             constant: "IN_PROGRESS"
         - setHeader:
-            name: "brokers"
+            name: "Brokers"
             constant: "{{brokers}}"
         - setHeader:
             name: "kafkaFlowSummaryTopicName"
@@ -146,10 +146,10 @@ spec:
             name: "kafkaDistributionTopicName"
             constant: "{{kafkaDistributionTopicName}}"
         - setHeader:
-            name: "flowCountryCode"
+            name: "FlowCountryCode"
             simple: "{{flowCountryCode}}"
         - setHeader:
-            name: "flowCountryId"
+            name: "FlowCountryId"
             simple: "{{flowCountryId}}"
         - setHeader:
             name: "MessageId"
@@ -158,13 +158,13 @@ spec:
             name: "CorrelationId"
             simple: "${header.CamelHttpUri}-${date:now:yyyyMMddHHmmssSSS}"
         - setHeader:
-            name: "beginFlowDatetime"
+            name: "BeginFlowDatetime"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         - setHeader:
-            name: "beginFlowDate"
+            name: "BeginFlowDate"
             simple: "${date:now:yyyy-MM-dd}"
         - setHeader:
-            name: "nasArchiveUrl"
+            name: "NasArchiveUrl"
             simple: "{{nasArchiveUrl}}"
         # Set charset with proper fallback for HTTP
         - choice:
@@ -183,18 +183,18 @@ spec:
         # Archive flowOccurId and timestamp to NAS
         # Store original body before file operation
         - setHeader:
-            name: "originalBodyBeforeArchive"
+            name: "OriginalBody"
             simple: "${body}"
         - toD:
-            uri: "${header.nasArchiveUrl}/IN/${header.flowOccurId}/?fileName=${header.FlowCode}_${header.flowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
+            uri: "${header.NasArchiveUrl}/IN/${header.FlowOccurId}/?fileName=${header.FlowCode}_${header.FlowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
         # Restore original body after file operation
         - setBody:
-            simple: "${header.originalBodyBeforeArchive}"
+            simple: "${header.OriginalBody}"
         - removeHeader:
-            name: "originalBodyBeforeArchive"
+            name: "OriginalBody"
         
         - wireTap:
-            uri: "kamelet:k-log-flow-summary?step=${header.step}&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}"
+            uri: "kamelet:k-log-flow-summary?step=${header.Step}&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.Brokers}"
         
         # Log event after completing HTTP processing
         - setHeader:

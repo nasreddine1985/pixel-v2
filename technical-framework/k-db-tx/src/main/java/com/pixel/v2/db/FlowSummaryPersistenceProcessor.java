@@ -10,10 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.pixel.v2.persistence.model.FlowSummary;
+import com.pixel.v2.model.FlowSummary;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+
 
 /**
  * FlowSummary persistence processor for JPA operations.

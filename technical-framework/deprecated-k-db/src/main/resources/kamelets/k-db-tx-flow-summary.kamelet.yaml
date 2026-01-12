@@ -22,22 +22,22 @@ spec:
           title: "Message ID"
           description: "Unique identifier for the message"
           type: string
-          default: "${header.messageId}"
+          default: "${header.MessageId}"
         correlationId:
           title: "Correlation ID"
           description: "Correlation identifier for the message"
           type: string
-          default: "${header.correlationId}"
+          default: "${header.CorrelationId}"
         messageType:
           title: "Message Type"
           description: "Type of the message (e.g., PACS008, CAMT054)"
           type: string
-          default: "${header.messageType}"
+          default: "${header.MessageType}"
         source:
           title: "Source"
           description: "Source of the message (e.g., MQ, HTTP, KAFKA)"
           type: string
-          default: "${header.source}"
+          default: "${header.Source}"
         payload:
           title: "Payload"
           description: "Message payload content"
@@ -68,7 +68,7 @@ spec:
         uri: "kamelet:source"
         steps:
           - log:
-              message: "k-db-tx-flow-summary: Starting flow summary persistence - messageId=${header.messageId}, correlationId=${header.correlationId}, type=${header.messageType}, source=${header.source}, bodySize=${body.length()}"
+              message: "k-db-tx-flow-summary: Starting flow summary persistence - messageId=${header.MessageId}, correlationId=${header.CorrelationId}, type=${header.MessageType}, source=${header.Source}, bodySize=${body.length()}"
               loggingLevel: "INFO"
 
           - setHeader:
@@ -77,19 +77,19 @@ spec:
 
           - setHeader:
               name: "SqlMessageId"
-              simple: "${header.messageId}"
+              simple: "${header.MessageId}"
               
           - setHeader:
               name: "SqlCorrelationId"
-              simple: "${header.correlationId}"
+              simple: "${header.CorrelationId}"
               
           - setHeader:
               name: "SqlMessageType"
-              simple: "${header.messageType}"
+              simple: "${header.MessageType}"
               
           - setHeader:
               name: "SqlSource"
-              simple: "${header.source}"
+              simple: "${header.Source}"
               
           - setHeader:
               name: "SqlPayload"
@@ -97,12 +97,12 @@ spec:
               
           - setHeader:
               name: "SqlProcessingStatus"
-              simple: "${header.processingStatus}"
+              simple: "${header.ProcessingStatus}"
 
           # Check if body is a collection and batch processing is enabled
           - choice:
               when:
-                - simple: "${header.enableBatchProcessing} == true && ${body} is 'java.util.Collection'"
+                - simple: "${header.EnableBatchProcessing} == true && ${body} is 'java.util.Collection'"
                   steps:
                     - log:
                         message: "k-db-tx-flow-summary: Processing batch of ${body.size()} flow summary records"
@@ -115,28 +115,28 @@ spec:
                         streaming: false
                         steps:
                           - setHeader:
-                              name: "BatchMessageId"
+                              name: "MessageId"
                               simple: "MSG-${date:now:yyyyMMddHHmmssSSS}-${exchangeProperty.CamelSplitIndex}"
                           - setHeader:
                               name: "BatchCorrelationId"
-                              simple: "${header.correlationId}"
+                              simple: "${header.CorrelationId}"
                           - setHeader:
                               name: "BatchMessageType"
-                              simple: "${header.messageType}"
+                              simple: "${header.MessageType}"
                           - setHeader:
                               name: "BatchSource"
-                              simple: "${header.source}"
+                              simple: "${header.Source}"
                           - setHeader:
                               name: "BatchPayload"
                               simple: "${body}"
                           - doTry:
                               steps:
                                 - setBody:
-                                    simple: "INSERT INTO pixel_v2.flow_summary (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.BatchMessageId}', '${header.BatchCorrelationId}', '${header.BatchMessageType}', '${header.BatchSource}', '${header.BatchPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                                    simple: "INSERT INTO pixel_v2.flow_summary (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.MessageId}', '${header.CorrelationId}', '${header.MessageType}', '${header.Source}', '${header.Payload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
                                 - to:
                                     uri: "jdbc:dataSource"
                                 - log:
-                                    message: "k-db-tx-flow-summary: ✅ Batch record persisted - Index: ${exchangeProperty.CamelSplitIndex}, ID: ${header.BatchMessageId}"
+                                    message: "k-db-tx-flow-summary: ✅ Batch record persisted - Index: ${exchangeProperty.CamelSplitIndex}, ID: ${header.MessageId}"
                                     loggingLevel: "INFO"
                               doCatch:
                                 - exception: ["java.lang.Exception"]
@@ -161,7 +161,7 @@ spec:
                 steps:
                   # Debug log to verify parameter values for single message
                   - log:
-                      message: "k-db-tx-flow-summary: About to execute SQL for single record - messageId=${header.messageId}, correlationId=${header.correlationId}, messageType=${header.messageType}, source=${header.source}"
+                      message: "k-db-tx-flow-summary: About to execute SQL for single record - messageId=${header.MessageId}, correlationId=${header.CorrelationId}, messageType=${header.MessageType}, source=${header.Source}"
                       loggingLevel: "INFO"
 
                   # Execute database insert for single message with proper error handling  
@@ -178,14 +178,14 @@ spec:
                             
                         - setHeader:
                             name: "PersistenceRecordId"
-                            simple: "${header.messageId}"
+                            simple: "${header.MessageId}"
                             
                         - setHeader:
                             name: "PersistenceOperation"
                             constant: "INSERT"
                             
                         - log:
-                            message: "k-db-tx-flow-summary: ✅ Single record persisted successfully - ID=${header.messageId}, Table=${header.tableName}"
+                            message: "k-db-tx-flow-summary: ✅ Single record persisted successfully - ID=${header.MessageId}, Table=${header.tableName}"
                             loggingLevel: "INFO"
                       doCatch:
                         - exception: ["java.lang.Exception"]
@@ -203,7 +203,7 @@ spec:
                                 constant: "INSERT_FAILED"
                                 
                             - log:
-                                message: "k-db-tx-flow-summary: ❌ Single record persistence failed - ID=${header.messageId}, Error=${exception.message}"
+                                message: "k-db-tx-flow-summary: ❌ Single record persistence failed - ID=${header.MessageId}, Error=${exception.message}"
                                 loggingLevel: "ERROR"
                                 
                             # Re-throw exception so parent route can catch it and route to error handler
@@ -212,5 +212,5 @@ spec:
                                 message: "Flow summary database persistence failed: ${exception.message}"
 
           - log:
-              message: "k-db-tx-flow-summary: Persistence completed - Status=${header.PersistenceStatus}, ID=${header.messageId}"
+              message: "k-db-tx-flow-summary: Persistence completed - Status=${header.PersistenceStatus}, ID=${header.MessageId}"
               loggingLevel: "DEBUG"

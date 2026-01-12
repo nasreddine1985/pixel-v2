@@ -42,15 +42,15 @@ spec:
         readLockTimeout: "10000"
       steps:
         - log: 
-            message: "[CFT-RECEIVER] Starting to process file: ${header.CamelFileName} from {{directoryPath}}"
+            message: "[CFT-RECEIVER] Starting to process file: ${header.FileName} from {{directoryPath}}"
             loggingLevel: "INFO"
         
-        - set-header:
-            name: "originalFileName"
-            simple: "${header.CamelFileName}"
+        - setHeader:
+            name: "OriginalFileName"
+            simple: "${header.FileName}"
         
-        - set-header:
-            name: "fileProcessingStartTime"
+        - setHeader:
+            name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         
         - split:
@@ -61,37 +61,37 @@ spec:
                   simple: "${body} != null && ${body.trim()} != ''"
                   steps:
                     - log: 
-                        message: "[CFT-RECEIVER] Processing XML message line ${header.CamelSplitIndex} from file ${header.originalFileName}: ${body}"
+                        message: "[CFT-RECEIVER] Processing XML message line ${header.CamelSplitIndex} from file ${header.OriginalFileName}: ${body}"
                         loggingLevel: "DEBUG"
                     
-                    - set-header:
-                        name: "messageSource"
+                    - setHeader:
+                        name: "MessageSource"
                         constant: "CFT_FILE"
                     
-                    - set-header:
-                        name: "receiptTimestamp"
+                    - setHeader:
+                        name: "ProcessingLineTimestamp"
                         simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
                     
-                    - set-header:
-                        name: "receiptChannel"
+                    - setHeader:
+                        name: "ReceiptChannel"
                         constant: "FILE_CFT"
                     
-                    - set-header:
-                        name: "fileName"
-                        simple: "${header.originalFileName}"
+                    - setHeader:
+                        name: "FileName"
+                        simple: "${header.OriginalFileName}"
                     
-                    - set-header:
-                        name: "lineNumber"
+                    - setHeader:
+                        name: "LineNumber"
                         simple: "${header.CamelSplitIndex}"
                     
-                    - set-header:
-                        name: "directoryPath"
+                    - setHeader:
+                        name: "DirectoryPath"
                         simple: "{{directoryPath}}"
                     
                     - log: 
-                        message: "[CFT-RECEIVER] Message metadata set - Source: ${header.messageSource}, File: ${header.fileName}, Line: ${header.lineNumber}, Timestamp: ${header.receiptTimestamp}"
+                        message: "[CFT-RECEIVER] Message metadata set - Source: ${header.MessageSource}, File: ${header.FileName}, Line: ${header.LineNumber}, Timestamp: ${header.ProcessingLineTimestamp}"
                         loggingLevel: "DEBUG"
         
         - log: 
-            message: "[CFT-RECEIVER] Completed processing file: ${header.originalFileName} - Processing started at ${header.fileProcessingStartTime}"
+            message: "[CFT-RECEIVER] Completed processing file: ${header.OriginalFileName} - Processing started at ${header.ProcessingTimestamp}"
             loggingLevel: "INFO"

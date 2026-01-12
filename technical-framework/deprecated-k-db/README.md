@@ -85,16 +85,16 @@ spec:
 
 ### Input Headers
 
-- `messageId`: Unique identifier for the message
-- `messageType`: Type of payment message (pacs.008, pan.001, etc.)
-- `receiptTimestamp`: When the message was received
+- `MessageId`: Unique identifier for the message
+- `MessageType`: Type of payment message (pacs.008, pan.001, etc.)
+- `ReceiptTimestamp`: When the message was received
 
 ### Output Headers
 
-- `persistenceTimestamp`: When persistence operation started
-- `persistenceStatus`: SUCCESS or ERROR
-- `persistedMessageId`: Database ID of the persisted message
-- `persistenceError`: Error message if persistence failed
+- `PersistenceTimestamp`: When persistence operation started
+- `PersistenceStatus`: SUCCESS or ERROR
+- `PersistedMessageId`: Database ID of the persisted message
+- `PersistenceError`: Error message if persistence failed
 
 ## Response Format
 
@@ -182,7 +182,7 @@ mvn verify
 - from:
     uri: "direct:processPayment"
     steps:
-      - log: "Processing payment message: ${header.messageId}"
+      - log: "Processing payment message: ${header.MessageId}"
 
       # Validate message
       - choice:

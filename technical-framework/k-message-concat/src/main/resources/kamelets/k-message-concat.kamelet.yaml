@@ -48,7 +48,7 @@ spec:
         
         # Set aggregation properties as headers for processing
         - setHeader:
-            name: "correlationId"
+            name: "CorrelationId"
             simple: "{{correlationId:DEFAULT}}"
         - setHeader:
             name: "size" 

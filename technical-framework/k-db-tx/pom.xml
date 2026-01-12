@@ -11,14 +11,14 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>k-db</artifactId>
+    <artifactId>k-db-tx</artifactId>
     <packaging>jar</packaging>
     <name>K-Database Kamelet</name>
     <description>Database operations kamelet with JPA support for PIXEL-V2</description>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -63,12 +63,7 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
-        <!-- Persistence Models -->
-        <dependency>
-            <groupId>com.pixel.v2</groupId>
-            <artifactId>k-db-tx</artifactId>
-            <version>1.0.1-SNAPSHOT</version>
-        </dependency>
+ 
 
         <!-- Test Dependencies -->
         <dependency>
@@ -90,8 +85,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>

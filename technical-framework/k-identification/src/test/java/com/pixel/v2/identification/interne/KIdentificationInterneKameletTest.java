@@ -275,14 +275,14 @@ public class KIdentificationInterneKameletTest {
             public void configure() throws Exception {
                 from("direct:test-input").routeId("test-body-preservation")
                         // Store original body
-                        .setHeader("OriginalMessageBody", simple("${body}"))
-                        .log("Original body preserved: ${header.OriginalMessageBody}")
+                        .setHeader("OriginalBody", simple("${body}"))
+                        .log("Original body preserved: ${header.OriginalBody}")
                         // Simulate cache/service operations that might change body
                         .setBody(constant("{\"someServiceResponse\": \"data\"}"))
                         .log("Body changed during processing: ${body}")
                         // Restore original body
-                        .setBody(simple("${header.OriginalMessageBody}"))
-                        .removeHeader("OriginalMessageBody").log("Body restored: ${body}")
+                        .setBody(simple("${header.OriginalBody}"))
+                        .removeHeader("OriginalBody").log("Body restored: ${body}")
                         .to("mock:sink");
             }
         });

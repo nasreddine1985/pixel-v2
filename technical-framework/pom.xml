@@ -16,33 +16,26 @@
     <description>Collection of Apache Camel Kamelets for PIXEL-V2 technical framework</description>
 
     <modules>
-        <module>common-utilities</module>
-        <module>k-cft-publisher</module>
-        <module>k-cft-starter</module>
         <module>k-db-tx</module>
         <module>k-duplicate-check</module>
-        <module>k-http-publisher</module>
-        <module>k-http-starter</module>
         <module>k-identification</module>
         <module>k-kafka-publisher</module>
         <module>k-kafka-starter</module>
         <module>k-log-events</module>
         <module>k-log-flow-summary</module>
         <module>k-log-tx</module>
-        <module>k-message-concat</module>
-        <module>k-message-split</module>
         <module>k-mq-publisher</module>
         <module>k-mq-starter</module>
         <module>k-dynamic-publisher</module>
-        <module>k-techpivot</module>
-        <module>k-techpivot-xml</module>
         <module>k-xsd-validation</module>
         <module>k-xsl-transformation</module>
+        <module>k-cft-publisher</module>
+        <module>k-http-publisher</module>
     </modules>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -53,9 +46,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                    <release>21</release>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
         </plugins>

@@ -58,34 +58,34 @@
             
             # Parse the JSON log message and extract fields for database persistence
             - setHeader:
-                name: "messageId"
+                name: "MessageId"
                 simple: "${uuid}"
             - setHeader:
-                name: "correlationId"
+                name: "CorrelationId"
                 simple: "LOG-${date:now:yyyyMMddHHmmssSSS}"
             - setHeader:
-                name: "messageType"
+                name: "MessageType"
                 constant: "PACS008_LOG"
             - setHeader:
-                name: "source"
+                name: "Source"
                 constant: "KAFKA"
             - setHeader:
                 name: "payload"
                 simple: "${body}"
             - setHeader:
-                name: "processingStatus"
+                name: "ProcessingStatus"
                 constant: "RECEIVED"
             
             # Persist log message to database using k-db-tx-logevents kamelet
             - to:
                 uri: "kamelet:k-db-tx-logevents"
                 parameters:
-                  messageId: "${header.messageId}"
-                  correlationId: "${header.correlationId}"
-                  messageType: "${header.messageType}"
-                  source: "${header.source}"
+                  messageId: "${header.MessageId}"
+                  correlationId: "${header.CorrelationId}"
+                  messageType: "${header.MessageType}"
+                  source: "${header.Source}"
                   payload: "${header.payload}"
-                  processingStatus: "${header.processingStatus}"
+                  processingStatus: "${header.ProcessingStatus}"
                   dataSource: "#dataSource"
                   tableName: "pixel_v2.log_event"
 
@@ -97,33 +97,33 @@
             
             # Parse the JSON flow summary message and extract fields for database persistence
             - setHeader:
-                name: "messageId"
+                name: "MessageId"
                 simple: "${uuid}"
             - setHeader:
-                name: "correlationId"
+                name: "CorrelationId"
                 simple: "FLOW-${date:now:yyyyMMddHHmmssSSS}"
             - setHeader:
-                name: "messageType"
+                name: "MessageType"
                 constant: "PACS008_FLOW_SUMMARY"
             - setHeader:
-                name: "source"
+                name: "Source"
                 constant: "KAFKA"
             - setHeader:
                 name: "payload"
                 simple: "${body}"
             - setHeader:
-                name: "processingStatus"
+                name: "ProcessingStatus"
                 constant: "RECEIVED"
             
             # Persist flow summary message to database using k-db-tx-flow-summary kamelet
             - to:
                 uri: "kamelet:k-db-tx-flow-summary"
                 parameters:
-                  messageId: "${header.messageId}"
-                  correlationId: "${header.correlationId}"
-                  messageType: "${header.messageType}"
-                  source: "${header.source}"
+                  messageId: "${header.MessageId}"
+                  correlationId: "${header.CorrelationId}"
+                  messageType: "${header.MessageType}"
+                  source: "${header.Source}"
                   payload: "${header.payload}"
-                  processingStatus: "${header.processingStatus}"
+                  processingStatus: "${header.ProcessingStatus}"
                   dataSource: "#dataSource"
                   tableName: "pixel_v2.tb_flow_summary"

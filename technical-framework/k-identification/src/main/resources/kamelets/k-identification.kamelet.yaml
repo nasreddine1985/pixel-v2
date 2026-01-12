@@ -56,16 +56,18 @@ spec:
         # Store original message body for preservation and set cache configuration
         - script:
             groovy: |
-              exchange.in.headers['OriginalMessageBody'] = exchange.in.body
+              exchange.in.headers['OriginalBody'] = exchange.in.body
               exchange.in.headers['CacheKey'] = 'flow_config_{{flowCode}}'
               exchange.in.headers['SpringCacheName'] = '{{springCacheName}}'
               exchange.in.headers['SpringCacheKey'] = '{{flowCode}}'
-              exchange.in.headers['CamelKameletFlowId'] = new java.text.SimpleDateFormat('yyyyMMddHHmmssSSS').format(new Date())
         - setHeader:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        - setHeader:
+            name: "ContextId"
+            simple: "identification-${uuid}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode={{flowCode}}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode={{flowCode}}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
             pattern: "InOnly"
 
         # Try to get from Spring cache using custom processor
@@ -89,9 +91,7 @@ spec:
                             groovy: |
                               def savedHeaders = [:]
                               exchange.in.headers.each { key, value ->
-                                if (!key.startsWith('kafka.')) {
                                   savedHeaders[key] = value
-                                }
                               }
                               exchange.setProperty('savedHeaders', savedHeaders)
                         # Remove all headers for clean HTTP call
@@ -118,16 +118,14 @@ spec:
                         - convertBodyTo: "java.lang.String"
                         - log: 
                             message: "Successfully retrieved flow config for ${header.FlowCode} from referential service"
-                            loggingLevel: DEBUG
+                            loggingLevel: INFO
                         - script:
                             groovy: |
                               exchange.in.headers['RefFlowData'] = exchange.in.body
                               exchange.in.headers['SpringCacheValue'] = exchange.in.body
                         - setBody:
-                            simple: "${header.OriginalMessageBody}"
-                        - log: 
-                            message: "Original message body restored before Spring cache PUT: ${body}"
-                            loggingLevel: DEBUG
+                            simple: "${header.OriginalBody}"
+                        
                         # Cache the result in Spring cache
                         - to: "bean:springCacheProcessorInterne?method=putCachedValue"
                       doCatch:
@@ -140,7 +138,7 @@ spec:
                                 name: "RefFlowData"
                                 simple: '{"error":"referential_service_unavailable","flowCode":"${header.SpringCacheKey}"}'
                             - setBody:
-                                simple: "${header.OriginalMessageBody}"
+                                simple: "${header.OriginalBody}"
             otherwise:
               steps:
                 - log: 
@@ -153,15 +151,15 @@ spec:
         
         # Restore original message body
         - setBody:
-            simple: "${header.OriginalMessageBody}"
-        - removeHeader: "OriginalMessageBody"
+            simple: "${header.OriginalBody}"
+        - removeHeader: "OriginalBody"
         
         # Log event after identification
         - setHeader:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
             pattern: "InOnly"
         
         # Send to sink

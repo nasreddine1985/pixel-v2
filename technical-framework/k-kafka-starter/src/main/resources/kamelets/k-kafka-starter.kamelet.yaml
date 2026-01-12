@@ -93,34 +93,34 @@ spec:
       steps:
         - log:
             loggingLevel: INFO
-            message: "[KAFKA-STARTER] Received message from topic '{{topic}}' with key: ${header.kafka.KEY}, partition: ${header.kafka.PARTITION}, offset: ${header.kafka.OFFSET}"
+            message: "[KAFKA-STARTER] Received message from topic '{{topic}}' with key: ${header.KafkaKey}, partition: ${header.KafkaPartition}, offset: ${header.KafkaOffset}"
         - setHeader:
-            name: messageSource
+            name: MessageSource
             constant: "KAFKA_TOPIC"
         - setHeader:
-            name: receiptTimestamp
+            name: ReceiptTimestamp
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         - setHeader:
-            name: receiptChannel
+            name: ReceiptChannel
             constant: "KAFKA_CONSUMER"
         - setHeader:
-            name: kafkaTopic
+            name: KafkaTopic
             simple: "{{topic}}"
         - setHeader:
-            name: kafkaGroupId
+            name: KafkaGroupId
             simple: "{{groupId}}"
         - setHeader:
-            name: kafkaPartition
-            simple: "${header.kafka.PARTITION}"
+            name: KafkaPartition
+            simple: "${header.KafkaPartition}"
         - setHeader:
-            name: kafkaOffset
-            simple: "${header.kafka.OFFSET}"
+            name: KafkaOffset
+            simple: "${header.KafkaOffset}"
         - setHeader:
-            name: kafkaKey
-            simple: "${header.kafka.KEY}"
+            name: KafkaKey
+            simple: "${header.KafkaKey}"
         - setHeader:
-            name: kafkaTimestamp
-            simple: "${header.kafka.TIMESTAMP}"
+            name: KafkaTimestamp
+            simple: "${header.KafkaTimestamp}"
         - log:
             loggingLevel: INFO
             message: "[KAFKA-STARTER] Message enriched with Kafka metadata, routing to: {{sinkEndpoint}}"

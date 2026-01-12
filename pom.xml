@@ -18,14 +18,15 @@
     </modules>
 
     <properties>
+        <java.version>21</java.version>
         <camel.version>4.1.0</camel.version>
         <spring-boot.version>3.4.1</spring-boot.version>
         <spring-framework.version>6.2.1</spring-framework.version>
         <saxon.version>12.3</saxon.version>
         <hibernate.version>6.2.7.Final</hibernate.version>
         <postgresql.version>42.6.0</postgresql.version>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
     </properties>
 
     <dependencyManagement>
@@ -57,9 +58,9 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <source>21</source>
-                    <target>21</target>
-                    <release>21</release>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
         </plugins>

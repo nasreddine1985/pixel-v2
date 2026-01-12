@@ -84,10 +84,10 @@ public class KMqStarterKameletTest {
                 // Simple test route that simulates k-mq-starter behavior
                 from("direct:test-input").routeId("test-basic-processing")
                         .log("Processing message: ${body}")
-                        .setHeader("flowCode", constant("PACS008"))
-                        .setHeader("flowCountryCode", constant("CH"))
-                        .setHeader("flowCountryId", constant("1"))
-                        .setHeader("flowOccurId", simple("${date:now:yyyyMMddHHmmssSSS}"))
+                        .setHeader("FlowCode", constant("PACS008"))
+                        .setHeader("FlowCountryCode", constant("CH"))
+                        .setHeader("FlowCountryId", constant("1"))
+                        .setHeader("FlowOccurId", simple("${date:now:yyyyMMddHHmmssSSS}"))
                         .setHeader("ReceivedTimestamp", simple("${date:now}")).to("mock:sink");
             }
         });
@@ -99,7 +99,7 @@ public class KMqStarterKameletTest {
         Map<String, Object> headers = new HashMap<>();
         headers.put("JMSMessageID", "TEST-MSG-001");
         headers.put("JMSCorrelationID", "CORR-001");
-        headers.put("breadcrumbId", "BREAD-001");
+        headers.put("BreadcrumbId", "BREAD-001");
 
         // Send test message
         producer.sendBodyAndHeaders(TEST_MESSAGE, headers);
@@ -112,11 +112,11 @@ public class KMqStarterKameletTest {
         assertEquals(TEST_MESSAGE, sinkExchange.getIn().getBody(String.class));
 
         // Verify required headers are set
-        assertNotNull(sinkExchange.getIn().getHeader("flowOccurId"));
+        assertNotNull(sinkExchange.getIn().getHeader("FlowOccurId"));
         assertNotNull(sinkExchange.getIn().getHeader("ReceivedTimestamp"));
-        assertEquals("PACS008", sinkExchange.getIn().getHeader("flowCode"));
-        assertEquals("CH", sinkExchange.getIn().getHeader("flowCountryCode"));
-        assertEquals("1", sinkExchange.getIn().getHeader("flowCountryId"));
+        assertEquals("PACS008", sinkExchange.getIn().getHeader("FlowCode"));
+        assertEquals("CH", sinkExchange.getIn().getHeader("FlowCountryCode"));
+        assertEquals("1", sinkExchange.getIn().getHeader("FlowCountryId"));
     }
 
     @Test
@@ -126,7 +126,7 @@ public class KMqStarterKameletTest {
             @Override
             public void configure() throws Exception {
                 from("direct:test-input").routeId("test-sequence-generation")
-                        .setHeader("flowOccurId", simple("${date:now:yyyyMMddHHmmssSSS}")).delay(1) // Small
+                        .setHeader("FlowOccurId", simple("${date:now:yyyyMMddHHmmssSSS}")).delay(1) // Small
                                                                                                     // delay
                                                                                                     // to
                                                                                                     // ensure
@@ -148,8 +148,8 @@ public class KMqStarterKameletTest {
         Exchange firstExchange = mockSink.getReceivedExchanges().get(0);
         Exchange secondExchange = mockSink.getReceivedExchanges().get(1);
 
-        String firstFlowOccurId = firstExchange.getIn().getHeader("flowOccurId", String.class);
-        String secondFlowOccurId = secondExchange.getIn().getHeader("flowOccurId", String.class);
+        String firstFlowOccurId = firstExchange.getIn().getHeader("FlowOccurId", String.class);
+        String secondFlowOccurId = secondExchange.getIn().getHeader("FlowOccurId", String.class);
 
         assertNotNull(firstFlowOccurId);
         assertNotNull(secondFlowOccurId);
@@ -190,7 +190,7 @@ public class KMqStarterKameletTest {
             @Override
             public void configure() throws Exception {
                 from("direct:test-input").routeId("test-flow-summary")
-                        .setHeader("step", constant("processing")).to("mock:log-flow-summary")
+                        .setHeader("Step", constant("processing")).to("mock:log-flow-summary")
                         .to("mock:sink");
             }
         });
@@ -208,7 +208,7 @@ public class KMqStarterKameletTest {
 
         // Verify flow summary was logged
         Exchange flowSummaryExchange = mockLogFlowSummary.getReceivedExchanges().get(0);
-        assertEquals("processing", flowSummaryExchange.getIn().getHeader("step"));
+        assertEquals("processing", flowSummaryExchange.getIn().getHeader("Step"));
     }
 
     @Test

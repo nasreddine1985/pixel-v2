@@ -104,7 +104,7 @@ spec:
         
         # Store original body for retry logic
         - setHeader:
-            name: "originalBodyForHttp"
+            name: "OriginalBody"
             simple: "${body}"
         
         # Publish to HTTP endpoint with retry logic
@@ -129,7 +129,7 @@ spec:
                       simple: "${exception.message}"
                   # Restore original body for retry
                   - setBody:
-                      simple: "${header.originalBodyForHttp}"
+                      simple: "${header.OriginalBody}"
                   # Retry logic could be implemented here
                   - throwException:
                       exceptionType: "java.lang.RuntimeException"
@@ -137,9 +137,9 @@ spec:
         
         # Restore original body after HTTP operation
         - setBody:
-            simple: "${header.originalBodyForHttp}"
+            simple: "${header.OriginalBody}"
         - removeHeader:
-            name: "originalBodyForHttp"
+            name: "OriginalBody"
         
         # Set response headers with HTTP details
         - setHeader:

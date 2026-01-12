@@ -69,9 +69,6 @@ spec:
       uri: "kamelet:source"
       steps:
         # Log event before publishing to CFT
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "{{flowId}}"
         - toD:
             uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start CFT publishing - flowCode: ${header.FlowCode}, directory: ${header.CftDirectory}&level=INFO"
             pattern: "InOnly"
@@ -92,39 +89,36 @@ spec:
         
         # Generate unique filename
         - setHeader:
-            name: "fileName"
+            name: "FileName"
             simple: "{{filePrefix}}_{{flowCode}}_${date:now:yyyyMMddHHmmssSSS}{{fileExtension}}"
         
         # Store original body before file operation
         - setHeader:
-            name: "originalBodyForCft"
+            name: "OriginalBody"
             simple: "${body}"
         
         # Write to CFT directory with temporary file
         - toD:
-            uri: "{{directoryPath}}?fileName=${header.fileName}&autoCreate=true&tempPrefix={{tempPrefix}}"
+            uri: "{{directoryPath}}?fileName=${header.FileName}&autoCreate=true&tempPrefix={{tempPrefix}}"
         
         # Restore original body after file operation
         - setBody:
-            simple: "${header.originalBodyForCft}"
+            simple: "${header.OriginalBody}"
         - removeHeader:
-            name: "originalBodyForCft"
+            name: "OriginalBody"
         
         # Set response headers with file details
         - setHeader:
             name: "CftFileName"
-            simple: "${header.fileName}"
+            simple: "${header.FileName}"
         - setHeader:
             name: "CftFilePath"
-            simple: "{{directoryPath}}/${header.fileName}"
+            simple: "{{directoryPath}}/${header.FileName}"
         - setHeader:
             name: "CftPublishStatus"
             constant: "SUCCESS"
         
         # Log event after successful publishing
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "{{flowId}}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End CFT publishing - flowCode: ${header.FlowCode}, file: ${header.fileName}, path: ${header.CftDirectory}/${header.fileName}&level=INFO"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End CFT publishing - flowCode: ${header.FlowCode}, file: ${header.FileName}, path: ${header.CftDirectory}/${header.FileName}&level=INFO"
             pattern: "InOnly"

@@ -42,6 +42,10 @@ spec:
         title: Processing Timestamp
         description: The processing timestamp for the log event
         type: string
+      contextId:
+        title: Context ID
+        description: The context ID for the log event
+        type: string
   template:
     route:
       id: "k_log_event_{{flowId}}"
@@ -66,7 +70,7 @@ spec:
                   simple: "${bean:com.pixel.v2.util.TimestampConverter?method=convertToISO('{{processingTimestamp}}')}"
             
               - setHeader:
-                  name: "logMessage"
+                  name: "LogMessage"
                   simple: |
                     {
                       "logId": "LOG-${date:now:yyyyMMddHHmmssSSS}",
@@ -75,17 +79,17 @@ spec:
                       "halfFlowId": "{{flowId}}-HALF",
                       "flowCode": "{{flowCode}}",
                       "halfFlowCode": "{{flowCode}}-HALF",
-                      "contextId": "${header.CorrelationId}",
+                      "contextId": "{{contextId}}",
                       "clientLogTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
                       "dbLogTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
                       "txt": "{{logMessageTxt}}",
-                      "longTxt": "[{{level}}] {{logMessageTxt}}",
+                      "longTxt": "",
                       "logRole": "{{level}}",
                       "code": "{{level}}",
                       "customStep": "{{logMessageTxt}}",
                       "component": "processing-flow",
                       "instanceId": "I${date:now:yyMMddHHmmss}",
-                      "servicePath": "${header.queueName}",
+                      "servicePath": "${header.QueueName}",
                       "processPath": "/processing",
                       "refFlowId": 0,
                       "beginProcess": "${header.FormattedProcessingTimestamp}",
@@ -109,10 +113,10 @@ spec:
                       "logDay": "${date:now:yyyy-MM-dd}"
                     }
               - log:
-                  message: "K-LOG-EVENTS (Route: ${routeId}): body=${header.logMessage}"
+                  message: "K-LOG-EVENTS (Route: ${routeId}): body=${header.LogMessage}"
                   loggingLevel: DEBUG
               - setBody:
-                  simple: "${header.logMessage}"
+                  simple: "${header.LogMessage}"
 
               # - to:
               #     uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&key={{flowId}}&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer"

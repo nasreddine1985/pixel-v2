@@ -24,10 +24,17 @@ spec:
     from:
       uri: "kamelet:source"
       steps:
-        - log:
-            message: "K-Dynamic-Publisher: Starting dynamic transport routing"
+
+        - setHeader:
+            name: "ProcessingTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+
+        - setHeader:
+            name: "ContextId"
+            simple: "dynamic-publisher-${uuid}"
+
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
             pattern: "InOnly"
         
         - setProperty:
@@ -210,7 +217,7 @@ spec:
                                                       name: "ProcessingTimestamp"
                                                       simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
                                                   - toD:
-                                                      uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start Kafka publishing - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+                                                      uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start Kafka publishing - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
                                                       pattern: "InOnly"
                                                   - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${exchangeProperty.currentPartnerCode}-topic&brokers=${header.Brokers}&key=${exchangeProperty.currentPartnerCode}"
                                                   - setHeader:
@@ -220,7 +227,7 @@ spec:
                                                       name: "ProcessingTimestamp"
                                                       simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
                                                   - toD:
-                                                      uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End Kafka publishing - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+                                                      uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End Kafka publishing - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
                                                       pattern: "InOnly"
                                                   - script:
                                                       groovy: |
@@ -263,6 +270,6 @@ spec:
         - log:
             message: "K-Dynamic-Publisher: Completed"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
             pattern: "InOnly"
         - to: "kamelet:sink"

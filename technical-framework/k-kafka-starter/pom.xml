@@ -6,9 +6,8 @@
 
     <parent>
         <groupId>com.pixel.v2</groupId>
-        <artifactId>pixel-v2</artifactId>
+        <artifactId>technical-framework</artifactId>
         <version>1.0.1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>k-kafka-starter</artifactId>

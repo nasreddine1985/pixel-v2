@@ -24,22 +24,22 @@ spec:
           title: "Message ID"
           description: "Unique identifier for the message"
           type: string
-          default: "${header.messageId}"
+          default: "${header.MessageId}"
         correlationId:
           title: "Correlation ID"
           description: "Correlation identifier for the message"
           type: string
-          default: "${header.correlationId}"
+          default: "${header.CorrelationId}"
         messageType:
           title: "Message Type"
           description: "Type of the message (e.g., PACS008, CAMT054)"
           type: string
-          default: "${header.messageType}"
+          default: "${header.MessageType}"
         source:
           title: "Source"
           description: "Source of the message (e.g., MQ, HTTP, KAFKA)"
           type: string
-          default: "${header.source}"
+          default: "${header.Source}"
         payload:
           title: "Payload"
           description: "Message payload content"
@@ -70,12 +70,12 @@ spec:
         uri: "kamelet:source"
         steps:
           - log:
-              message: "k-db-tx-messages: Starting message persistence - messageId=${header.messageId}, correlationId=${header.correlationId}, type=${header.messageType}, source=${header.source}, bodySize=${body.length()}"
+              message: "k-db-tx-messages: Starting message persistence - messageId=${header.MessageId}, correlationId=${header.CorrelationId}, type=${header.MessageType}, source=${header.Source}, bodySize=${body.length()}"
               loggingLevel: "INFO"
 
           # Store original body to restore it after database operation
           - setHeader:
-              name: "OriginalPayload"
+              name: "OriginalBody"
               simple: "${body}"
 
           - setHeader:
@@ -84,7 +84,7 @@ spec:
 
           - setHeader:
               name: "SqlMessageId"
-              simple: "${header.messageId}"
+              simple: "${header.MessageId}"
               
           - setHeader:
               name: "SqlCorrelationId"
@@ -92,15 +92,15 @@ spec:
               
           - setHeader:
               name: "SqlMessageType"
-              simple: "${header.messageType}"
+              simple: "${header.MessageType}"
               
           - setHeader:
               name: "SqlSource"
-              simple: "${header.source}"
+              simple: "${header.Source}"
               
           - setHeader:
               name: "SqlPayload"
-              simple: "${header.OriginalPayload}"
+              simple: "${header.OriginalBody}"
               
           - setHeader:
               name: "SqlProcessingStatus"
@@ -109,7 +109,7 @@ spec:
           # Check if body is a collection and batch processing is enabled
           - choice:
               when:
-                - simple: "{{enableBatchProcessing}} == true && ${body} is 'java.util.Collection'"
+                - simple: "${header.EnableBatchProcessing} == true && ${body} is 'java.util.Collection'"
                   steps:
                     - log:
                         message: "k-db-tx-messages: Processing batch of ${body.size()} messages"
@@ -122,48 +122,48 @@ spec:
                         streaming: false
                         steps:
                           - setHeader:
-                              name: "BatchMessageId"
+                              name: "MessageId"
                               simple: "MSG-${date:now:yyyyMMddHHmmssSSS}-${exchangeProperty.CamelSplitIndex}"
                           - setHeader:
-                              name: "BatchCorrelationId"
-                              simple: "${header.correlationId}"
+                              name: "CorrelationId"
+                              simple: "${header.CorrelationId}"
                           - setHeader:
-                              name: "BatchMessageType"
-                              simple: "${header.messageType}"
+                              name: "MessageType"
+                              simple: "${header.MessageType}"
                           - setHeader:
-                              name: "BatchSource"
-                              simple: "${header.source}"
+                              name: "Source"
+                              simple: "${header.Source}"
                           - setHeader:
-                              name: "BatchPayload"
+                              name: "Payload"
                               simple: "${body}"
                           # Store current split body before database operation
                           - setHeader:
-                              name: "CurrentBatchPayload"
+                              name: "OriginalBody"
                               simple: "${body}"
                           - doTry:
                               steps:
                                 - setBody:
-                                    simple: "INSERT INTO pixel_v2.tb_messages (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.BatchMessageId}', '${header.BatchCorrelationId}', '${header.BatchMessageType}', '${header.BatchSource}', '${header.BatchPayload}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                                    simple: "INSERT INTO pixel_v2.tb_messages (message_id, correlation_id, message_type, source, payload, processing_status, received_at, created_at, updated_at) VALUES ('${header.MessageId}', '${header.CorrelationId}', '${header.MessageType}', '${header.Source}', '${header.OriginalBody}', 'RECEIVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
                                 - to:
                                     uri: "jdbc:dataSource"
                                 # Restore current batch item body
                                 - setBody:
-                                    simple: "${header.CurrentBatchPayload}"
+                                    simple: "${header.OriginalBody}"
                                 - log:
-                                    message: "k-db-tx-messages: ✅ Batch message persisted - Index: ${exchangeProperty.CamelSplitIndex}, ID: ${header.BatchMessageId}"
+                                    message: "k-db-tx-messages: Batch message persisted - Index: ${exchangeProperty.CamelSplitIndex}, ID: ${header.MessageId}"
                                     loggingLevel: "INFO"
                               doCatch:
                                 - exception: ["java.lang.Exception"]
                                   steps:
                                     - log:
-                                        message: "k-db-tx-messages: ❌ Batch message failed - Index: ${exchangeProperty.CamelSplitIndex}, Error: ${exception.message}"
+                                        message: "k-db-tx-messages: Batch message failed - Index: ${exchangeProperty.CamelSplitIndex}, Error: ${exception.message}"
                                         loggingLevel: "ERROR"
                                     - throwException:
                                         exceptionType: "java.lang.RuntimeException"
                                         message: "Batch message persistence failed: ${exception.message}"
                     # Restore original body after batch processing
                     - setBody:
-                        simple: "${header.OriginalPayload}"
+                        simple: "${header.OriginalBody}"
                     - setHeader:
                         name: "PersistenceStatus"
                         constant: "BATCH_SUCCESS"
@@ -171,14 +171,14 @@ spec:
                         name: "PersistenceOperation"
                         constant: "BATCH_INSERT"
                     - log:
-                        message: "k-db-tx-messages: ✅ Batch processing completed successfully"
+                        message: "k-db-tx-messages: Batch processing completed successfully"
                         loggingLevel: "INFO"
                         
               otherwise:
                 steps:
                   # Debug log to verify parameter values for single message
                   - log:
-                      message: "k-db-tx-messages: About to execute SQL for single message - messageId=${header.messageId}, correlationId=${header.correlationId}, messageType=${header.messageType}, source=${header.source}"
+                      message: "k-db-tx-messages: About to execute SQL for single message - messageId=${header.MessageId}, correlationId=${header.CorrelationId}, messageType=${header.MessageType}, source=${header.Source}"
                       loggingLevel: "INFO"
 
                   # Execute database insert for single message with proper error handling  
@@ -191,7 +191,7 @@ spec:
                         
                         # Restore original body after database operation
                         - setBody:
-                            simple: "${header.OriginalPayload}"
+                            simple: "${header.OriginalBody}"
                         
                         - setHeader:
                             name: "PersistenceStatus"
@@ -206,7 +206,7 @@ spec:
                             constant: "INSERT"
                             
                         - log:
-                            message: "k-db-tx-messages: ✅ Single message persisted successfully - ID=${header.SqlMessageId}, Table=pixel_v2.tb_messages"
+                            message: "k-db-tx-messages: Single message persisted successfully - ID=${header.SqlMessageId}, Table=pixel_v2.tb_messages"
                             loggingLevel: "INFO"
                       doCatch:
                         - exception: ["java.lang.Exception"]

@@ -25,9 +25,11 @@ public class ErrorHandlingRoute extends RouteBuilder {
                                                 errorReason = errorReason.substring(0, 125) + "...";
                                         }
                                         exchange.getIn().setHeader("ShortErrorReason", errorReason);
+
+                                        
                                 })
-                                // Log error event to Kafka with explicit headers
-                                .toD("kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=[ERROR] ${header.FlowOccurId}: ${header.ShortErrorReason}&level=ERROR&processingTimestamp=${header.ProcessingTimestamp}")
+                                // Log error event to Kafka with sanitized headers
+                                .toD("kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=ERROR_${header.SanitizedErrorReason}&level=ERROR&processingTimestamp=${header.ProcessingTimestamp}&contextId=ERROR")
                                 .wireTap("kamelet:k-log-flow-summary?step=ERROR&kafkaTopicName=${header.KafkaFlowSummaryTopicName}&brokers=${header.Brokers}");
         }
 }

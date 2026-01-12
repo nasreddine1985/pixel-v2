@@ -58,9 +58,7 @@ spec:
       steps:
         # - log:
         #     message: "[K-MQ-STARTER] - Message received from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}, CorrelationId: ${header.JMSCorrelationID}"
-        - setHeader:
-            name: "ReceivedTimestamp"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
+        
         - setHeader:
             name: "MessageId"
             simple: "${header.JMSMessageID}"
@@ -94,6 +92,7 @@ spec:
         - setHeader:
             name: "KafkaDistributionTopicName"
             simple: "{{flowCode}}-distribution-topic"
+        
 
         # Store original body before sequence generation
         - setHeader:
@@ -125,6 +124,9 @@ spec:
         - setHeader:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        - setHeader:
+            name: "ContextId"
+            simple: "mq-starter-2-${uuid}"
 
         # Restore original body
         - setBody:
@@ -133,14 +135,8 @@ spec:
             name: "OriginalBody"
         # Log event before starting MQ processing
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start MQ processing - queue: ${header.MqFileName}, MessageId: ${header.MessageId}&level=${header.Level}&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start MQ processing - queue: ${header.MqFileName}, MessageId: ${header.MessageId}&level=${header.Level}&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
             pattern: "InOnly"
-        - setHeader:
-            name: "BeginFlowDatetime"
-            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
-        - setHeader:
-            name: "BeginFlowDate"
-            simple: "${date:now:yyyy-MM-dd}"
         - setHeader:
             name: "Step"
             constant: "IN_PROGRESS"
@@ -157,12 +153,7 @@ spec:
                 - setHeader:
                     name: "JMSEncoding"
                     constant: "utf-8"
-        # # Log event before save to NAS
-        # - to:
-        #     uri: "kamelet:k-log-events?flowId=${uuid}-start&kafkaTopicName=${header.kafkaLogTopicName}&brokers=${header.brokers}&logMessageTxt=Start receipt occurrence - flowOccurId: ${header.flowOccurId}&level=INFO"
-              
-        # Archive flowOccurId and timestamp to NAS
-        # Store original body before file operation
+        
         - setHeader:
             name: "OriginalBody"
             simple: "${body}"
@@ -181,7 +172,6 @@ spec:
         
         # Log event after completing MQ processing
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End MQ processing - queue: ${header.MqFileName}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO&processingTimestamp=${header.ProcessingTimestamp}"
+            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End MQ processing - queue: ${header.MqFileName}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
             pattern: "InOnly"
-        
         - to: "kamelet:sink"

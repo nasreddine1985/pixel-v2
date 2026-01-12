@@ -72,11 +72,11 @@ spec:
               - simple: "'{{key}}' != ''"
                 steps:
                   - setHeader:
-                      name: "kafka.KEY"
+                      name: "KafkaKey"
                       simple: "{{key}}"
         # Publish message to Kafka
         - log:
-             message: "[K-KAFKA-PUBLISHER] Publishing message to topic: {{kafkaTopicName}}, Key: ${header.kafka.KEY}, MessageSize: ${body.length()}"
+             message: "[K-KAFKA-PUBLISHER] Publishing message to topic: {{kafkaTopicName}}, Key: ${header.KafkaKey}, MessageSize: ${body.length()}"
              loggingLevel: DEBUG
         # Save current headers to exchange properties before removing them
         - script:

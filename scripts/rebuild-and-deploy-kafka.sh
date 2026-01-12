@@ -16,6 +16,11 @@ cd "$PROJECT_ROOT"
 # Step 1: Stop and remove existing Kafka containers
 echo "🛑 Step 1: Stopping existing Kafka infrastructure..."
 
+# Stop Kafdrop first (it depends on Kafka)
+docker compose -f docker/docker-compose.yml --profile tools stop kafdrop 2>/dev/null || true
+docker compose -f docker/docker-compose.yml --profile tools rm -f kafdrop 2>/dev/null || true
+echo "✅ Kafdrop container stopped"
+
 # Stop Kafka first (it depends on Zookeeper)
 docker compose -f docker/docker-compose.yml stop kafka 2>/dev/null || true
 docker compose -f docker/docker-compose.yml rm -f kafka 2>/dev/null || true
@@ -27,14 +32,14 @@ docker compose -f docker/docker-compose.yml rm -f zookeeper 2>/dev/null || true
 echo "✅ Zookeeper container stopped"
 
 # Step 2: Remove old Kafka images (optional - for complete refresh)
-echo "🧹 Step 2: Cleaning old Kafka images..."
-OLD_KAFKA_IMAGES=$(docker images --filter=reference="*kafka*" --filter=reference="*pixel-v2*kafka*" -q)
+echo "🧹 Step 2: Cleaning old Kafka and Kafdrop images..."
+OLD_KAFKA_IMAGES=$(docker images --filter=reference="*kafka*" --filter=reference="*pixel-v2*kafka*" --filter=reference="*kafdrop*" -q)
 if [ -n "$OLD_KAFKA_IMAGES" ]; then
-    echo "🗑️  Removing old Kafka images..."
+    echo "🗑️  Removing old Kafka and Kafdrop images..."
     docker rmi $OLD_KAFKA_IMAGES 2>/dev/null || true
-    echo "✅ Old Kafka images cleaned"
+    echo "✅ Old Kafka and Kafdrop images cleaned"
 else
-    echo "✅ No old Kafka images to clean"
+    echo "✅ No old Kafka or Kafdrop images to clean"
 fi
 
 # Step 3: Rebuild Kafka Docker image with fresh configuration
@@ -150,6 +155,33 @@ else
     echo "❌ Zookeeper is not running"
 fi
 
+# Step 8: Deploy Kafdrop for Kafka management
+echo "🚀 Step 8: Deploying Kafdrop for Kafka management..."
+docker compose -f docker/docker-compose.yml --profile tools up -d kafdrop
+if [ $? -eq 0 ]; then
+    echo "✅ Kafdrop deployment SUCCESS"
+    
+    # Wait for Kafdrop to start up
+    echo "⏳ Waiting for Kafdrop to initialize..."
+    sleep 10
+    
+    # Check if Kafdrop container is running
+    if docker ps | grep -q pixel-v2-kafdrop; then
+        echo "✅ Kafdrop container is running"
+        
+        # Show recent Kafdrop logs
+        echo "📋 Recent Kafdrop startup logs:"
+        echo "----------------------------------------"
+        docker logs pixel-v2-kafdrop --tail 10 2>/dev/null || true
+        echo "----------------------------------------"
+    else
+        echo "⚠️  Kafdrop container failed to start"
+        docker logs pixel-v2-kafdrop 2>/dev/null || true
+    fi
+else
+    echo "⚠️  Kafdrop deployment FAILED (optional - continuing anyway)"
+fi
+
 echo ""
 echo "🎉 Kafka Rebuild and Deploy Process Complete!"
 echo "=================================================="
@@ -158,6 +190,7 @@ echo "   - Zookeeper: ✅ Deployed and running on port 2181"
 echo "   - Kafka Broker: ✅ Rebuilt and deployed on ports 9092/29092"
 echo "   - PIXEL-V2 Topics: ✅ $PIXEL_TOPICS topics configured"
 echo "   - Custom Configuration: ✅ Applied"
+echo "   - Kafdrop UI: ✅ Deployed on port 9000 (http://localhost:9000)"
 echo ""
 echo "🔍 To monitor Kafka:"
 echo "   docker logs -f pixel-v2-kafka"
@@ -167,3 +200,6 @@ echo "   docker compose -f docker/docker-compose.yml exec kafka kafka-topics --b
 echo ""
 echo "🌐 Kafka is available at: localhost:9092"
 echo "📡 Zookeeper is available at: localhost:2181"
+echo "🖥️  Kafdrop Web UI: http://localhost:9000"
+echo ""
+echo "💡 Tip: Use Kafdrop to visualize topics, consumer groups, and messages"

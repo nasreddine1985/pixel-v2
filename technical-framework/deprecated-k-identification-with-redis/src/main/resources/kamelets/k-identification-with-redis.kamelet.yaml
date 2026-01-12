@@ -50,7 +50,7 @@ spec:
       steps:
         # Store original message body for preservation
         - setHeader:
-            name: OriginalMessageBody
+            name: OriginalBody
             simple: "${body}"
         
         # Set cache key based on flow code
@@ -82,7 +82,7 @@ spec:
                   - doTry:
                       steps:
                         - log: 
-                            message: "Original message body preserved: ${header.OriginalMessageBody}"
+                            message: "Original message body preserved: ${header.OriginalBody}"
                             loggingLevel: DEBUG
                         - setHeader:
                             name: CamelHttpMethod
@@ -105,7 +105,7 @@ spec:
                             name: CacheTTL
                             constant: "{{cacheTtl}}"
                         - setBody:
-                            simple: "${header.OriginalMessageBody}"
+                            simple: "${header.OriginalBody}"
                         - log: 
                             message: "Original message body restored before Redis SET: ${body}"
                             loggingLevel: DEBUG
@@ -126,7 +126,7 @@ spec:
                                 name: FlowConfiguration
                                 simple: "${body}"
                             - setBody:
-                                simple: "${header.OriginalMessageBody}"
+                                simple: "${header.OriginalBody}"
             otherwise:
               steps:
                 - log: 
@@ -139,8 +139,8 @@ spec:
         
         # Restore original message body
         - setBody:
-            simple: "${header.OriginalMessageBody}"
-        - removeHeader: "OriginalMessageBody"
+            simple: "${header.OriginalBody}"
+        - removeHeader: "OriginalBody"
         
         # Log event after identification
         - toD:
