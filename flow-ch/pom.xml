@@ -4,7 +4,12 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.pixel.v2</groupId>
+    <parent>
+        <groupId>com.pixel.v2</groupId>
+        <artifactId>PIXEL-V2</artifactId>
+        <version>1.0.1-SNAPSHOT</version>
+    </parent>
+
     <artifactId>pixel-ch-app</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -13,39 +18,15 @@
     <description>Standalone Spring Boot Camel application for PIXEL-V2 payment processing</description>
 
     <properties>
-        <maven.compiler.source>21</maven.compiler.source>
-        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <spring-boot.version>3.4.1</spring-boot.version>
-        <camel.version>4.1.0</camel.version>
         <kafka-clients.version>3.6.1</kafka-clients.version>
         <activemq.version>6.0.1</activemq.version>
-        <postgresql.version>42.6.0</postgresql.version>
         <jakarta.jms.version>3.1.0</jakarta.jms.version>
         <logback.version>1.4.11</logback.version>
     </properties>
 
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot BOM -->
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
-                <version>${spring-boot.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- Camel BOM -->
-            <dependency>
-                <groupId>org.apache.camel.springboot</groupId>
-                <artifactId>camel-spring-boot-bom</artifactId>
-                <version>${camel.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
             <!-- Kafka Client Version Management -->
             <dependency>
                 <groupId>org.apache.kafka</groupId>
