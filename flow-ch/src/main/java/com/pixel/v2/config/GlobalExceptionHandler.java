@@ -3,6 +3,7 @@ package com.pixel.v2.config;
 import org.apache.camel.CamelContext;
 import org.apache.camel.Exchange;
 import org.apache.camel.ProducerTemplate;
+import org.apache.camel.ResolveEndpointFailedException;
 import org.apache.camel.spi.CamelEvent;
 import org.apache.camel.spi.CamelEvent.ExchangeFailedEvent;
 import org.apache.camel.support.EventNotifierSupport;
@@ -26,6 +27,7 @@ public class GlobalExceptionHandler {
     @Autowired
     private CamelContext camelContext;
 
+
     @Component
     public class ExceptionNotifier extends EventNotifierSupport {
 
@@ -34,6 +36,11 @@ public class GlobalExceptionHandler {
             if (event instanceof ExchangeFailedEvent exchangeFailedEvent) {
                 Exchange exchange = exchangeFailedEvent.getExchange();
                 Exception exception = exchange.getException();
+
+                // Skip ResolveEndpointFailedException
+                if (exception instanceof ResolveEndpointFailedException) {
+                    return;
+                }
 
                 if (exception != null) {
                     logger.info("Global Exception Handler caught: {} - {}",
@@ -45,15 +52,16 @@ public class GlobalExceptionHandler {
                     exchange.getIn().setHeader("ErrorDetails", getStackTrace(exception));
                     exchange.getIn().setHeader("OriginalRouteId", exchange.getFromRouteId());
 
-                    // Send to error handling route using ProducerTemplate
                     try (ProducerTemplate template = camelContext.createProducerTemplate()) {
-                        template.sendBodyAndHeaders("direct:error-handling",
+                        // Send body and headers to error handler (doesn't re-throw exceptions)
+                        template.sendBodyAndHeaders("direct:handleError",
                                 exchange.getIn().getBody(), exchange.getIn().getHeaders());
                     }
 
-                    logger.info("Exception forwarded to error-handling route");
                 }
             }
+
+
         }
 
         @Override

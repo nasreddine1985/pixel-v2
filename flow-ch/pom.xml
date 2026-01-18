@@ -143,11 +143,7 @@
             <artifactId>camel-file-starter</artifactId>
         </dependency>
 
-        <!-- Redis dependencies for k-identification kamelet -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
-        </dependency>
+
         <dependency>
             <groupId>io.lettuce</groupId>
             <artifactId>lettuce-core</artifactId>
@@ -211,7 +207,7 @@
 
         <dependency>
             <groupId>com.pixel.v2</groupId>
-            <artifactId>k-kafka-starter</artifactId>
+            <artifactId>k-kafka-log-starter</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 
@@ -269,6 +265,12 @@
 
         <dependency>
             <groupId>com.pixel.v2</groupId>
+            <artifactId>k-kafka-log-publisher</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.pixel.v2</groupId>
             <artifactId>k-mq-publisher</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
@@ -284,6 +286,12 @@
         <dependency>
             <groupId>com.pixel.v2</groupId>
             <artifactId>k-duplicate-check</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.pixel.v2</groupId>
+            <artifactId>k-error-handling</artifactId>
             <version>1.0.1-SNAPSHOT</version>
         </dependency>
 
@@ -376,9 +384,9 @@
                 <configuration>
                     <excludes>
                         <!-- Exclude integration tests that require full Camel context with kamelets -->
-                        <exclude>**/ChRouteTest.java</exclude>
+                        <exclude>**/IchsicRouteTest.java</exclude>
                         <exclude>**/PixelCamelApplicationTest.java</exclude>
-                        <exclude>**/RedisProcessorTest.java</exclude>
+
                         <exclude>**/PixelCamelApplicationSimpleTest.java</exclude>
                     </excludes>
                 </configuration>

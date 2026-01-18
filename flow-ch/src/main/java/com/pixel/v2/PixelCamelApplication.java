@@ -17,10 +17,6 @@ import org.springframework.context.annotation.ComponentScan;
 public class PixelCamelApplication {
 
     public static void main(String[] args) {
-        // Configure system properties for better JVM performance
-        System.setProperty("spring.jmx.enabled", "true");
-        System.setProperty("camel.springboot.jmx-enabled", "true");
-
         SpringApplication.run(PixelCamelApplication.class, args);
     }
 }

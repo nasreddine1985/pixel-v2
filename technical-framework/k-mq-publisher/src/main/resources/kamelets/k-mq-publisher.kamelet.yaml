@@ -80,7 +80,7 @@ spec:
             name: "ContextId"
             simple: "mq-publisher-${uuid}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start MQ publishing - queue: {{mqFileName}}, flowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start MQ publishing - queue: {{mqFileName}}, flowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-MQ-PUBLISHER"
             pattern: "InOnly"
         
         # Set JMS headers
@@ -112,5 +112,5 @@ spec:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End MQ publishing - queue: {{mqFileName}}, flowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End MQ publishing - queue: {{mqFileName}}, flowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-MQ-PUBLISHER"
             pattern: "InOnly"

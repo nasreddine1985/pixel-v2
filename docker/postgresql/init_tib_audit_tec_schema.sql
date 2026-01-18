@@ -374,6 +374,7 @@ CREATE TABLE tib_audit_tec.ref_postflow_notify (
     destination VARCHAR(512)
 );
 
+
 -- ========================================
 -- 9. PERFORMANCE INDEXES
 -- ========================================

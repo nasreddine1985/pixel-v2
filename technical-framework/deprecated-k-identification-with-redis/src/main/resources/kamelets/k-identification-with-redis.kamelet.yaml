@@ -61,7 +61,7 @@ spec:
         # Log event before identification
         
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start identification - flowOccurId: ${header.FlowOccurId}, FlowCode: {{flowCode}}&level=INFO"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start identification - flowOccurId: ${header.FlowOccurId}, FlowCode: {{flowCode}}&level=INFO"
             pattern: "InOnly"
         
         # Try to get from Redis cache
@@ -144,7 +144,7 @@ spec:
         
         # Log event after identification
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: {{flowCode}}&level=INFO"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: {{flowCode}}&level=INFO"
             pattern: "InOnly"
         
         # Send to sink

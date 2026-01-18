@@ -82,7 +82,7 @@ spec:
             name: "ProcessingStartTime"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start HTTP publishing - url: {{httpUrl}}, flowCode: {{flowCode}}&level=INFO"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start HTTP publishing - url: {{httpUrl}}, flowCode: {{flowCode}}&level=INFO&processingTimestamp=${header.ProcessingStartTime}&component=K-HTTP-PUBLISHER"
             pattern: "InOnly"
         
         # Set HTTP headers
@@ -154,5 +154,5 @@ spec:
             name: "CamelKameletFlowId"
             simple: "{{flowId}}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End HTTP publishing - url: {{httpUrl}}, flowCode: {{flowCode}}, ResponseCode: ${header.HttpResponseCode}&level=INFO&processingTimestamp=${header.ProcessingStartTime}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End HTTP publishing - url: {{httpUrl}}, flowCode: {{flowCode}}, ResponseCode: ${header.HttpResponseCode}&level=INFO&processingTimestamp=${header.ProcessingStartTime}&component=K-HTTP-PUBLISHER"
             pattern: "InOnly"

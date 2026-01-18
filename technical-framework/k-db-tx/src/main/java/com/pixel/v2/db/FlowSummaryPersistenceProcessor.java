@@ -58,7 +58,7 @@ public class FlowSummaryPersistenceProcessor {
 
             persistFlowSummary(flowSummary);
 
-            logger.debug("K-DB-FLOW-SUMMARY: Successfully persisted FlowSummary - ID: {}, Code: {}",
+            logger.debug("[K-DB-FLOW-SUMMARY] Successfully persisted FlowSummary - ID: {}, Code: {}",
                     flowSummary.getFlowOccurId(), flowSummary.getFlowCode());
 
         } catch (Exception e) {

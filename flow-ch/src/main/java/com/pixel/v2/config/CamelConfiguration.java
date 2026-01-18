@@ -7,11 +7,6 @@ import org.apache.camel.component.jms.JmsComponent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.jms.connection.CachingConnectionFactory;
 
 import jakarta.jms.ConnectionFactory;
@@ -24,20 +19,14 @@ import jakarta.jms.ConnectionFactory;
 @Configuration
 public class CamelConfiguration {
 
-    @Value("${pixel.activemq.broker-url:tcp://pixel-v2-activemq:61616}")
+    @Value("${pixel.activemq.broker-url}")
     private String brokerUrl;
 
-    @Value("${pixel.activemq.username:admin}")
+    @Value("${pixel.activemq.username}")
     private String username;
 
-    @Value("${pixel.activemq.password:admin}")
+    @Value("${pixel.activemq.password}")
     private String password;
-
-    @Value("${pixel.redis.host:redis}")
-    private String redisHost;
-
-    @Value("${pixel.redis.port:6379}")
-    private int redisPort;
 
     /**
      * ActiveMQ Connection Factory for JMS integration Uses reflection to create ActiveMQ connection
@@ -111,35 +100,7 @@ public class CamelConfiguration {
         return jms;
     }
 
-    /**
-     * Redis Connection Factory
-     */
-    @Bean
-    public RedisConnectionFactory redisConnectionFactory() {
-        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
-        config.setHostName(redisHost);
-        config.setPort(redisPort);
-        return new LettuceConnectionFactory(config);
-    }
-
-    /**
-     * Redis Template for k-identification kamelet
-     */
-    @Bean
-    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, String> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-
-        // Use String serializer for both keys and values
-        StringRedisSerializer stringSerializer = new StringRedisSerializer();
-        template.setKeySerializer(stringSerializer);
-        template.setValueSerializer(stringSerializer);
-        template.setHashKeySerializer(stringSerializer);
-        template.setHashValueSerializer(stringSerializer);
-
-        template.afterPropertiesSet();
-        return template;
-    }
+    
 
     /**
      * UUID Generator bean for Camel routes

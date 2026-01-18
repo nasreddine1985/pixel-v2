@@ -67,12 +67,7 @@ spec:
         description: Deserializer class for keys
         type: string
         default: "org.apache.kafka.common.serialization.StringDeserializer"
-      sinkEndpoint:
-        title: Sink Endpoint
-        description: Endpoint to route consumed messages to
-        type: string
-        example: "direct:kafka-message-processing"
-        default: "direct:kafka-message-processing"
+      
   dependencies:
     - "camel:kafka"
     - "camel:log"
@@ -92,17 +87,11 @@ spec:
         keyDeserializer: "{{keyDeserializer}}"
       steps:
         - log:
-            loggingLevel: INFO
-            message: "[KAFKA-STARTER] Received message from topic '{{topic}}' with key: ${header.KafkaKey}, partition: ${header.KafkaPartition}, offset: ${header.KafkaOffset}"
+            loggingLevel: DEBUG
+            message: "[KAFKA-STARTER] Received message from topic '{{topic}}' with key: ${header.KafkaKey}"
         - setHeader:
-            name: MessageSource
-            constant: "KAFKA_TOPIC"
-        - setHeader:
-            name: ReceiptTimestamp
+            name: ProcessingTimestamp
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
-        - setHeader:
-            name: ReceiptChannel
-            constant: "KAFKA_CONSUMER"
         - setHeader:
             name: KafkaTopic
             simple: "{{topic}}"
@@ -110,18 +99,9 @@ spec:
             name: KafkaGroupId
             simple: "{{groupId}}"
         - setHeader:
-            name: KafkaPartition
-            simple: "${header.KafkaPartition}"
-        - setHeader:
-            name: KafkaOffset
-            simple: "${header.KafkaOffset}"
-        - setHeader:
             name: KafkaKey
             simple: "${header.KafkaKey}"
-        - setHeader:
-            name: KafkaTimestamp
-            simple: "${header.KafkaTimestamp}"
         - log:
-            loggingLevel: INFO
-            message: "[KAFKA-STARTER] Message enriched with Kafka metadata, routing to: {{sinkEndpoint}}"
-        - to: "{{sinkEndpoint}}"
+            loggingLevel: DEBUG
+            message: "[KAFKA-STARTER] Message enriched with Kafka metadata, routing to: kamelet:sink"
+        - to: "kamelet:sink"

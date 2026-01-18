@@ -70,7 +70,7 @@ spec:
       steps:
         # Log event before publishing to CFT
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start CFT publishing - flowCode: ${header.FlowCode}, directory: ${header.CftDirectory}&level=INFO"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start CFT publishing - flowCode: ${header.FlowCode}, directory: ${header.CftDirectory}&level=INFO&component=K-CFT-PUBLISHER&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"
         
         # Set publishing metadata
@@ -120,5 +120,5 @@ spec:
         
         # Log event after successful publishing
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End CFT publishing - flowCode: ${header.FlowCode}, file: ${header.FileName}, path: ${header.CftDirectory}/${header.FileName}&level=INFO"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End CFT publishing - flowCode: ${header.FlowCode}, file: ${header.FileName}, path: ${header.CftDirectory}/${header.FileName}&level=INFO&component=K-CFT-PUBLISHER&processingTimestamp=${header.ProcessingTimestamp}"
             pattern: "InOnly"

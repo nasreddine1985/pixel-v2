@@ -52,7 +52,7 @@ spec:
             simple: "{{transformationMode}}"
         
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start transformation - flowOccurId: ${header.FlowOccurId}, XSL: {{xslFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start transformation - flowOccurId: ${header.FlowOccurId}, XSL: {{xslFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-XSL-TRANSFORMATION"
             pattern: "InOnly"
             
         # Transform XML using XSL stylesheet via custom processor
@@ -65,7 +65,7 @@ spec:
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End transformation - flowOccurId: ${header.FlowOccurId}, XSL: {{xslFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End transformation - flowOccurId: ${header.FlowOccurId}, XSL: {{xslFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-XSL-TRANSFORMATION"
             pattern: "InOnly"
             
         

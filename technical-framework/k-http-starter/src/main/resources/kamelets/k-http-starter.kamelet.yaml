@@ -89,15 +89,13 @@ spec:
       uri: "jetty:http://0.0.0.0:{{httpPort}}{{httpPath}}?httpMethodRestrict={{httpMethod}}"
       steps:
         - setHeader:
-            name: "ReceivedTimestamp"
+            name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
         
         # Log event before starting HTTP processing
-        - setHeader:
-            name: "CamelKameletFlowId"
-            simple: "${date:now:yyyyMMddHHmmssSSS}"
+
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start HTTP processing - path: {{httpPath}}, method: {{httpMethod}}, RemoteAddress: ${header.CamelHttpRemoteAddress}&level=INFO"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start HTTP processing - path: {{httpPath}}, method: {{httpMethod}}, RemoteAddress: ${header.CamelHttpRemoteAddress}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&component=K-HTTP-STARTER"
             pattern: "InOnly"
         
         # Store original body before sequence generation
@@ -201,7 +199,7 @@ spec:
             name: "CamelKameletFlowId"
             simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End HTTP processing - path: {{httpPath}}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End HTTP processing - path: {{httpPath}}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&component=K-HTTP-STARTER"
             pattern: "InOnly"
         
         # Set HTTP response status

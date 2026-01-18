@@ -18,9 +18,12 @@
     <modules>
         <module>k-db-tx</module>
         <module>k-duplicate-check</module>
+        <module>k-error-handling</module>
         <module>k-identification</module>
         <module>k-kafka-publisher</module>
         <module>k-kafka-starter</module>
+        <module>k-kafka-log-starter</module>
+        <module>k-kafka-log-publisher</module>
         <module>k-log-events</module>
         <module>k-log-flow-summary</module>
         <module>k-log-tx</module>

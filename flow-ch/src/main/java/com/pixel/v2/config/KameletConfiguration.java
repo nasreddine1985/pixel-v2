@@ -23,9 +23,5 @@ public class KameletConfiguration {
         return new LogPersistenceProcessor();
     }
 
-    /**
-     * Note: K-Log Flow Summary and K-MQ Starter are now pure YAML kamelets
-     * They are automatically discovered from the classpath resources/kamelets directory
-     * No need to register them as Spring beans
-     */
+
 }

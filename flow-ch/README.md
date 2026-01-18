@@ -82,14 +82,7 @@ pixel.nas.shared.smb.url=file:///opt/nas/shared
 pixel.nas.data.smb.url=file:///opt/nas/data
 
 # K-MQ Starter Configuration
-kmq.starter.mqFileName=pacs008.input.queue
-kmq.starter.connectionFactory=jmsConnectionFactory
-kmq.starter.flowCode=ICHSIC
-kmq.starter.payementType=PACS008
-kmq.starter.messageType=PACS.008.001.02
-kmq.starter.kafkaFlowSummaryTopicName=ch-flow-summary
-kmq.starter.kafkaLogTopicName=ch-log-events
-kmq.starter.kafkaDistributionTopicName=ch-distribution
+
 
 # Referential Service Configuration
 pixel.referential.service.url=http://pixel-v2-referential:8099

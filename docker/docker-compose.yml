@@ -271,8 +271,10 @@ services:
       - postgresql
       - kafka
       - activemq
-      - redis
     environment:
+      # Hostname Configuration
+      HOSTNAME: pixel-v2-app-spring-1
+      
       # Spring Boot Configuration
       SPRING_PROFILES_ACTIVE: prod
       JAVA_OPTS: "-Xms512m -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=200 -Djava.security.egd=file:/dev/./urandom -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=8778 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
@@ -296,12 +298,8 @@ services:
       CH_LOG_KAFKA_BROKERS: kafka:29092
       KMQ_STARTER_BROKERS: kafka:29092
       
-      # Redis Configuration for k-identification kamelet
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
+     
       PIXEL_REFERENTIAL_SERVICE_URL: http://pixel-v2-referential:8099
-      PIXEL_KAFKA_BROKERS: kafka:29092
-      PIXEL_CACHE_TTL: 3600
       
       # Application Configuration
       SERVER_PORT: 8080

@@ -1,0 +1,109 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-kafka-log-publisher
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-Kafka Log Publisher"
+    description: "Publishes messages to Kafka topics with configurable serializers and delivery options"
+    required: [kafkaTopicName, brokers]
+    properties:
+      kafkaTopicName:
+        title: "Kafka Topic"
+        type: string
+        description: "Name of the Kafka topic to publish messages to"
+      brokers:
+        title: "Kafka Brokers"
+        type: string
+        description: "Comma-separated list of Kafka broker addresses"
+        default: "localhost:9092"
+      key:
+        title: "Message Key"
+        type: string
+        description: "Key for the Kafka message (can use simple expressions like ${header.CorrelationId})"
+        default: ""
+      keySerializer:
+        title: "Key Serializer"
+        type: string
+        description: "Serializer class for message keys"
+        default: "org.apache.kafka.common.serialization.StringSerializer"
+      valueSerializer:
+        title: "Value Serializer"
+        type: string
+        description: "Serializer class for message values"
+        default: "org.apache.kafka.common.serialization.StringSerializer"
+      requestTimeoutMs:
+        title: "Request Timeout"
+        type: integer
+        description: "Maximum time in milliseconds to wait for the request to complete"
+        default: 5000
+      connectionMaxIdleMs:
+        title: "Connection Max Idle"
+        type: integer
+        description: "Maximum time in milliseconds a connection can remain idle"
+        default: 5000
+      retries:
+        title: "Retries"
+        type: integer
+        description: "Number of retries for failed sends"
+        default: 3
+      requestRequiredAcks:
+        title: "Acknowledgments"
+        type: string
+        description: "Number of acknowledgments the producer requires"
+        enum: ["0", "1", "all"]
+        default: "1"
+      enableIdempotence:
+        title: "Enable Idempotence"
+        type: boolean
+        description: "Enable idempotent producer to avoid duplicate messages"
+        default: false
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+        - setHeader:
+            name: "PublishTimestamp"
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
+        - choice:
+            when:
+              - simple: "'{{key}}' != ''"
+                steps:
+                  - setHeader:
+                      name: "KafkaKey"
+                      simple: "{{key}}"
+        # Publish message to Kafka
+        - log:
+             message: "[K-KAFKA-LOG-PUBLISHER] Publishing message to topic: {{kafkaTopicName}}, Key: ${header.KafkaKey}, MessageSize: ${body.length()}"
+             loggingLevel: DEBUG
+        # Save current headers to exchange properties before removing them
+        - script:
+            groovy: |
+              def savedHeaders = [:]
+              exchange.in.headers.each { key, value ->
+                if (!key.startsWith('kafka.')) {
+                  savedHeaders[key] = value
+                }
+              }
+              exchange.setProperty('savedHeaders', savedHeaders)
+        # Remove all headers except kafka.* for clean Kafka publishing
+        - removeHeaders:
+            pattern: "*"
+            excludePattern: "kafka.*"
+        # Send to Kafka with only body and kafka.* headers
+        - to:
+            uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&keySerializer={{keySerializer}}&valueSerializer={{valueSerializer}}&requestTimeoutMs={{requestTimeoutMs}}&connectionMaxIdleMs={{connectionMaxIdleMs}}&retries={{retries}}&requestRequiredAcks={{requestRequiredAcks}}&enableIdempotence={{enableIdempotence}}"
+        # Restore saved headers after Kafka publishing
+        - script:
+            groovy: |
+              def savedHeaders = exchange.getProperty('savedHeaders', Map.class)
+              if (savedHeaders != null) {
+                savedHeaders.each { key, value ->
+                  exchange.in.setHeader(key, value)
+                }
+              }
+              exchange.removeProperty('savedHeaders')
+        # Continue to next step (validation passed)
+        - to: "kamelet:sink"

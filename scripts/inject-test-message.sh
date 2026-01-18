@@ -14,7 +14,7 @@ MESSAGE_BODY='<?xml version="1.0" encoding="UTF-8"?>
 			<MsgId>1717480887/1XXXX</MsgId>
 			<CreDtTm>2024-11-22T15:43:01+01:00</CreDtTm>
 			<NbOfTxs>1</NbOfTxs>
-			<TtlIntrBkSttlmAmt Ccy="CHF">1003</TtlIntrBkSttlmAmt>
+			<TtlIntrBkSttlmAmt Ccy="CHF">1004</TtlIntrBkSttlmAmt>
 			<SttlmInf>
 				<SttlmMtd>CLRG</SttlmMtd>
 				<ClrSys>

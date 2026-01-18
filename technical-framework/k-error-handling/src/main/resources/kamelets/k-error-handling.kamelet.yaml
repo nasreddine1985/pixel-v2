@@ -1,0 +1,51 @@
+apiVersion: camel.apache.org/v1alpha1
+kind: Kamelet
+metadata:
+  name: k-error-handling
+  labels:
+    camel.apache.org/kamelet.type: "sink"
+spec:
+  definition:
+    title: "K-Error Handling"
+    description: |-
+      Handles errors and exceptions from payment processing routes.
+      Sanitizes error reasons, logs error events to Kafka, and tracks flow summary.
+    type: object
+  template:
+    from:
+      uri: "kamelet:source"
+      steps:
+      
+      # Log error details
+      - log:
+          message: "[K-ERROR-HANDLING] Error processing message. Headers: ErrorType=${header.ErrorType}, ErrorReason=${header.ErrorReason}"
+          loggingLevel: "INFO"
+      
+      # Sanitize error reason (truncate to max 128 characters)
+      - choice:
+          when:
+            - simple: "${header.ErrorReason != null} && ${header.ErrorReason.length()} > 128"
+              steps:
+                - setProperty:
+                    name: "ShortErrorReason"
+                    simple: "${header.ErrorReason.substring(0, 125)}..."
+          otherwise:
+            steps:
+              - setProperty:
+                  name: "ShortErrorReason"
+                  simple: "${header.ErrorReason}"
+      
+      # Set SanitizedErrorReason header for downstream use
+      - setHeader:
+          name: "SanitizedErrorReason"
+          simple: "${exchangeProperty.ShortErrorReason}"
+      
+      # Log error event to Kafka with sanitized headers using configured topics and brokers
+      - toD:
+          uri: "kamelet:k-log-events?kafkaTopicName=${header.kafkaErrorLogTopicName}&brokers=${header.brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=${header.SanitizedErrorReason}&level=ERROR&processingTimestamp=${header.ProcessingTimestamp}&contextId=ERROR&component=K-ERROR-HANDLING&isError=true"
+
+      # Wire tap to also log flow summary
+      - wireTap:
+          uri: "kamelet:k-log-flow-summary?step=ERROR&kafkaTopicName=${header.kafkaFlowSummaryTopicName}&brokers=${header.brokers}"
+      # Send to sink
+      - to: "kamelet:sink"

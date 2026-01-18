@@ -29,109 +29,117 @@ import jakarta.persistence.PersistenceContext;
 @Component
 public class LogEventPersistenceProcessor {
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(LogEventPersistenceProcessor.class);
+        private static final Logger logger =
+                        LoggerFactory.getLogger(LogEventPersistenceProcessor.class);
 
-    @PersistenceContext
-    private EntityManager entityManager;
+        @PersistenceContext
+        private EntityManager entityManager;
 
-    private ObjectMapper objectMapper;
+        private ObjectMapper objectMapper;
 
-    public LogEventPersistenceProcessor() {
-        this.objectMapper = new ObjectMapper();
+        public LogEventPersistenceProcessor() {
+                this.objectMapper = new ObjectMapper();
 
-        // Configure JavaTimeModule with custom LocalDateTime format
-        JavaTimeModule javaTimeModule = new JavaTimeModule();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
+                // Configure JavaTimeModule with custom LocalDateTime format
+                JavaTimeModule javaTimeModule = new JavaTimeModule();
+                DateTimeFormatter formatter =
+                                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS");
 
-        SimpleModule customModule = new SimpleModule();
-        customModule.addDeserializer(java.time.LocalDateTime.class,
-                new LocalDateTimeDeserializer(formatter));
-        customModule.addSerializer(java.time.LocalDateTime.class,
-                new LocalDateTimeSerializer(formatter));
+                SimpleModule customModule = new SimpleModule();
+                customModule.addDeserializer(java.time.LocalDateTime.class,
+                                new LocalDateTimeDeserializer(formatter));
+                customModule.addSerializer(java.time.LocalDateTime.class,
+                                new LocalDateTimeSerializer(formatter));
 
-        this.objectMapper.registerModule(javaTimeModule);
-        this.objectMapper.registerModule(customModule);
-        this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-    }
-
-    /**
-     * Persists a LogEvent entity from JSON string to the database.
-     * 
-     * @param jsonBody the JSON string representing a LogEvent
-     */
-    @Handler
-    @Transactional
-    public void persistLogEventFromJson(@Body String jsonBody) {
-        try {
-
-            // Convert JSON to LogEvent entity using our configured ObjectMapper
-            LogEvent logEvent = objectMapper.readValue(jsonBody, LogEvent.class);
-
-            logger.info("K-DB-LOG-EVENT: LogEvent entity created - ID: {}, Code: {}, Component: {}",
-                    logEvent.getLogId(), logEvent.getCode(), logEvent.getComponent());
-
-            persistLogEvent(logEvent);
-
-            logger.debug(
-                    "K-DB-LOG-EVENT: Successfully persisted LogEvent - ID: {}, Code: {}, Component: {}",
-                    logEvent.getLogId(), logEvent.getCode(), logEvent.getComponent());
-
-        } catch (Exception e) {
-            logger.error(
-                    "K-DB-LOG-EVENT: Failed to parse JSON and persist LogEvent - JSON: {}, Error: {}",
-                    jsonBody, e.getMessage(), e);
-            throw new RuntimeException(
-                    "Failed to parse JSON and persist LogEvent: " + e.getMessage(), e);
+                this.objectMapper.registerModule(javaTimeModule);
+                this.objectMapper.registerModule(customModule);
+                this.objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         }
-    }
 
-    /**
-     * Persists a LogEvent entity to the database.
-     * 
-     * @param logEvent the LogEvent entity to persist
-     * @return the persisted LogEvent entity
-     */
-    @Transactional
-    public LogEvent persistLogEvent(LogEvent logEvent) {
-        try {
-            logger.debug("K-DB: Persisting LogEvent entity - LogId: {}, FlowId: {}, Component: {}",
-                    logEvent.getLogId(), logEvent.getFlowId(), logEvent.getComponent());
+        /**
+         * Persists a LogEvent entity from JSON string to the database.
+         * 
+         * @param jsonBody the JSON string representing a LogEvent
+         */
+        @Handler
+        @Transactional
+        public void persistLogEventFromJson(@Body String jsonBody) {
+                try {
 
-            // Check if entity already exists using logId as primary key
-            LogEvent existingEntity = null;
-            if (logEvent.getLogId() != null) {
-                existingEntity = entityManager.find(LogEvent.class, logEvent.getLogId());
-            }
+                        // Convert JSON to LogEvent entity using our configured ObjectMapper
+                        LogEvent logEvent = objectMapper.readValue(jsonBody, LogEvent.class);
 
-            LogEvent result;
-            if (existingEntity != null) {
-                // Update existing entity
-                logger.debug("K-DB: Updating existing LogEvent entity with LogId: {}",
-                        logEvent.getLogId());
-                result = entityManager.merge(logEvent);
-            } else {
-                // Persist new entity
-                logger.debug("K-DB: Persisting new LogEvent entity with LogId: {}",
-                        logEvent.getLogId());
-                entityManager.persist(logEvent);
-                result = logEvent;
-            }
+                        logger.debug("K-DB-LOG-EVENT: LogEvent entity created - ID: {}, Code: {}, Component: {}",
+                                        logEvent.getLogId(), logEvent.getCode(),
+                                        logEvent.getComponent());
 
-            // Force synchronization to database
-            entityManager.flush();
+                        persistLogEvent(logEvent);
 
-            logger.debug(
-                    "K-DB: LogEvent entity persisted successfully - LogId: {}, FlowId: {}, Component: {}",
-                    result.getLogId(), result.getFlowId(), result.getComponent());
+                        logger.debug("[K-DB-LOG-EVENT] Successfully persisted LogEvent - ID: {}, Code: {}, Component: {}",
+                                        logEvent.getLogId(), logEvent.getCode(),
+                                        logEvent.getComponent());
 
-            return result;
-
-        } catch (Exception e) {
-            logger.error("❌ K-DB: Failed to persist LogEvent entity - LogId: {}, Error: {}",
-                    logEvent.getLogId(), e.getMessage(), e);
-            throw new RuntimeException(
-                    "Failed to persist LogEvent entity with LogId: " + logEvent.getLogId(), e);
+                } catch (Exception e) {
+                        logger.error("[K-DB-LOG-EVENT] Failed to parse JSON and persist LogEvent - JSON: {}, Error: {}",
+                                        jsonBody, e.getMessage(), e);
+                        throw new RuntimeException("Failed to parse JSON and persist LogEvent: "
+                                        + e.getMessage(), e);
+                }
         }
-    }
+
+        /**
+         * Persists a LogEvent entity to the database.
+         * 
+         * @param logEvent the LogEvent entity to persist
+         * @return the persisted LogEvent entity
+         */
+        @Transactional
+        public LogEvent persistLogEvent(LogEvent logEvent) {
+                try {
+                        logger.debug("K-DB: Persisting LogEvent entity - LogId: {}, FlowId: {}, Component: {}",
+                                        logEvent.getLogId(), logEvent.getFlowId(),
+                                        logEvent.getComponent());
+
+                        // Set DBLOGTIMESTAMP to current timestamp
+                        logEvent.setDbLogTimestamp(java.time.LocalDateTime.now());
+                        logger.debug("K-DB: Set DBLOGTIMESTAMP to current timestamp: {}",
+                                        logEvent.getDbLogTimestamp());
+
+                        // Check if entity already exists using logId as primary key
+                        LogEvent existingEntity = null;
+                        if (logEvent.getLogId() != null) {
+                                existingEntity = entityManager.find(LogEvent.class,
+                                                logEvent.getLogId());
+                        }
+
+                        LogEvent result;
+                        if (existingEntity != null) {
+                                // Update existing entity
+                                logger.debug("[K-DB] Updating existing LogEvent entity with LogId: {}",
+                                                logEvent.getLogId());
+                                result = entityManager.merge(logEvent);
+                        } else {
+                                // Persist new entity
+                                logger.debug("[K-DB] Persisting new LogEvent entity with LogId: {}",
+                                                logEvent.getLogId());
+                                entityManager.persist(logEvent);
+                                result = logEvent;
+                        }
+
+                        // Force synchronization to database
+                        entityManager.flush();
+
+                        logger.debug("K-DB: LogEvent entity persisted successfully - LogId: {}, FlowId: {}, Component: {}",
+                                        result.getLogId(), result.getFlowId(),
+                                        result.getComponent());
+
+                        return result;
+
+                } catch (Exception e) {
+                        logger.error("❌ K-DB: Failed to persist LogEvent entity - LogId: {}, Error: {}",
+                                        logEvent.getLogId(), e.getMessage(), e);
+                        throw new RuntimeException("Failed to persist LogEvent entity with LogId: "
+                                        + logEvent.getLogId(), e);
+                }
+        }
 }

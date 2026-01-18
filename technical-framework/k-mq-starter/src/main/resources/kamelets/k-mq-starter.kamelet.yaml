@@ -42,7 +42,6 @@ spec:
         title: Data Source
         description: Database data source bean name for sequence generation
         type: string
-        default: "dataSource"
       nasArchiveUrl:
         title: NAS Archive URL
         description: File URL for archiving messages to NAS (mounted directory)
@@ -58,7 +57,6 @@ spec:
       steps:
         # - log:
         #     message: "[K-MQ-STARTER] - Message received from queue: {{mqFileName}}, MessageId: ${header.JMSMessageID}, CorrelationId: ${header.JMSCorrelationID}"
-        
         - setHeader:
             name: "MessageId"
             simple: "${header.JMSMessageID}"
@@ -75,11 +73,11 @@ spec:
             name: "ConnectionFactory"
             simple: "{{connectionFactory}}"
         - setHeader:
-            name: "NasArchiveUrl"
-            simple: "{{nasArchiveUrl}}"
-        - setHeader:
             name: "DataSource"
             simple: "{{dataSource}}"
+        - setHeader:
+            name: "NasArchiveUrl"
+            simple: "{{nasArchiveUrl}}"
         - setHeader:
             name: "Brokers"
             constant: "{{brokers}}"
@@ -102,7 +100,7 @@ spec:
         - doTry:
             steps:
               - to:
-                  uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource=#dataSource"
+                  uri: "sql:SELECT nextval('pixel_v2.flow_occurence_id_seq') as flowOccurId?dataSource={{dataSource}}"
               - setHeader:
                   name: "FlowOccurId"
                   simple: "${body[0][flowOccurId]}"
@@ -126,7 +124,7 @@ spec:
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
         - setHeader:
             name: "ContextId"
-            simple: "mq-starter-2-${uuid}"
+            simple: "mq-starter-${uuid}"
 
         # Restore original body
         - setBody:
@@ -135,7 +133,7 @@ spec:
             name: "OriginalBody"
         # Log event before starting MQ processing
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start MQ processing - queue: ${header.MqFileName}, MessageId: ${header.MessageId}&level=${header.Level}&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start MQ processing - queue: ${header.MqFileName}, MessageId: ${header.MessageId}&level=${header.Level}&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-MQ-STARTER"
             pattern: "InOnly"
         - setHeader:
             name: "Step"
@@ -172,6 +170,6 @@ spec:
         
         # Log event after completing MQ processing
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End MQ processing - queue: ${header.MqFileName}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End MQ processing - queue: ${header.MqFileName}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-MQ-STARTER"
             pattern: "InOnly"
         - to: "kamelet:sink"

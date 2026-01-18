@@ -49,9 +49,8 @@ if wait_for_kafka; then
     # Switzerland (CH) Flow Topics
     create_topic "ICHSIC-flow-summary-topic" 1 1
     create_topic "ICHSIC-log-event-topic" 1 1
-    create_topic "ICHSIC-out-topic" 1 1
-    create_topic "ICHSIC-in-topic" 1 1
-    create_topic "ICHSIC-exception-topic" 1 1
+    create_topic "ICHSIC-distribution-topic" 1 1
+    create_topic "ICHSIC-error-event-topic" 1 1
     
     # General PIXEL-V2 Topics
     create_topic "pixel-v2transaction-audit-topic" 1 1

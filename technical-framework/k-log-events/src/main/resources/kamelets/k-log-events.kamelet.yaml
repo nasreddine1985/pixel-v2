@@ -22,14 +22,6 @@ spec:
         type: string
         enum: ["INFO", "WARN", "DEBUG", "ERROR"]
         default: "INFO"
-      kafkaTopicName:
-        title: Kafka Topic Name
-        description: Kafka topic for log events
-        type: string
-      brokers:
-        title: Kafka Brokers
-        description: Kafka broker endpoints
-        type: string
       flowCode:
         title: Flow Code
         description: The flow code for logging context
@@ -46,6 +38,22 @@ spec:
         title: Context ID
         description: The context ID for the log event
         type: string
+      component:
+        title: Component
+        description: The component generating the log event
+        type: string
+      kafkaTopicName:
+        title: Kafka Topic Name
+        description: Kafka topic to publish log events to
+      brokers:
+        title: Kafka Brokers
+        description: Kafka broker endpoints
+        type: string
+      isError:
+        title: Is Error
+        description: Flag indicating if the log event is an error
+        type: boolean
+        default: false
   template:
     route:
       id: "k_log_event_{{flowId}}"
@@ -56,7 +64,7 @@ spec:
         # Log route ID at the start
         - log:
             message: "K-LOG-EVENTS: Starting processing with route ID: ${routeId}"
-            loggingLevel: INFO
+            loggingLevel: DEBUG
         # Error handling with doTry/doCatch
         - doTry:
             steps:
@@ -64,64 +72,93 @@ spec:
               - setHeader:
                   name: "OriginalBody"
                   simple: "${body}"
+              # Set hostname header from property (configured via Spring application.properties)
+              - setHeader:
+                  name: "Hostname"
+                  simple: "${properties:pixel.hostname}"
               # Transform processingTimestamp from compact format to ISO format
               - setHeader:
                   name: "FormattedProcessingTimestamp" 
                   simple: "${bean:com.pixel.v2.util.TimestampConverter?method=convertToISO('{{processingTimestamp}}')}"
             
-              - setHeader:
-                  name: "LogMessage"
-                  simple: |
-                    {
-                      "logId": "LOG-${date:now:yyyyMMddHHmmssSSS}",
-                      "datats": "${header.FormattedProcessingTimestamp}",
-                      "flowId": "{{flowId}}",
-                      "halfFlowId": "{{flowId}}-HALF",
-                      "flowCode": "{{flowCode}}",
-                      "halfFlowCode": "{{flowCode}}-HALF",
-                      "contextId": "{{contextId}}",
-                      "clientLogTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
-                      "dbLogTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
-                      "txt": "{{logMessageTxt}}",
-                      "longTxt": "",
-                      "logRole": "{{level}}",
-                      "code": "{{level}}",
-                      "customStep": "{{logMessageTxt}}",
-                      "component": "processing-flow",
-                      "instanceId": "I${date:now:yyMMddHHmmss}",
-                      "servicePath": "${header.QueueName}",
-                      "processPath": "/processing",
-                      "refFlowId": 0,
-                      "beginProcess": "${header.FormattedProcessingTimestamp}",
-                      "endProcess": null,
-                      "contextTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
-                      "msgSentTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
-                      "messagingType": "JMS",
-                      "msgId": "${header.MessageId}",
-                      "msgPriority": 1,
-                      "msgCorrelationId": "${header.CorrelationId}",
-                      "msgSourceSystem": "PIXEL-V2",
-                      "msgPrivateContext": "${header.toString()}",
-                      "msgTransactionId": "${header.MessageId}",
-                      "msgProperties": "{}",
-                      "msgBatchName": null,
-                      "msgBatchMsgNo": null,
-                      "msgBatchSize": null,
-                      "xmlMsgAction": null,
-                      "msgResubmitInd": "N",
-                      "msgBody": "",
-                      "logDay": "${date:now:yyyy-MM-dd}"
-                    }
-              - log:
-                  message: "K-LOG-EVENTS (Route: ${routeId}): body=${header.LogMessage}"
-                  loggingLevel: DEBUG
+              # Choose log message format based on isError flag
+              - choice:
+                  when:
+                    - simple: "{{isError}} == true"
+                      steps:
+                        - setHeader:
+                            name: "LogMessage"
+                            simple: |
+                              {
+                                "logid": "ERR-${date:now:yyyyMMddHHmmssSSS}",
+                                "datats": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                                "errtimestamp": "${header.FormattedProcessingTimestamp}",
+                                "component": "{{component}}",
+                                "instanceid": "${header.Hostname}",
+                                "processstack": "${header.OriginalRouteId}",
+                                "rootprocesspath": "{{flowCode}}",
+                                "code": "{{level}}_{{contextId}}",
+                                "description": "{{logMessageTxt}}",
+                                "shortdesc": "${header.ErrorType}",
+                                "type": "E",
+                                "severity": 3,
+                                "stack": "${header.ErrorDetails}",
+                                "input": "${header.OriginalBody}",
+                                "debugdata": "{ \"flowId\": \"{{flowId}}\", \"flowCode\": \"{{flowCode}}\", \"contextId\": \"{{contextId}}\" }"
+                              }
+                  otherwise:
+                    steps:
+                      - setHeader:
+                          name: "LogMessage"
+                          simple: |
+                            {
+                              "logId": "LOG-${date:now:yyyyMMddHHmmssSSS}",
+                              "datats": "${header.FormattedProcessingTimestamp}",
+                              "flowId": "{{flowId}}",
+                              "halfFlowId": "{{flowId}}-HALF",
+                              "flowCode": "{{flowCode}}",
+                              "halfFlowCode": "{{flowCode}}-HALF",
+                              "contextId": "{{contextId}}",
+                              "clientLogTimestamp": "${header.FormattedProcessingTimestamp}",
+                              "txt": "{{logMessageTxt}}",
+                              "longTxt": "${header.Hostname}",
+                              "logRole": "{{level}}",
+                              "code": "{{level}}",
+                              "customStep": "{{logMessageTxt}}",
+                              "component": "{{component}}",
+                              "instanceId": "I-${date:now:yyMMddHHmmss}",
+                              "servicePath": "",
+                              "processPath": "processing",
+                              "refFlowId": 0,
+                              "beginProcess": "${header.FormattedProcessingTimestamp}",
+                              "endProcess": null,
+                              "contextTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                              "msgSentTimestamp": "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}",
+                              "messagingType": "JMS",
+                              "msgId": "${header.MessageId}",
+                              "msgPriority": 1,
+                              "msgCorrelationId": "${header.CorrelationId}",
+                              "msgSourceSystem": "PIXEL-V2",
+                              "msgPrivateContext": "",
+                              "msgTransactionId": "${header.MessageId}",
+                              "msgProperties": "{}",
+                              "msgBatchName": null,
+                              "msgBatchMsgNo": null,
+                              "msgBatchSize": null,
+                              "xmlMsgAction": null,
+                              "msgResubmitInd": "N",
+                              "msgBody": "",
+                              "logDay": "${date:now:yyyy-MM-dd}"
+                            }
+
               - setBody:
                   simple: "${header.LogMessage}"
+              - log:
+                  message: "[{{component}}] ${header.Hostname} - {{logMessageTxt}} - brokers: {{brokers}}, topic: {{kafkaTopicName}}"
+                  loggingLevel: INFO
 
-              # - to:
-              #     uri: "kafka:{{kafkaTopicName}}?brokers={{brokers}}&key={{flowId}}&keySerializer=org.apache.kafka.common.serialization.StringSerializer&valueSerializer=org.apache.kafka.common.serialization.StringSerializer"
 
-              - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&key={{flowId}}"
+              - toD: "kamelet:k-kafka-log-publisher?kafkaTopicName={{kafkaTopicName}}&brokers={{brokers}}&key={{flowId}}"
             doCatch:
               - exception: "java.lang.Exception"
                 steps:

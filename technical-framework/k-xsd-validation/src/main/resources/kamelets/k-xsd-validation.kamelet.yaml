@@ -54,7 +54,7 @@ spec:
             name: "ContextId"
             simple: "xsd-validation-${uuid}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start validation - flowOccurId: ${header.FlowOccurId}, XSD: {{xsdFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start validation - flowOccurId: ${header.FlowOccurId}, XSD: {{xsdFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-XSD-VALIDATION"
             pattern: "InOnly"
             
         # Validate XML against XSD using custom processor
@@ -66,7 +66,7 @@ spec:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyyMMddHHmmssSSS}"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End validation - flowOccurId: ${header.FlowOccurId}, XSD: {{xsdFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.kafkaTopicName}&brokers=${headers.kafkaBrokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End validation - flowOccurId: ${header.FlowOccurId}, XSD: {{xsdFileName}}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-XSD-VALIDATION"
             pattern: "InOnly"
             
         # Log validation success

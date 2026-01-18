@@ -1,0 +1,100 @@
+apiVersion: camel.apache.org/v1
+kind: Kamelet
+metadata:
+  name: k-kafka-log-starter
+  labels:
+    camel.apache.org/kamelet.type: "source"
+    camel.apache.org/kamelet.group: "Kafka"
+    camel.apache.org/provider: "Pixel"
+  annotations:
+    camel.apache.org/kamelet.support.level: "Stable"
+    camel.apache.org/catalog.version: "4.1.0"
+    camel.apache.org/provider: "Pixel V2"
+spec:
+  definition:
+    title: "Kafka Log Starter"
+    description: "Consumes log event messages from Kafka topics with error handling and monitoring"
+    required:
+      - bootstrapServers
+      - topic
+    type: object
+    properties:
+      bootstrapServers:
+        title: Bootstrap Servers
+        description: Comma-separated list of Kafka bootstrap servers
+        type: string
+        example: "localhost:9092"
+      topic:
+        title: Topic Name
+        description: Name of the Kafka log topic to consume from
+        type: string
+        example: "pixel-logs"
+      groupId:
+        title: Consumer Group ID
+        description: Kafka consumer group identifier
+        type: string
+        example: "log-processor-group"
+        default: "k-kafka-log-receiver-group"
+      offsetReset:
+        title: Offset Reset Strategy
+        description: What to do when there is no initial offset in Kafka
+        type: string
+        enum: ["earliest", "latest"]
+        default: "latest"
+      maxPollRecords:
+        title: Max Poll Records
+        description: Maximum number of records returned in a single call to poll()
+        type: integer
+        default: 500
+      sessionTimeoutMs:
+        title: Session Timeout
+        description: Timeout used to detect client failures when using Kafka's group management facility
+        type: integer
+        default: 30000
+      autoCommitIntervalMs:
+        title: Auto Commit Interval
+        description: Frequency in milliseconds that the consumer offsets are auto-committed to Kafka
+        type: integer
+        default: 5000
+      valueDeserializer:
+        title: Value Deserializer
+        description: Deserializer class for values
+        type: string
+        default: "org.apache.kafka.common.serialization.StringDeserializer"
+      keyDeserializer:
+        title: Key Deserializer
+        description: Deserializer class for keys
+        type: string
+        default: "org.apache.kafka.common.serialization.StringDeserializer"
+      
+  dependencies:
+    - "camel:kafka"
+    - "camel:log"
+    - "camel:direct"
+    - "camel:jackson"
+  template:
+    from:
+      uri: "kafka:{{topic}}"
+      parameters:
+        brokers: "{{bootstrapServers}}"
+        groupId: "{{groupId}}"
+        autoOffsetReset: "{{offsetReset}}"
+        maxPollRecords: "{{maxPollRecords}}"
+        sessionTimeoutMs: "{{sessionTimeoutMs}}"
+        autoCommitIntervalMs: "{{autoCommitIntervalMs}}"
+        valueDeserializer: "{{valueDeserializer}}"
+        keyDeserializer: "{{keyDeserializer}}"
+      steps:
+        # Log incoming message
+        - log:
+            loggingLevel: DEBUG
+            message: "[KAFKA-LOG-STARTER] Received log event from topic '{{topic}}'"
+        
+        # Set processing headers
+        - setHeader:
+            name: ProcessingTimestamp
+            simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSS}"
+        
+        
+        # Route to sink
+        - to: "kamelet:sink"

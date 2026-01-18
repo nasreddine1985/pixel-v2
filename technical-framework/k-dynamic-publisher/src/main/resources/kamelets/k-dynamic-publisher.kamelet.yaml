@@ -34,7 +34,7 @@ spec:
             simple: "dynamic-publisher-${uuid}"
 
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-DYNAMIC-PUBLISHER"
             pattern: "InOnly"
         
         - setProperty:
@@ -144,7 +144,7 @@ spec:
                                                   - setHeader:
                                                       name: "PartnerCode"
                                                       simple: "${exchangeProperty.currentPartnerCode}"
-                                                  - toD: "kamelet:k-cft-publisher?directoryPath=/nas/outgoing/cft&flowCode=${exchangeProperty.flowCode}&flowId=${exchangeProperty.flowId}&dataSource=dataSource"
+                                                  - toD: "kamelet:k-cft-publisher?directoryPath=/nas/outgoing/cft&flowCode=${exchangeProperty.flowCode}&flowId=${exchangeProperty.flowId}&dataSource=${header.DataSource}"
                                                   - script:
                                                       groovy: |
                                                         def successCount = exchange.properties['successCount'] as Integer ?: 0
@@ -216,9 +216,7 @@ spec:
                                                   - setHeader:
                                                       name: "ProcessingTimestamp"
                                                       simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
-                                                  - toD:
-                                                      uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=Start Kafka publishing - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
-                                                      pattern: "InOnly"
+                                                
                                                   - toD: "kamelet:k-kafka-publisher?kafkaTopicName=${exchangeProperty.currentPartnerCode}-topic&brokers=${header.Brokers}&key=${exchangeProperty.currentPartnerCode}"
                                                   - setHeader:
                                                       name: "PartnerCode"
@@ -226,9 +224,7 @@ spec:
                                                   - setHeader:
                                                       name: "ProcessingTimestamp"
                                                       simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
-                                                  - toD:
-                                                      uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End Kafka publishing - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
-                                                      pattern: "InOnly"
+                                                  
                                                   - script:
                                                       groovy: |
                                                         def successCount = exchange.properties['successCount'] as Integer ?: 0
@@ -270,6 +266,6 @@ spec:
         - log:
             message: "K-Dynamic-Publisher: Completed"
         - toD:
-            uri: "kamelet:k-log-events?flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&kafkaTopicName=${header.KafkaLogTopicName}&brokers=${header.Brokers}&logMessageTxt=End Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-DYNAMIC-PUBLISHER"
             pattern: "InOnly"
         - to: "kamelet:sink"

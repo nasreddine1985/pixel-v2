@@ -171,21 +171,8 @@ echo "Username: pixelv2"
 echo "Password: pixelv2_secure_password"
 echo ""
 echo "JDBC URL: jdbc:postgresql://localhost:5432/pixelv2"
-echo ""
-print_status "Updated table structures:"
-echo "- flow_summary: Updated to match FlowSummary JPA entity (FLOW_OCCUR_ID as PK)"
-echo "- log_event: Updated to match LogEvent JPA entity (LOGID as PK)"
-echo "- Generated columns: BEGIN_FLOW_DATE, END_FLOW_DATE, LOG_DAY"
-echo "- Updated indexes: Performance optimized for new structure"
 
-# Step 12: Display final success message
-print_status "To view PostgreSQL logs, run:"
-echo "docker logs ${CONTAINER_NAME} -f"
 
 print_success "PostgreSQL container rebuild and restart completed successfully!"
-echo ""
-echo "======================================"
-echo "   PostgreSQL Container Ready!       "
-echo "======================================"
 
 exit 0
