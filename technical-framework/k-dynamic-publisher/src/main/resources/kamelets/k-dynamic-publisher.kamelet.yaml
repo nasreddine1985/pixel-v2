@@ -33,13 +33,25 @@ spec:
             name: "ContextId"
             simple: "dynamic-publisher-${uuid}"
 
+        - setProperty:
+            name: "originalXmlBody"
+            simple: "${body}"
+
         - toD:
             uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=Start Dynamic Publisher - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-DYNAMIC-PUBLISHER"
             pattern: "InOnly"
         
-        - setProperty:
-            name: "originalXmlBody"
-            simple: "${body}"
+        # Archive originalXmlBody to NAS OUT folder
+        - setHeader:
+            name: "OriginalBody"
+            simple: "${exchangeProperty.originalXmlBody}"
+        - toD:
+            uri: "${header.NasArchiveUrl}/OUT/${header.FlowOccurId}/?fileName=${header.FlowCode}_${header.FlowOccurId}_${date:now:yyyyMMddHHmmssSSS}.txt&autoCreate=true&tempPrefix=.tmp"
+        # Restore original message body
+        - setBody:
+            simple: "${exchangeProperty.originalXmlBody}"
+        - removeHeader:
+            name: "OriginalBody"
         
         - setProperty:
             name: "refFlowDataJson"
@@ -258,10 +270,6 @@ spec:
                 steps:
                   - log:
                       message: "K-Dynamic-Publisher: No RefFlowData found in header RefFlowData"
-                      
-        # Restore original message body
-        - setBody:
-            simple: "${exchangeProperty.originalXmlBody}"
         
         - log:
             message: "K-Dynamic-Publisher: Completed"

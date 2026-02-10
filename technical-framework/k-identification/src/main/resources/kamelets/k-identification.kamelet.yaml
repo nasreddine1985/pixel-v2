@@ -154,10 +154,22 @@ spec:
             simple: "${header.OriginalBody}"
         - removeHeader: "OriginalBody"
         
+        
+        
+        # Generate TechPivot XML from flow data
+        - toD:
+            uri: "kamelet:k-techpivot-xml?operation=generate&xmlOutputHeader=techPivotXml&flowDataJsonHeader=RefFlowData"
+        
+        # Log the generated TechPivot XML
+        - log:
+            message: "TechPivot XML generated for flow ${header.FlowCode}: ${header.techPivotXml}"
+            loggingLevel: INFO
         # Log event after identification
         - setHeader:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        
+        # Log event after identification
         - toD:
             uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End identification - flowOccurId: ${header.FlowOccurId}, FlowCode: ${header.FlowCode}&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-IDENTIFICATION"
             pattern: "InOnly"

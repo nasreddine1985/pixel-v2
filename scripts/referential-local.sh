@@ -12,7 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-REFERENTIEL_DIR="referentiel"
+REFERENTIEL_DIR="referential"
 REFERENTIEL_PORT=8099
 PID_FILE="/tmp/referentiel-local.pid"
 LOG_FILE="/tmp/referentiel-local.log"
@@ -171,17 +171,17 @@ start_referentiel() {
     
     # Determine the correct project directory
     local project_dir=""
-    if [[ -f "referentiel/pom.xml" ]]; then
+    if [[ -f "referential/pom.xml" ]]; then
         # We're in the pixel-v2 root directory
         project_dir="."
-    elif [[ -f "../referentiel/pom.xml" ]]; then
+    elif [[ -f "../referential/pom.xml" ]]; then
         # We're in a subdirectory (like scripts)
         project_dir=".."
-    elif [[ -f "../../referentiel/pom.xml" ]]; then
+    elif [[ -f "../../referential/pom.xml" ]]; then
         # We're in a deeper subdirectory
         project_dir="../.."
     else
-        echo -e "${RED}❌ Error: Cannot find referentiel/pom.xml${NC}"
+        echo -e "${RED}❌ Error: Cannot find referential/pom.xml${NC}"
         echo -e "${YELLOW}Please ensure you're running this script from the pixel-v2 directory or its subdirectories${NC}"
         exit 1
     fi
@@ -191,8 +191,8 @@ start_referentiel() {
     project_dir=$(pwd)
     echo -e "${BLUE}📁 Working directory: $project_dir${NC}"
     
-    # Update referentiel directory path
-    REFERENTIEL_DIR="referentiel"
+    # Update referential directory path
+    REFERENTIEL_DIR="referential"
     
     # Check if already running
     if is_referentiel_running; then
@@ -228,11 +228,9 @@ start_referentiel() {
     echo -e "${BLUE}🔍 Checking PostgreSQL dependency...${NC}"
     if ! docker ps | grep -q "pixel-v2-postgresql"; then
         echo -e "${YELLOW}⚠️  PostgreSQL container not running. Starting...${NC}"
-        current_dir=$(pwd)
-        docker-compose -f docker/docker-compose.yml up -d postgresql
+        docker-compose -f "${project_dir}/docker/docker-compose.yml" up -d postgresql
         echo -e "${YELLOW}⏳ Waiting for PostgreSQL to be ready...${NC}"
         sleep 10
-        cd "$current_dir/${REFERENTIEL_DIR}"
     else
         echo -e "${GREEN}✅ PostgreSQL is running${NC}"
     fi

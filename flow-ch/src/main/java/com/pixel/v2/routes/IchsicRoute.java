@@ -66,7 +66,7 @@ public class IchsicRoute extends RouteBuilder {
 
                                 // // Step 4: XSD Validation using
                                 // // k-xsd-validation
-                                .to(K_XSD_VALIDATION_ENDPOINT)
+                                //.to(K_XSD_VALIDATION_ENDPOINT)
 
                                 // // Step 5: XSLT Transformation using k-xsl-transformation
                                 .to(K_XSL_PACS008_001_08TO_CDM_TRANSFORMATION_ENDPOINT)

@@ -3,12 +3,17 @@ package com.pixel.v2.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 /**
  * Entity representing LOG_EVENT table Contains detailed logging information for flow processing
@@ -137,6 +142,13 @@ public class LogEvent {
 
     @Column(name = "LOG_DAY", insertable = false, updatable = false)
     private LocalDate logDay;
+
+    @OneToMany(mappedBy = "logEvent", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ApplicationContext> applicationContexts = new ArrayList<>();
+
+    // Transient field to receive applicationContexts as strings from JSON
+    @Transient
+    private List<String> applicationContextNames = new ArrayList<>();
 
     // Default constructor
     public LogEvent() {
@@ -457,6 +469,32 @@ public class LogEvent {
 
     public void setLogDay(LocalDate logDay) {
         this.logDay = logDay;
+    }
+
+    public List<ApplicationContext> getApplicationContexts() {
+        return applicationContexts;
+    }
+
+    public void setApplicationContexts(List<ApplicationContext> applicationContexts) {
+        this.applicationContexts = applicationContexts;
+    }
+
+    public void addApplicationContext(ApplicationContext context) {
+        this.applicationContexts.add(context);
+        context.setLogEvent(this);
+    }
+
+    public void removeApplicationContext(ApplicationContext context) {
+        this.applicationContexts.remove(context);
+        context.setLogEvent(null);
+    }
+
+    public List<String> getApplicationContextNames() {
+        return applicationContextNames;
+    }
+
+    public void setApplicationContextNames(List<String> applicationContextNames) {
+        this.applicationContextNames = applicationContextNames;
     }
 
     @Override

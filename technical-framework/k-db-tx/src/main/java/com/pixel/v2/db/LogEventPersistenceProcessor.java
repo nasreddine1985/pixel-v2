@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateTimeDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateTimeSerializer;
+import com.pixel.v2.model.ApplicationContext;
 import com.pixel.v2.model.LogEvent;
 
 import jakarta.persistence.EntityManager;
@@ -73,6 +74,9 @@ public class LogEventPersistenceProcessor {
                                         logEvent.getLogId(), logEvent.getCode(),
                                         logEvent.getComponent());
 
+                        // Build ApplicationContext entities from applicationContextNames
+                        buildApplicationContextsFromNames(logEvent);
+
                         persistLogEvent(logEvent);
 
                         logger.debug("[K-DB-LOG-EVENT] Successfully persisted LogEvent - ID: {}, Code: {}, Component: {}",
@@ -84,6 +88,35 @@ public class LogEventPersistenceProcessor {
                                         jsonBody, e.getMessage(), e);
                         throw new RuntimeException("Failed to parse JSON and persist LogEvent: "
                                         + e.getMessage(), e);
+                }
+        }
+
+        /**
+         * Builds ApplicationContext entities from applicationContextNames. Converts each string
+         * name into a complete ApplicationContext entity.
+         * 
+         * @param logEvent the LogEvent to build application contexts for
+         */
+        private void buildApplicationContextsFromNames(LogEvent logEvent) {
+                if (logEvent.getApplicationContextNames() == null
+                                || logEvent.getApplicationContextNames().isEmpty()) {
+                        return;
+                }
+
+                for (String contextName : logEvent.getApplicationContextNames()) {
+                        if (contextName != null && !contextName.trim().isEmpty()) {
+                                ApplicationContext appContext = new ApplicationContext();
+                                appContext.setName(contextName.trim());
+                                appContext.setLogId(logEvent.getLogId());
+                                appContext.setDatats(logEvent.getDatats());
+                                appContext.setFlowId(logEvent.getFlowId());
+                                appContext.setLogEvent(logEvent);
+
+                                logEvent.addApplicationContext(appContext);
+
+                                logger.debug("[K-DB] Built ApplicationContext from string - Name: {}, LogId: {}",
+                                                contextName, logEvent.getLogId());
+                        }
                 }
         }
 
@@ -133,6 +166,12 @@ public class LogEventPersistenceProcessor {
                                         result.getLogId(), result.getFlowId(),
                                         result.getComponent());
 
+                        // Persist associated ApplicationContext entities if they exist
+                        if (logEvent.getApplicationContexts() != null
+                                        && !logEvent.getApplicationContexts().isEmpty()) {
+                                persistApplicationContexts(result);
+                        }
+
                         return result;
 
                 } catch (Exception e) {
@@ -140,6 +179,51 @@ public class LogEventPersistenceProcessor {
                                         logEvent.getLogId(), e.getMessage(), e);
                         throw new RuntimeException("Failed to persist LogEvent entity with LogId: "
                                         + logEvent.getLogId(), e);
+                }
+        }
+
+        /**
+         * Persists ApplicationContext entities associated with a LogEvent.
+         * 
+         * @param logEvent the parent LogEvent entity with application contexts to persist
+         */
+        @Transactional
+        private void persistApplicationContexts(LogEvent logEvent) {
+                try {
+                        for (ApplicationContext appContext : logEvent.getApplicationContexts()) {
+                                // Ensure appContext has the same logId, datats, and flowId as the
+                                // parent LogEvent
+                                appContext.setLogId(logEvent.getLogId());
+                                appContext.setDatats(logEvent.getDatats());
+                                appContext.setFlowId(logEvent.getFlowId());
+                                appContext.setLogEvent(logEvent);
+
+                                logger.debug("[K-DB] Persisting ApplicationContext - LogId: {}, Name: {}, Value: {}",
+                                                appContext.getLogId(), appContext.getName(),
+                                                appContext.getValue() != null ? appContext
+                                                                .getValue()
+                                                                .substring(0, Math.min(50,
+                                                                                appContext.getValue()
+                                                                                                .length()))
+                                                                : "null");
+
+                                entityManager.persist(appContext);
+                        }
+
+                        // Force synchronization to database
+                        entityManager.flush();
+
+                        logger.debug("[K-DB] Successfully persisted {} ApplicationContext entities for LogId: {}",
+                                        logEvent.getApplicationContexts().size(),
+                                        logEvent.getLogId());
+
+                } catch (Exception e) {
+                        logger.error("❌ K-DB: Failed to persist ApplicationContext entities for LogId: {}, Error: {}",
+                                        logEvent.getLogId(), e.getMessage(), e);
+                        throw new RuntimeException(
+                                        "Failed to persist ApplicationContext entities for LogId: "
+                                                        + logEvent.getLogId(),
+                                        e);
                 }
         }
 }

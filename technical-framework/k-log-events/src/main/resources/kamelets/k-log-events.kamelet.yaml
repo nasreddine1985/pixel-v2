@@ -54,6 +54,13 @@ spec:
         description: Flag indicating if the log event is an error
         type: boolean
         default: false
+        required: false
+      applicationContextNames:
+        title: Application Context Names
+        description: Collection of application context names to attach to the log event (optional)
+        type: string
+        default: "[]"
+        required: false
   template:
     route:
       id: "k_log_event_{{flowId}}"
@@ -148,7 +155,8 @@ spec:
                               "xmlMsgAction": null,
                               "msgResubmitInd": "N",
                               "msgBody": "",
-                              "logDay": "${date:now:yyyy-MM-dd}"
+                              "logDay": "${date:now:yyyy-MM-dd}",
+                              "applicationContextNames": {{applicationContextNames}}
                             }
 
               - setBody:

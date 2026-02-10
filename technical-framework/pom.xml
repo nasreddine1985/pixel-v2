@@ -34,6 +34,7 @@
         <module>k-xsl-transformation</module>
         <module>k-cft-publisher</module>
         <module>k-http-publisher</module>
+        <module>k-techpivot-xml</module>
     </modules>
 
     <properties>

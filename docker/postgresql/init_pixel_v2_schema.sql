@@ -120,6 +120,35 @@ CREATE TABLE pixel_v2.exception (
   DEBUGDATA TEXT
 );
 
+-- Create application context table for storing context data linked to log events
+CREATE TABLE IF NOT EXISTS pixel_v2.application_context (
+  ID SERIAL PRIMARY KEY,
+  LOGID VARCHAR(64) NOT NULL,
+  DATATS TIMESTAMP(6) WITHOUT TIME ZONE NOT NULL,
+  FLOWID VARCHAR(64) NOT NULL,
+  NAME VARCHAR(255) NOT NULL,
+  VALUE TEXT,
+  
+  -- Unique constraint on logid and name combination
+  CONSTRAINT uq_app_context_logid_name UNIQUE (LOGID, NAME),
+  
+  -- Foreign key to log_event table
+  CONSTRAINT fk_app_context_log_event FOREIGN KEY (LOGID) 
+    REFERENCES pixel_v2.log_event(LOGID) ON DELETE CASCADE
+);
+
+-- Create indexes for application context queries
+CREATE INDEX IF NOT EXISTS idx_app_context_logid ON pixel_v2.application_context(LOGID);
+CREATE INDEX IF NOT EXISTS idx_app_context_name ON pixel_v2.application_context(NAME);
+CREATE INDEX IF NOT EXISTS idx_app_context_flowid ON pixel_v2.application_context(FLOWID);
+CREATE INDEX IF NOT EXISTS idx_app_context_datats ON pixel_v2.application_context(DATATS);
+
+-- Create indexes for exception table queries
+CREATE INDEX IF NOT EXISTS idx_exception_datats ON pixel_v2.exception(DATATS);
+CREATE INDEX IF NOT EXISTS idx_exception_component ON pixel_v2.exception(COMPONENT);
+CREATE INDEX IF NOT EXISTS idx_exception_severity ON pixel_v2.exception(SEVERITY);
+CREATE INDEX IF NOT EXISTS idx_exception_type ON pixel_v2.exception(TYPE);
+
 -- Create indexes for log events queries (matching JPA @Index annotations)
 CREATE INDEX IF NOT EXISTS idx_log_datats ON pixel_v2.log_event(DATATS);
 CREATE INDEX IF NOT EXISTS idx_log_flowid ON pixel_v2.log_event(FLOWID);

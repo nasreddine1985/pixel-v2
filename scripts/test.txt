@@ -1,0 +1,1215 @@
+package com.bnpp.bw;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
+
+/**
+ * @author 822042
+ *
+ */
+public class CERTISToXML implements CERTISConstants {
+
+	/** Private Global variables **/
+	private TransformerHandler th;
+	private StreamResult out;
+	private AttributesImpl atts;
+	private int lineNumber=0;
+	private boolean eof=false;
+    private String RejectMsg="";
+	private String responseCode = "SUCCESS";
+	private String responseDescription = "Successfully converted the message.";
+	
+	private static Map<String, String> props = new HashMap<String, String>();
+
+	private static final org.apache.logging.log4j.Logger loggerBW = org.apache.logging.log4j.LogManager.getLogger("bw.logger");
+
+	static {
+		Properties properties = new Properties();
+		InputStream objInputStream = null;
+		String strPropsPath = "certis.properties";
+		try {
+			// Access properties file
+			objInputStream = CERTISToXML.class.getResourceAsStream(strPropsPath);
+			// load data in file into a Properties object
+			properties.load(objInputStream);
+			// convert Properties object into a HashMap
+			props = new HashMap<String, String>((Map) properties);
+		} catch (FileNotFoundException fe) {
+			loggerBW.error("Properties file not found (" + strPropsPath + ")."
+					+ fe.getMessage());
+			fe.printStackTrace();
+		} catch (IOException ie) {
+			loggerBW.error("Exception while reading properties file ("
+					+ strPropsPath + ")." + ie.getMessage());
+			ie.printStackTrace();
+		} catch (Exception e) {
+			loggerBW.error("Exception while reading properties from file at ("
+					+ strPropsPath + ")." + e.getMessage());
+			e.printStackTrace();
+		} finally {
+			try {
+				// closing inputstream object
+				if (objInputStream != null) {
+					objInputStream.close();
+				}
+			} catch (IOException ie) {
+				loggerBW.error("Exception while closing inputstream object "
+						+ ie.getMessage());
+				ie.printStackTrace();
+			}
+		}
+	}
+	
+	private String getProperty(String key) {
+		return props.get(key);
+	}
+
+	
+	/**
+	 * @param patternName
+	 * @return the pattern value corresponding to the current Certis element tag  
+	 * @throws IllegalArgumentException
+	 * @throws SecurityException
+	 * @throws IllegalAccessException
+	 * @throws NoSuchFieldException
+	 */
+	private String getPatternValue(String patternName) throws IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException{
+		//return  (String) this.getClass().getDeclaredField(patternName).get(String.class);
+		//return  (String) this.getClass().getInterfaces()[0].getDeclaredField(patternName).get(String.class);
+		return (String)CERTISConstants.class.getDeclaredField(patternName).get(null);
+			
+	}
+
+	/**
+	 * @param fileName
+	 * @param msgNbr
+	 * @param position 
+	 * @return parsing the msgNbr first Certis message from file "Filename"   
+	 * @throws Exception 
+	 * @throws TransformerException
+	 */
+	
+	@SuppressWarnings("finally")
+	public String[] parseCertisFile(String fileName , int msgNbr , int position ) 
+	//	throws Exception 
+		{
+		// initialize  global variables
+	
+		
+	    String[] ReturnValue = new String[2];
+		try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName),Charset.forName(getProperty(READER_ENCODING))))) {
+			//in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName),Charset.forName("ISO-8859-1")));
+
+
+            Writer writer = new StringWriter();
+		    out = new StreamResult(writer);
+		    lineNumber=position;
+		    
+		    // initialize local variables
+			String msgCertis = "";
+			String str=null;
+			int index = 0;
+			boolean CertisMsgStart;
+			
+			// skip the firsts "position" lines 
+			if( position ==0)   str=in.readLine();
+			else for (int i = 0; i<=position; i++) str=in.readLine();
+			
+			// init the XML CERTIS result
+			initXML();
+
+			// read the firsts 'position' message Certis  
+			while (index < msgNbr && !eof ){
+				CertisMsgStart = true;	
+				while (str != null  && CertisMsgStart ) {
+					msgCertis +=  msgCertis.isEmpty()?str:DELIM+str ;
+					str = in.readLine();
+					if (str != null && str.startsWith(CERTIS_Msg_Starting)) CertisMsgStart=false;
+					lineNumber++;
+				}
+				// build message Certis
+				if (!msgCertis.isEmpty()){
+					doit(msgCertis, Integer.parseInt(msgCertis.substring(3,5)));
+				}
+				msgCertis="";
+				index++;
+				
+				if (str==null) eof=true;
+			}
+			// close XML CERTIS result 
+			in.close();
+	    	closeXML();
+	    	//System.out.println(writer.toString());
+	    	ReturnValue[0]= writer.toString();
+	    	ReturnValue[1]= RejectMsg;
+		} 
+		catch (FileNotFoundException e) 
+		{
+			responseCode = "FAILURE";
+			responseDescription = "file : "+ fileName+" doesn't exists";
+			loggerBW.error(responseDescription + "\n" + e.getMessage());
+			//e.printStackTrace();
+		}
+		catch (Exception e) 
+		{
+			responseCode = "FAILURE";
+			responseDescription = e.getMessage();
+			loggerBW.error(responseDescription);
+			//e.printStackTrace();
+		} 
+		finally
+		{
+			return ReturnValue;
+		}
+		
+		/*
+		 
+		writer = new StringWriter();
+	    out = new StreamResult(writer);
+	    lineNumber=position;
+	    
+	    // initialize local variables
+		String msgCertis = new String();
+		String str=null;
+		int index = 0;
+		boolean CertisMsgStart;
+		
+		// skip the firsts "position" lines 
+		if( position ==0)   str=in.readLine();
+		else for (int i = 0; i<=position; i++) str=in.readLine();
+		
+		// init the XML CERTIS result
+		initXML();
+
+		// read the firsts 'position' message Certis  
+		while (index < msgNbr && !eof ){
+			CertisMsgStart = true;	
+			while (str != null  && CertisMsgStart ) {
+				msgCertis +=  msgCertis.isEmpty()?str:DELIM+str ;
+				str = in.readLine();
+				if (str != null && str.startsWith(CERTIS_Msg_Starting)) CertisMsgStart=false;
+				lineNumber++;
+			}
+			// build message Certis
+			if (!msgCertis.isEmpty()){
+				doit(msgCertis, Integer.parseInt(msgCertis.substring(3,5)));
+			}
+			msgCertis="";
+			index++;
+			
+			if (str==null) eof=true;
+		}
+		// close XML CERTIS result 
+		in.close();
+    	closeXML();
+		return writer.toString();
+		
+		*/
+
+	}
+
+	/**
+	 * this method build an XML one Message Certis
+	 * @param Message
+	 * @param msgType
+	 */
+	private  void doit( String Message , int msgType) {
+		String previouselt = null;
+
+		try {
+			// get the type of the message Certis
+			String nodeName0 = null;
+			/**
+			 * Changed for Release V3.1 
+			 switch (msgType) {
+			 	case 01: case 11: case 12: case 13:
+			 	case 14:
+			 		nodeName0 = "CP";break;
+			 	case 15 : case 16: case 17: case 18: case 25: 
+			 	case 26:
+			 		nodeName0 = "TP";break;
+			 	case 21 :
+			 		nodeName0 = "B2B";break;
+			 	case 33 :
+			 		nodeName0 = "RR" ;break;
+			 	case 32 :
+			 		nodeName0 = "RD";break;
+			 	case 55 :
+			 		nodeName0 = "RJ";break;
+			 	case 61: case 62: case 63: case 64: case 65: case 66: case 67: case 68: 
+			 	case 69: case 71: case 72: case 73: case 74: case 75: case 77: case 82: case 83: 
+			 	case 85 : 
+			 		nodeName0 = "NACK";break;
+			 default : nodeName0=null;break;
+			 */
+			switch (msgType) {
+			 	case 01: case 11: case 12: case 13:	case 14: case 96 : case 97 : // CP
+			 	case 15 : case 16: case 17: case 18: case 25: case 26: // TP
+			 	case 21 : // B2B
+			 		nodeName0 = "Payment";
+			 		break;
+			 	case 33 : //RR
+			 	case 32 : //RD
+				case 98 : //RD
+			 		nodeName0 = "Request" ;
+			 		break;
+			 	case 55 : //RJ
+			 		nodeName0 = "Reject";
+			 		break;
+			 	case 61: case 62: case 63: case 64: case 65: case 66: case 67: case 68: case 69: 
+			 	case 71: case 72: case 73: case 74: case 75: case 77: case 82: case 83:	case 85: case 88 :
+			 		nodeName0 = "NACK";
+			 		break;
+			 	case 52: //Balance --> Added this node to handle Balance Files i.e. HD:52 
+			 		nodeName0 = "Balance";
+			 		break;
+				 default : 
+					 nodeName0=null;
+				 break;
+			}
+			
+			// build one xml Certis 
+			if (nodeName0!=null ){
+				 atts.clear();
+				 th.startElement("","MESSAGECERTIS","MESSAGECERTIS",atts);
+				 th.startElement("",nodeName0,nodeName0,atts);
+				 StringTokenizer st = new StringTokenizer(Message, DELIM);
+				 if(nodeName0.equals("Reject")){
+					// System.out.println("Message is : "+Message);
+					 RejectMsg=RejectMsg+"\n"+Message;
+					// System.out.println("Complete Msg: "+RejectMsg);
+			      }
+				 previouselt ="";
+				 while (st.hasMoreTokens()) {
+					 String str = st.nextToken();
+					 
+					 if (!str.startsWith("   ")&& !previouselt.isEmpty()) {
+						 process( previouselt);
+						 previouselt=str;
+					 }else
+						 previouselt+= previouselt.isEmpty() ?str:DELIM+str;
+				
+				 } 
+				 process(previouselt);
+				 th.endElement("",nodeName0,nodeName0);
+				 th.endElement("","MESSAGECERTIS","MESSAGECERTIS");
+			}
+			
+		} catch (Exception e) {
+			responseCode = "FAILURE";
+			responseDescription = e.getMessage();
+			//loggerBW.error(e.getMessage());
+			//e.printStackTrace();
+		}
+	}
+
+	/**
+	 * this method build an xml from one line 
+	 * @param iV
+	 * @throws Exception 
+	 * @throws SAXException
+	 */
+	private  void process( String iV) throws Exception  {
+		// Since the separator character " " has special meaning
+		// with regular expression.
+		String iN = iV.substring(0, 2);
+		String content;
+	    atts.clear();
+		Pattern p = Pattern.compile(getPatternValue(iN+"_Pattern"));
+        Matcher m = p.matcher(iV);
+        m.matches();
+    	try {
+			th.startElement("",iN,iN,atts);
+			
+			// Get all groups for this match
+	        for (int i = 2; i<=m.groupCount(); i+=2) {
+	        	content = m.group(i);
+	            if (content!=null && !content.isEmpty()){
+		           	th.startElement("",iN+(i/2),iN+(i/2),atts);
+		   	    	th.characters(content.toCharArray(),0,content.length());
+		   	    	th.endElement("",iN+(i/2) ,iN+(i/2));
+	            }
+	        }
+	        
+			//th.endElement("",iN,iN);
+			
+			/* Removed and reverted the older parsing code
+			// If each record of CERTIS (HD/KC/ID/...) contains a new line (DI/ZI/KP...) then if condition is followed, since the regular expression structure is different from the other one  
+			if(m.group(0).contains(DELIM))
+			{
+				for (int i = 2, index =1; i<=m.groupCount();  i+=3) 
+				{
+					content = m.group(i);
+					if (content!=null && content.length()>0)
+					{
+						th.startElement("",iN+index,iN+index,atts);
+						th.characters(content.toCharArray(),0,content.length());
+						th.endElement("",iN+index ,iN+index);
+					}
+					if(content!=null)
+						index+=1;
+				}
+			}
+			
+			//If each record of CERTIS (HD/KC/ID/...) does not contain a new line (HD/ZK/...) then the else condition is followed
+			else
+			{
+				for (int i = 2; i<=m.groupCount();  i+=2) 
+				{
+					content = m.group(i);
+					if (content!=null && content.length()>0)
+					{
+						th.startElement("",iN+(i/2),iN+(i/2),atts);
+						th.characters(content.toCharArray(),0,content.length());
+						th.endElement("",iN+(i/2) ,iN+(i/2));
+					}
+				}
+			}
+			*/
+	        
+		} catch (SAXException e) {
+			responseCode = "FAILURE";
+			responseDescription = "error during creation xml elements : " + e.getMessage();
+			//loggerBW.error("error during creation xml elements : ",e);
+			//e.printStackTrace();
+		} catch (Exception e) {
+			responseCode = "FAILURE";
+			responseDescription = "error during parsing text : " + e.getMessage() + "\n" + iV + " for pattern " + p.toString();
+			//loggerBW.error("error during parsing text : ",e);
+			//loggerBW.debug(iV + " for pattern " + p.toString());
+		}
+    	finally	{
+    		th.endElement("",iN,iN);
+    	}
+       
+	}
+
+
+	
+	/**
+	 *   this method initialize  an xml message Certis
+	 * @throws ParserConfigurationException
+	 * @throws TransformerConfigurationException
+	 * @throws SAXException
+	 */
+	private   void initXML() throws ParserConfigurationException,
+			TransformerConfigurationException, SAXException {
+		// JAXP + SAX
+		SAXTransformerFactory tf = (SAXTransformerFactory) SAXTransformerFactory
+				.newInstance();
+		th = tf.newTransformerHandler();
+		Transformer serializer = th.getTransformer();
+		serializer.setOutputProperty(OutputKeys.MEDIA_TYPE, "XML");
+		//serializer.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
+		serializer.setOutputProperty(OutputKeys.ENCODING, getProperty(WRITER_ENCODING));
+		// pretty XML output
+		 serializer.setOutputProperty
+	        ("{http://xml.apache.org/xslt}indent-amount", "4");
+	    serializer.setOutputProperty(OutputKeys.INDENT,"yes");
+
+        th.setResult(out);
+		th.startDocument();
+		
+		atts = new AttributesImpl();
+		atts.addAttribute("", "xmlns", "xmlns", "CDATA", MESSAGE_XML_NAMESPACE_URI);
+		th.startElement("" ,"MESSAGE" , "MESSAGE" , atts);
+		atts.addAttribute("", "xmlns", "xmlns", "CDATA", MSGSCERTIS_XML_NAMESPACE_URI);
+		th.startElement("" ,"MSGSCERTIS"  ,  "MSGSCERTIS" , atts);
+		atts.clear();
+		
+	}
+	
+	
+
+	/**
+	 * Close an xml Certis result
+	 * @throws SAXException
+	 */
+	private  void closeXML() throws SAXException {
+		
+	    th.endElement("","MSGSCERTIS","MSGSCERTIS");
+	    
+	    th.startElement("" ,"POSITION"  ,  "POSITION" , atts);
+	    th.characters(String.valueOf(lineNumber).toCharArray(), 0, String.valueOf(lineNumber).length());
+	    th.endElement("","POSITION","POSITION");
+	    
+	    th.startElement("" ,"EOF"  ,  "EOF" , atts);
+	    th.characters(String.valueOf(eof).toCharArray(), 0, String.valueOf(eof).length());
+	    th.endElement("","EOF","EOF");
+	    
+	    th.startElement("" ,"ResponseCode"  ,  "ResponseCode" , atts);
+	    th.characters(responseCode.toCharArray(), 0, responseCode.length());
+	    th.endElement("","ResponseCode","ResponseCode");
+	    
+	    th.startElement("" ,"ResponseDescription"  ,  "ResponseDescription" , atts);
+	    th.characters(responseDescription.toCharArray(), 0, responseDescription.length());
+	    th.endElement("","ResponseDescription","ResponseDescription");
+	    
+	    th.endElement("","MESSAGE","MESSAGE");
+	    th.endDocument();
+	}
+		
+
+	/**
+	 * string left pad with "size" space  
+	 * @param str
+	 * @param size
+	 * @return
+	 */
+	public  String padStart(String str, int size) {
+		return String.format("%" + size + "s", str);
+	}
+	
+	public int getLineNumber() {
+		return lineNumber;
+	}
+
+	public boolean isEof() {
+		return eof;
+	}
+
+	/*-------------------------Main Class---------------------------------(For testing purpose)
+	 public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		CERTISToXML xm = new CERTISToXML();
+		xm.parseCertisFile("C://Apoorva//Docs//CZ//JIRA_1369//F130723679_GEBA.510", 200, 0);
+
+	}*/
+
+}
+
+
+package com.bnpp.bw;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.sax.SAXTransformerFactory;
+import javax.xml.transform.sax.TransformerHandler;
+import javax.xml.transform.stream.StreamResult;
+
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
+
+/**
+ * @author 822042
+ *
+ */
+public class CERTISToXML implements CERTISConstants {
+
+	/** Private Global variables **/
+	private TransformerHandler th;
+	private StreamResult out;
+	private AttributesImpl atts;
+	private int lineNumber=0;
+	private boolean eof=false;
+	private Writer writer ;
+	private String RejectMsg="";
+	private String responseCode = "SUCCESS";
+	private String responseDescription = "Successfully converted the message.";
+	
+	private static Map<String, String> props = new HashMap<String, String>();
+	
+	private static org.apache.log4j.Logger loggerBW = org.apache.log4j.Logger.getLogger("bw.logger");
+	
+	static {
+		Properties properties = new Properties();
+		InputStream objInputStream = null;
+		String strPropsPath = "certis.properties";
+		try {
+			// Access properties file
+			objInputStream = CERTISToXML.class.getResourceAsStream(strPropsPath);
+			// load data in file into a Properties object
+			properties.load(objInputStream);
+			// convert Properties object into a HashMap
+			props = new HashMap<String, String>((Map) properties);
+		} catch (FileNotFoundException fe) {
+			loggerBW.error("Properties file not found (" + strPropsPath + ")."
+					+ fe.getMessage());
+			fe.printStackTrace();
+		} catch (IOException ie) {
+			loggerBW.error("Exception while reading properties file ("
+					+ strPropsPath + ")." + ie.getMessage());
+			ie.printStackTrace();
+		} catch (Exception e) {
+			loggerBW.error("Exception while reading properties from file at ("
+					+ strPropsPath + ")." + e.getMessage());
+			e.printStackTrace();
+		} finally {
+			try {
+				// closing inputstream object
+				if (objInputStream != null) {
+					objInputStream.close();
+				}
+			} catch (IOException ie) {
+				loggerBW.error("Exception while closing inputstream object "
+						+ ie.getMessage());
+				ie.printStackTrace();
+			}
+		}
+	}
+	
+	private String getProperty(String key) {
+		return props.get(key);
+	}
+
+	
+	/**
+	 * @param patternName
+	 * @return the pattern value corresponding to the current Certis element tag  
+	 * @throws IllegalArgumentException
+	 * @throws SecurityException
+	 * @throws IllegalAccessException
+	 * @throws NoSuchFieldException
+	 */
+	private String getPatternValue(String patternName) throws IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException{
+		//return  (String) this.getClass().getDeclaredField(patternName).get(String.class);
+		//return  (String) this.getClass().getInterfaces()[0].getDeclaredField(patternName).get(String.class);
+		return (String)CERTISConstants.class.getDeclaredField(patternName).get(null);
+			
+	}
+
+	/**
+	 * @param fileName
+	 * @param msgNbr
+	 * @param position 
+	 * @return parsing the msgNbr first Certis message from file "Filename"   
+	 * @throws Exception 
+	 * @throws TransformerException
+	 */
+	
+	@SuppressWarnings("finally")
+	public String[] parseCertisFile(String fileName , int msgNbr , int position ) 
+	//	throws Exception 
+		{
+		// initialize  global variables
+	
+		
+		BufferedReader in = null;
+	    String[] ReturnValue = new String[2];
+		try {
+			in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName),Charset.forName(getProperty(READER_ENCODING))));
+			//in = new BufferedReader(new InputStreamReader(new FileInputStream(fileName),Charset.forName("ISO-8859-1")));
+			
+			
+			writer = new StringWriter();
+		    out = new StreamResult(writer);
+		    lineNumber=position;
+		    
+		    // initialize local variables
+			String msgCertis = new String();
+			String str=null;
+			int index = 0;
+			boolean CertisMsgStart;
+			
+			// skip the firsts "position" lines 
+			if( position ==0)   str=in.readLine();
+			else for (int i = 0; i<=position; i++) str=in.readLine();
+			
+			// init the XML CERTIS result
+			initXML();
+
+			// read the firsts 'position' message Certis  
+			while (index < msgNbr && !eof ){
+				CertisMsgStart = true;	
+				while (str != null  && CertisMsgStart ) {
+					msgCertis +=  msgCertis.isEmpty()?str:DELIM+str ;
+					str = in.readLine();
+					if (str != null && str.startsWith(CERTIS_Msg_Starting)) CertisMsgStart=false;
+					lineNumber++;
+				}
+				// build message Certis
+				if (!msgCertis.isEmpty()){
+					doit(msgCertis, Integer.parseInt(msgCertis.substring(3,5)));
+				}
+				msgCertis="";
+				index++;
+				
+				if (str==null) eof=true;
+			}
+			// close XML CERTIS result 
+			in.close();
+	    	closeXML();
+	    	//System.out.println(writer.toString());
+	    	ReturnValue[0]= writer.toString();
+	    	ReturnValue[1]=RejectMsg.toString();			
+		} 
+		catch (FileNotFoundException e) 
+		{
+			responseCode = "FAILURE";
+			responseDescription = "file : "+ fileName+" doesn't exists";
+			loggerBW.error(responseDescription + "\n" + e.getMessage());
+			//e.printStackTrace();
+		}
+		catch (Exception e) 
+		{
+			responseCode = "FAILURE";
+			responseDescription = e.getMessage();
+			loggerBW.error(responseDescription);
+			//e.printStackTrace();
+		} 
+		finally
+		{
+			return ReturnValue;
+		}
+		
+		/*
+		 
+		writer = new StringWriter();
+	    out = new StreamResult(writer);
+	    lineNumber=position;
+	    
+	    // initialize local variables
+		String msgCertis = new String();
+		String str=null;
+		int index = 0;
+		boolean CertisMsgStart;
+		
+		// skip the firsts "position" lines 
+		if( position ==0)   str=in.readLine();
+		else for (int i = 0; i<=position; i++) str=in.readLine();
+		
+		// init the XML CERTIS result
+		initXML();
+
+		// read the firsts 'position' message Certis  
+		while (index < msgNbr && !eof ){
+			CertisMsgStart = true;	
+			while (str != null  && CertisMsgStart ) {
+				msgCertis +=  msgCertis.isEmpty()?str:DELIM+str ;
+				str = in.readLine();
+				if (str != null && str.startsWith(CERTIS_Msg_Starting)) CertisMsgStart=false;
+				lineNumber++;
+			}
+			// build message Certis
+			if (!msgCertis.isEmpty()){
+				doit(msgCertis, Integer.parseInt(msgCertis.substring(3,5)));
+			}
+			msgCertis="";
+			index++;
+			
+			if (str==null) eof=true;
+		}
+		// close XML CERTIS result 
+		in.close();
+    	closeXML();
+		return writer.toString();
+		
+		*/
+
+	}
+
+	/**
+	 * this method build an XML one Message Certis
+	 * @param Message
+	 * @param msgType
+	 */
+	private  void doit( String Message , int msgType) {
+		String previouselt = null;
+
+		try {
+			// get the type of the message Certis
+			String nodeName0 = null;
+			/**
+			 * Changed for Release V3.1 
+			 switch (msgType) {
+			 	case 01: case 11: case 12: case 13:
+			 	case 14:
+			 		nodeName0 = "CP";break;
+			 	case 15 : case 16: case 17: case 18: case 25: 
+			 	case 26:
+			 		nodeName0 = "TP";break;
+			 	case 21 :
+			 		nodeName0 = "B2B";break;
+			 	case 33 :
+			 		nodeName0 = "RR" ;break;
+			 	case 32 :
+			 		nodeName0 = "RD";break;
+			 	case 55 :
+			 		nodeName0 = "RJ";break;
+			 	case 61: case 62: case 63: case 64: case 65: case 66: case 67: case 68: 
+			 	case 69: case 71: case 72: case 73: case 74: case 75: case 77: case 82: case 83: 
+			 	case 85 : 
+			 		nodeName0 = "NACK";break;
+			 default : nodeName0=null;break;
+			 */
+			switch (msgType) {
+			 	case 01: case 11: case 12: case 13:	case 14: case 96 : case 97 : // CP
+			 	case 15 : case 16: case 17: case 18: case 25: case 26: // TP
+			 	case 21 : // B2B
+			 		nodeName0 = "Payment";
+			 		break;
+			 	case 33 : //RR
+			 	case 32 : //RD
+				case 98 : //RD
+			 		nodeName0 = "Request" ;
+			 		break;
+			 	case 55 : //RJ
+			 		nodeName0 = "Reject";
+			 		break;
+			 	case 61: case 62: case 63: case 64: case 65: case 66: case 67: case 68: case 69: 
+			 	case 71: case 72: case 73: case 74: case 75: case 77: case 82: case 83:	case 85: case 88 :
+			 		nodeName0 = "NACK";
+			 		break;
+			 	case 52: //Balance --> Added this node to handle Balance Files i.e. HD:52 
+			 		nodeName0 = "Balance";
+			 		break;
+				 default : 
+					 nodeName0=null;
+				 break;
+			}
+			
+			// build one xml Certis 
+			if (nodeName0!=null ){
+				 atts.clear();
+				 th.startElement("","MESSAGECERTIS","MESSAGECERTIS",atts);
+				 th.startElement("",nodeName0,nodeName0,atts);
+				 StringTokenizer st = new StringTokenizer(Message, DELIM);
+				 if(nodeName0=="Reject"){
+					// System.out.println("Message is : "+Message);
+					 RejectMsg=RejectMsg+"\n"+Message;
+					// System.out.println("Complete Msg: "+RejectMsg);
+			      }
+				 previouselt ="";
+				 while (st.hasMoreTokens()) {
+					 String str = st.nextToken();
+					 
+					 if (!str.startsWith("   ")&& previouselt.length()>0) {
+						 process( previouselt);
+						 previouselt=str;
+					 }else
+						 previouselt+=previouselt.length()==0?str:DELIM+str;
+				
+				 } 
+				 process(previouselt);
+				 th.endElement("",nodeName0,nodeName0);
+				 th.endElement("","MESSAGECERTIS","MESSAGECERTIS");
+			}
+			
+		} catch (Exception e) {
+			responseCode = "FAILURE";
+			responseDescription = e.getMessage();
+			//loggerBW.error(e.getMessage());
+			//e.printStackTrace();
+		}
+	}
+
+	/**
+	 * this method build an xml from one line 
+	 * @param iV
+	 * @throws Exception 
+	 * @throws SAXException
+	 */
+	private  void process( String iV) throws Exception  {
+		// Since the separator character " " has special meaning
+		// with regular expression.
+		String iN = iV.substring(0, 2);
+		String content;
+	    atts.clear();
+		Pattern p = Pattern.compile(getPatternValue(iN+"_Pattern"));
+        Matcher m = p.matcher(iV);
+        m.matches();
+    	try {
+			th.startElement("",iN,iN,atts);
+			
+			// Get all groups for this match
+	        for (int i = 2; i<=m.groupCount(); i+=2) {
+	        	content = m.group(i);
+	            if (content!=null &&  content.length()>0){
+		           	th.startElement("",iN+(i/2),iN+(i/2),atts);
+		   	    	th.characters(content.toCharArray(),0,content.length());
+		   	    	th.endElement("",iN+(i/2) ,iN+(i/2));
+	            }
+	        }
+	        
+			//th.endElement("",iN,iN);
+			
+			/* Removed and reverted the older parsing code
+			// If each record of CERTIS (HD/KC/ID/...) contains a new line (DI/ZI/KP...) then if condition is followed, since the regular expression structure is different from the other one  
+			if(m.group(0).contains(DELIM))
+			{
+				for (int i = 2, index =1; i<=m.groupCount();  i+=3) 
+				{
+					content = m.group(i);
+					if (content!=null && content.length()>0)
+					{
+						th.startElement("",iN+index,iN+index,atts);
+						th.characters(content.toCharArray(),0,content.length());
+						th.endElement("",iN+index ,iN+index);
+					}
+					if(content!=null)
+						index+=1;
+				}
+			}
+			
+			//If each record of CERTIS (HD/KC/ID/...) does not contain a new line (HD/ZK/...) then the else condition is followed
+			else
+			{
+				for (int i = 2; i<=m.groupCount();  i+=2) 
+				{
+					content = m.group(i);
+					if (content!=null && content.length()>0)
+					{
+						th.startElement("",iN+(i/2),iN+(i/2),atts);
+						th.characters(content.toCharArray(),0,content.length());
+						th.endElement("",iN+(i/2) ,iN+(i/2));
+					}
+				}
+			}
+			*/
+	        
+		} catch (SAXException e) {
+			responseCode = "FAILURE";
+			responseDescription = "error during creation xml elements : " + e.getMessage();
+			//loggerBW.error("error during creation xml elements : ",e);
+			//e.printStackTrace();
+		} catch (Exception e) {
+			responseCode = "FAILURE";
+			responseDescription = "error during parsing text : " + e.getMessage() + "\n" + iV + " for pattern " + p.toString();
+			//loggerBW.error("error during parsing text : ",e);
+			//loggerBW.debug(iV + " for pattern " + p.toString());
+		}
+    	finally	{
+    		th.endElement("",iN,iN);
+    	}
+       
+	}
+
+
+	
+	/**
+	 *   this method initialize  an xml message Certis
+	 * @throws ParserConfigurationException
+	 * @throws TransformerConfigurationException
+	 * @throws SAXException
+	 */
+	private   void initXML() throws ParserConfigurationException,
+			TransformerConfigurationException, SAXException {
+		// JAXP + SAX
+		SAXTransformerFactory tf = (SAXTransformerFactory) SAXTransformerFactory
+				.newInstance("com.sun.org.apache.xalan.internal.xsltc.trax.TransformerFactoryImpl", this.getClass().getClassLoader());
+		th = tf.newTransformerHandler();
+		Transformer serializer = th.getTransformer();
+		serializer.setOutputProperty(OutputKeys.MEDIA_TYPE, "XML");
+		//serializer.setOutputProperty(OutputKeys.ENCODING, "ISO-8859-1");
+		serializer.setOutputProperty(OutputKeys.ENCODING, getProperty(WRITER_ENCODING));
+		// pretty XML output
+		 serializer.setOutputProperty
+	        ("{http://xml.apache.org/xslt}indent-amount", "4");
+	    serializer.setOutputProperty(OutputKeys.INDENT,"yes");
+	    
+	    
+	
+        th.setResult(out);
+		th.startDocument();
+		
+		atts = new AttributesImpl();
+		atts.addAttribute("", "xmlns", "xmlns", "CDATA", MESSAGE_XML_NAMESPACE_URI);
+		th.startElement("" ,"MESSAGE" , "MESSAGE" , atts);
+		atts.addAttribute("", "xmlns", "xmlns", "CDATA", MSGSCERTIS_XML_NAMESPACE_URI);
+		th.startElement("" ,"MSGSCERTIS"  ,  "MSGSCERTIS" , atts);
+		atts.clear();
+
+		
+		
+	}
+	
+	
+
+	/**
+	 * Close an xml Certis result
+	 * @throws SAXException
+	 */
+	private  void closeXML() throws SAXException {
+		
+	    th.endElement("","MSGSCERTIS","MSGSCERTIS");
+	    
+	    th.startElement("" ,"POSITION"  ,  "POSITION" , atts);
+	    th.characters(String.valueOf(lineNumber).toCharArray(), 0, String.valueOf(lineNumber).length());
+	    th.endElement("","POSITION","POSITION");
+	    
+	    th.startElement("" ,"EOF"  ,  "EOF" , atts);
+	    th.characters(String.valueOf(eof).toCharArray(), 0, String.valueOf(eof).length());
+	    th.endElement("","EOF","EOF");
+	    
+	    th.startElement("" ,"ResponseCode"  ,  "ResponseCode" , atts);
+	    th.characters(responseCode.toCharArray(), 0, responseCode.length());
+	    th.endElement("","ResponseCode","ResponseCode");
+	    
+	    th.startElement("" ,"ResponseDescription"  ,  "ResponseDescription" , atts);
+	    th.characters(responseDescription.toCharArray(), 0, responseDescription.length());
+	    th.endElement("","ResponseDescription","ResponseDescription");
+	    
+	    th.endElement("","MESSAGE","MESSAGE");
+	    th.endDocument();
+	}
+		
+
+	/**
+	 * string left pad with "size" space  
+	 * @param str
+	 * @param size
+	 * @return
+	 */
+	public  String padStart(String str, int size) {
+		return String.format("%" + size + "s", str);
+	}
+	
+	public int getLineNumber() {
+		return lineNumber;
+	}
+
+	public boolean isEof() {
+		return eof;
+	}
+
+	/*-------------------------Main Class---------------------------------(For testing purpose)
+	 public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		CERTISToXML xm = new CERTISToXML();
+		xm.parseCertisFile("C://Apoorva//Docs//CZ//JIRA_1369//F130723679_GEBA.510", 200, 0);
+
+	}*/
+
+}
+
+pipeline {
+   
+	parameters 
+	{
+		string(name: 'release_version', defaultValue: "", description: """For instance: 152.0.0""")
+		string(name: 'development_version', defaultValue: "", description: """For instance: 152.0.1-SNAPSHOT""")
+		
+		extendedChoice(multiSelectDelimiter: ',', 
+					name: 'projects',
+					type: 'PT_CHECKBOX', 
+					value: """
+					          All,
+							  bw/Containers/itl-container-at/container/pom.xml,
+							  bw/Containers/itl-container-bg/container/pom.xml,
+							  bw/Containers/itl-container-ch/container/pom.xml,
+							  bw/Containers/itl-container-common-functions/container/pom.xml,
+							  bw/Containers/itl-container-cz/container/pom.xml,
+							  bw/Containers/itl-container-de/container/pom.xml,
+							  bw/Containers/itl-container-dk/container/pom.xml,
+							  bw/Containers/itl-container-ds01/container/pom.xml,
+							  bw/Containers/itl-container-enrich/container/pom.xml,
+							  bw/Containers/itl-container-es/container/pom.xml,
+							  bw/Containers/itl-container-flow-common/container/pom.xml,
+							  bw/Containers/itl-container-gb/container/pom.xml,
+							  bw/Containers/itl-container-global/container/pom.xml,
+							  bw/Containers/itl-container-hu/container/pom.xml,
+							  bw/Containers/itl-container-ie/container/pom.xml,
+							  bw/Containers/itl-container-ipas/container/pom.xml,
+							  bw/Containers/itl-container-no/container/pom.xml,
+							  bw/Containers/itl-container-pacs/container/pom.xml,
+							  bw/Containers/itl-container-pacs-ch/container/pom.xml,
+							  bw/Containers/itl-container-pass/container/pom.xml,
+							  bw/Containers/itl-container-pl/container/pom.xml,
+							  bw/Containers/itl-container-pt/container/pom.xml,
+							  bw/Containers/itl-container-ro/container/pom.xml,
+							  bw/Containers/itl-container-ru/container/pom.xml,
+							  bw/Containers/itl-container-sdd/container/pom.xml,
+							  bw/Containers/itl-container-sa/container/pom.xml,
+							  bw/Containers/itl-container-se/container/pom.xml,
+							  bw/Containers/itl-container-swift/container/pom.xml,
+							  bw/Containers/itl-container-testing/container/pom.xml,	
+							  bw/Containers/itl-container-pti/container/pom.xml,
+							  bw/Containers/itl-container-it/container/pom.xml,
+							  bw/Containers/itl-container-timers/container/pom.xml,
+							  bw/Containers/itl-container-rsl/container/pom.xml,
+							  bw/Containers/itl-container-trf-ref/container/pom.xml,
+							  bw/Containers/itl-container-ae/container/pom.xml,
+							  bw/ITL_Interface_Remediation
+							  							
+							  """, 
+					visibleItemCount: 50
+					)
+    }
+	
+	agent
+	{
+		label "TEC"
+	}
+	
+   environment
+	{
+    		/* Use Pipeline Utility Steps plugin to read information from pom.xml into env variables */
+    		MAVEN_OPTS		= '-Xms1024m -Xmx4096m'
+    		RELEASE_REPO    = "itl-maven-local-release"
+    		ARTIFACTORY_URL = 'https://artifactory.cib.echonet/artifactory'
+    		JAVA_HOME = '/apps/JRE17/lastJDK'
+            PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+    }
+
+	
+	stages {
+				
+				stage('Prepare')
+                {
+                    steps
+                    {
+                        script
+                        {
+                            artifactoryServer = Artifactory.newServer url: ARTIFACTORY_URL, credentialsId: "artifactory-cib-itl"
+                            artifactoryServer.bypassProxy = true
+                            artifactoryMaven = Artifactory.newMavenBuild()
+                            artifactoryMaven.resolver releaseRepo: 'itl-maven', snapshotRepo: 'itl-maven', server: artifactoryServer
+
+                            uploadSpec = """
+                            {
+                                "files":
+                                [
+                                    {
+                                    "pattern": "**/ITL-${params.release_version}.zip",
+                                    "target": "${RELEASE_REPO}/com/bnpp/itl/itl-delivery/${params.release_version}/itl-delivery-${params.release_version}.zip"
+                                    }
+                                ]
+                            }"""
+                        }
+                    }
+                }
+				
+				
+				stage('pom update-release version') {
+					when { expression { params.projects!="" } }
+			
+							steps {
+										echo "Checking out source (scm) ..."
+										checkout scm
+										echo "Checking completed successfully"
+										
+									script{
+											myMaven "org.codehaus.mojo:versions-maven-plugin:2.11.0:set -DnewVersion=${params.release_version}"
+						
+										}
+
+								}
+					}
+			
+
+				stage('buildandupload artifacts in artifactory') {
+					when { expression { params.projects!="" } }
+
+					steps {
+
+						script{
+								if ( params.projects!='All' ){
+									myMaven "-Dprojects=${projects} -pl .,java,delivery,delivery/resources,${projects} -am clean package"
+								}
+							  }
+
+
+						script{
+								if ( params.projects=='All'){
+									myMaven "-am clean package"
+								}
+							  }
+
+
+						}
+				}
+
+			 stage('Distribute binaries to Artifactory'){
+
+				steps
+                {
+                    script
+                    {
+                        buildInfo = Artifactory.newBuildInfo()
+                        buildInfo.env.capture = true
+                        buildInfo.retention maxBuilds: 10, maxDays: 20, deleteBuildArtifacts: true
+                        buildInfo = artifactoryServer.upload(uploadSpec)
+                        artifactoryServer.publishBuildInfo(buildInfo)
+                    }
+                }
+            }
+
+			stage('push release version in bitbucket') {
+				when { expression { params.projects!=""  } }
+				steps {
+
+						script{
+								sh 'git config --global user.name "Jenkins user"'
+								sh "git add pom.xml && git add '**/pom.xml'"
+								sh "git commit -m '[ITL Release ]updated pom to version ${params.release_version}'"
+								sh "git tag ${params.release_version}"
+								sh "git push origin ${params.release_version}" --force
+								//sh "git push origin ${env.BRANCH_NAME} "
+							 }
+
+				      }
+			 }
+			stage('pom update-development version') {
+
+			     when { expression { params.projects!=""  } }
+						steps {
+
+
+								script{
+										myMaven "org.codehaus.mojo:versions-maven-plugin:2.11.0:set -DnewVersion=${params.development_version}"
+										sh "git pull origin ${env.BRANCH_NAME}"
+										sh 'git config --global user.name "Jenkins user"'
+										sh "git add pom.xml && git add '**/pom.xml'"
+										sh "git commit -m '[ITL Development ]updated pom to version ${params.development_version}'"
+									    sh "git push origin ${env.BRANCH_NAME}" --force
+
+
+									  }
+
+							  }
+					}
+			}
+	}
+	
+
+
+def myMaven(parameters)
+    {
+        sh "mvn -s /apps/maven/apache-maven-3.9.9/conf/settings.xml -gs /apps/maven/apache-maven-3.9.9/conf/settings.xml -X -e "+ parameters
+    }

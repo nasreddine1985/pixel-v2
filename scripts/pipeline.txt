@@ -1,0 +1,123 @@
+pipeline {
+    agent{
+        label "TEC"
+    }
+
+    environment {
+        JAVA_HOME = '/apps/JRE17/lastJDK'
+            PATH = "${env.JAVA_HOME}/bin:${env.PATH}"
+    }
+
+    options {
+        timeout(time: 60, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    parameters {
+        string(name: 'RELEASE_VERSION', defaultValue: '', description: 'Optional release version (e.g. 1.2.3). Leave empty to let the Maven Release Plugin decide.')
+        string(name: 'DEVELOPMENT_VERSION', defaultValue: '', description: 'Optional next development version (e.g. 1.2.4-SNAPSHOT). Leave empty to let the plugin decide.')
+    }
+
+    stages {
+
+        stage('Check out and update pom to release version') {
+            when {
+                expression {
+                    params.RELEASE_VERSION != "" && params.DEVELOPMENT_VERSION != ""
+                }
+            }
+
+            steps {
+                checkout scm
+
+                script {
+                    myMaven "org.codehaus.mojo:versions-maven-plugin:2.19.1:set -DnewVersion=${params.RELEASE_VERSION}"
+
+                }
+
+            }
+        }
+
+        stage('Build and upload release in repository') {
+            when {
+                expression {
+                    params.RELEASE_VERSION != "" && params.DEVELOPMENT_VERSION != ""
+                }
+            }
+
+            steps {
+
+                script {
+
+                    myMaven " -am clean deploy -P default,-archetypes"
+                    myMaven " clean deploy -pl archetypes"
+
+                }
+
+            }
+        }
+
+        stage('Create tag with release version') {
+            when {
+                expression {
+                    params.RELEASE_VERSION != "" && params.DEVELOPMENT_VERSION != ""
+                }
+            }
+
+            steps {
+
+                script {
+                    sh 'git config --global user.name "Jenkins user"'
+                    sh "git add pom.xml && git add '**/pom.xml'"
+                    sh "git commit -m '[TEC Release - Release version] updated pom to version ${params.RELEASE_VERSION}'"
+                    sh "git tag ${params.RELEASE_VERSION}"
+                    sh "git push origin ${params.RELEASE_VERSION}"
+                }
+
+            }
+        }
+
+        stage('Update pom to development version and push in origin') {
+            when {
+                expression {
+                    params.RELEASE_VERSION != "" && params.DEVELOPMENT_VERSION != ""
+                }
+            }
+
+            steps {
+
+                script {
+                    myMaven "org.codehaus.mojo:versions-maven-plugin:2.19.1:set -DnewVersion=${params.DEVELOPMENT_VERSION}"
+                    sh "git pull origin ${env.BRANCH_NAME}"
+                    sh 'git config --global user.name "Jenkins user"'
+                    sh "git add pom.xml && git add '**/pom.xml'"
+                    sh "git commit -m '[TEC Release - Development version] updated pom to version ${params.DEVELOPMENT_VERSION}'"
+                    sh "git push origin HEAD:${env.BRANCH_NAME}"
+
+                }
+
+            }
+        }
+
+    }
+
+    post {
+        always {
+            junit allowEmptyResults: true,
+            testResults: '**/target/surefire-reports/*.xml'
+            archiveArtifacts artifacts: '**/target/*.jar',
+            fingerprint: true,
+            allowEmptyArchive: true
+        }
+        success {
+            echo 'Build completed successfully.'
+        }
+        failure {
+            echo 'Build failed. Please review the logs.'
+        }
+    }
+}
+
+def myMaven(parameters) {
+    sh "mvn -s /apps/maven/apache-maven-3.9.9/conf/settings.xml -gs /apps/maven/apache-maven-3.9.9/conf/settings.xml " + parameters
+}

@@ -165,11 +165,14 @@ spec:
         - setHeader:
             name: "ProcessingTimestamp"
             simple: "${date:now:yyyy-MM-dd'T'HH:mm:ss.SSSSSS}"
+        - setHeader:
+            name: "ApplicationContextNames"
+            simple: "[\"test-app-context\"]"
         - wireTap:
             uri: "kamelet:k-log-flow-summary?step=${header.Step}&kafkaTopicName=${header.KafkaFlowSummaryTopicName}&brokers=${header.Brokers}"
         
         # Log event after completing MQ processing
         - toD:
-            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End MQ processing - queue: ${header.MqFileName}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-MQ-STARTER"
+            uri: "kamelet:k-log-events?kafkaTopicName=${headers.KafkaLogTopicName}&brokers=${headers.Brokers}&flowId=${header.FlowOccurId}&flowCode=${header.FlowCode}&logMessageTxt=End MQ processing - queue: ${header.MqFileName}, flowOccurId: ${header.FlowOccurId}, archived to: ${header.NasArchiveUrl}/IN/${header.FlowOccurId}/&level=INFO&processingTimestamp=${header.ProcessingTimestamp}&contextId=${header.ContextId}&component=K-MQ-STARTER&applicationContextNames=${header.ApplicationContextNames}"
             pattern: "InOnly"
         - to: "kamelet:sink"
