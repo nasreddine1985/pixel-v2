@@ -1,0 +1,588 @@
+================================================================================
+PIXEL-V2 PRESENTATION - SPEAKER NOTES
+================================================================================
+Total Slides: 32
+Date: February 17, 2026
+================================================================================
+
+SLIDE 1: TITLE SLIDE
+"PIXEL-V2 - Enterprise Payment Message Processing System"
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Today I'will present PIXEL-V2, our 
+enterprise-grade payment message processing system. This platform represents 
+a modern approach to handling payment messages with high reliability, 
+scalability, and compliance. I'll walk you through 
+the architecture, key components, and the powerful technologies that make 
+PIXEL-V2 a robust solution for payment processing
+
+
+SLIDE 2: EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let me start with a quick executive summary. PIXEL-V2 is an enterprise-grade 
+multi-flow payment processing platform. What makes it special? First, it can 
+handle multiple payment flows and schemes, not just one specific format. 
+
+The architecture is based on microservices using Apache Camel, which gives us 
+tremendous flexibility. We're running on the latest technologies - Spring Boot 
+3.4.1, Java 21, and Apache Camel 4.1.0. Everything is containerized with Docker/DMZR
+for easy deployment and scaling.
+
+For integration, we use Kafka for event streaming, IBM MQ for enterprise 
+messaging, Redis for caching, PostgreSQL/oracle for data persistence, and Axway CFT 
+for secure file transfers. And crucially, we're fully compliant with ISO 20022 
+standards, which is essential in the financial industry.
+
+
+SLIDE 3: WHAT IS PIXEL-V2?
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+So what exactly does PIXEL-V2 do? Think of it as a comprehensive payment 
+message processing pipeline. It receives payment messages from multiple sources 
+through JMS queues. Each message is then validated against XML schemas following 
+ISO 20022 standards - this ensures data quality from the start.
+
+We then transform these messages using XSLT templates to convert them into the 
+required output formats. During processing, we enrich the data by looking up 
+referential information - things like country codes, partner settings, and 
+business rules.
+
+Every message is automatically archived to NAS file systems for compliance and 
+audit purposes. And throughout the entire process, we're logging events to 
+Kafka, giving us complete visibility and traceability of every transaction.
+
+
+SLIDE 4: BUSINESS VALUE
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+What business value does this bring? Let me highlight four key areas:
+
+First, high performance. We use Spring caching for referential data lookups, 
+which gives us sub-millisecond response times. This is critical when processing 
+many thousands of transactions per day.
+
+Second, reliability. We have comprehensive validation at every step and robust 
+error handling, so issues are caught early and handled gracefully.
+
+Third, observability. With our Kafka event streaming, we have a complete audit 
+trail. You can trace any message through its entire lifecycle, which is 
+invaluable for troubleshooting and compliance.
+
+And finally, flexibility. All our flows and transformation rules are 
+configurable, so we can adapt to new requirements without code changes. Plus, 
+messages are automatically archived, meeting regulatory retention requirements.
+
+
+SLIDE 5: SECTION - SYSTEM ARCHITECTURE
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Now let's dive into the system architecture. Understanding the structure is key 
+to appreciating how PIXEL-V2 achieves its flexibility and maintainability.
+
+
+SLIDE 6: MULTI-MODULE MAVEN PROJECT
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+PIXEL-V2 is organized as a multi-module Maven project. At the top, we have the 
+parent module that manages dependencies and versions.
+
+The technical-framework module contains reusable Camel Kamelets - these are like 
+building blocks that any payment flow can use. Think of them as standardized 
+components for common tasks like message validation, transformation, and logging.
+
+The referential module is our configuration service API. It centralizes all 
+configuration data - flow definitions, country mappings, business rules - and 
+exposes them through REST APIs.
+
+Then we have flow-ch, which is our example implementation for Swiss ICHSIC 
+payments. But here's the important part - we can add flow-xxx modules for other 
+payments. Each flow uses the same framework but with 
+its own specific configuration.
+
+The generic processing pipeline is consistent across all flows: messages come 
+in through JMS Or CFT Or Http ..., go through identification, validation, transformation, and 
+publishing. This consistency makes the system maintainable and predictable.
+
+
+SLIDE 7: SECTION - KEY COMPONENTS
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let's explore the key components that make up PIXEL-V2. These are the building 
+blocks that handle the actual work.
+
+
+SLIDE 8: TECHNICAL FRAMEWORK - CUSTOM KAMELETS
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+The heart of PIXEL-V2 is our technical framework of custom Kamelets. These are 
+reusable Apache Camel components that we've developed specifically for payment 
+processing.
+
+K-mq-starter listens to JMS queues and generates unique flow IDs for tracking.
+K-identification performs payment identification and looks up referential data 
+using Spring caching for fast access.
+K-xsd-validation validates XML against schemas to ensure ISO 20022 compliance.
+K-xsl-transformation applies XSLT templates to transform messages.
+K-log-flow-summary publishes audit logs to Kafka.
+K-kafka-publisher handles asynchronous event streaming.
+K-cft-publisher integrates with Axway CFT for secure file transfers.
+K-http-publisher calls RESTful services.
+K-db-tx manages database transactions.
+And k-duplicate-check prevents duplicate message processing.
+
+The beauty of this approach is that any new payment flow can simply compose 
+these Kamelets together like Lego blocks, without reinventing the wheel.
+
+
+SLIDE 9: FLOW-CH COMPONENT
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let me show you a concrete example - Flow-CH, which handles the ICHSIC flow. 
+ICHSIC stands for Switzerland IN SEPA SIC - it's one specific payment scheme.
+
+Messages arrive from IBM MQ queues. We validate them against the Swiss-specific 
+PACS.008 schema version 02. Then we transform them using a specialized XSLT 
+stylesheet. The output goes to Kafka topics for further processing, gets 
+archived to NAS, and can be transferred via CFT to partner systems.
+
+All the configuration - which queues to listen to, which schemas to use, which 
+transformations to apply - comes from the referential service dynamically.
+
+The key point is that every flow module in PIXEL-V2 follows this same pattern. 
+They all use the same reusable Kamelets from the technical framework, just 
+configured differently. This gives us consistency and reduces development time 
+for new flows dramatically.
+
+
+SLIDE 10: REFERENTIAL CONFIGURATION SERVICE
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+The referential service is the brain of PIXEL-V2. It's a centralized 
+configuration repository that serves ALL flows.
+
+It stores flow definitions - not just ICHSIC, but potentially dozens of payment 
+flows. It maintains country and partner mappings, business rules, validation 
+parameters, and character encoding configurations.
+
+The service exposes these configurations through REST APIs, so flows can 
+retrieve their settings in real-time. This means we can update configurations 
+without redeploying applications - just update the database and the flows pick 
+up the new settings.
+
+Technically, it's built with Spring Boot 3.4.1, uses PostgreSQL for data 
+persistence, and Liquibase for database schema versioning. This ensures our 
+configuration management is as robust and version-controlled as our code.
+
+
+SLIDE 11: SECTION - TECHNICAL STACK
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Now let's look at the technical stack powering PIXEL-V2. We've chosen modern, 
+proven technologies that work well together.
+
+
+SLIDE 12: MULTI-FLOW ARCHITECTURE DESIGN
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Our multi-flow architecture is designed for scalability. The genius of this 
+design is the separation between shared and flow-specific components.
+
+The shared components - our technical framework with its reusable Kamelets, 
+the referential service with centralized configuration, and the infrastructure 
+like Kafka, Spring cache, and PostgreSQL - these are used by ALL flows. We build and 
+maintain them once.
+
+Then we have independent flow modules. Flow-ch for ICHSIC is our example 
+implementation. But we can easily add others flow. Each flow module is 
+independent - it has its own configuration, XSD schemas, and XSLT stylesheets.
+
+This architecture means we can add new payment flows without touching existing 
+ones. Each team can work independently, and deployments are isolated. If we 
+need to update the Bahrein flow, it doesn't affect the Swiss payments.
+
+
+SLIDE 13: CORE TECHNOLOGIES & INFRASTRUCTURE
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let me walk you through our core technologies and infrastructure.
+
+On the core technology side, we're using Java 21, the latest Long-Term Support 
+version, which gives us performance improvements and modern language features. 
+Spring Boot 3.4.1 provides our application framework with auto-configuration 
+and production-ready features. Apache Camel 4.1.0 handles all our integration 
+patterns. Maven manages our builds, and Docker handles containerization.
+
+For XML and data processing, we use Saxon 12.3 for XSLT 3.0 transformations - 
+it's the most powerful XSLT processor available. Hibernate 6.2.7 handles our 
+ORM, and Liquibase manages database migrations.
+
+On the infrastructure side, IBM MQ provides enterprise-grade JMS messaging with 
+guaranteed delivery. Apache Kafka handles our event streaming for audit logs. 
+Redis gives us lightning-fast caching. PostgreSQL is our primary database. 
+Axway CFT handles secure file transfers with partners. And Hawtio provides 
+real-time monitoring of our Camel routes.
+
+We follow ISO 20022 standards and specifically support Swiss PACS.008 formats.
+
+
+SLIDE 14: SECTION - CORE FEATURES
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let's examine the core features that make PIXEL-V2 powerful and reliable.
+
+
+SLIDE 15: MESSAGE PROCESSING PIPELINE
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Our message processing pipeline follows a clear, seven-step workflow:
+
+Step one: Input - we receive the message from JMS queues.
+Step two: Archive - immediately save a copy to NAS for compliance.
+Step three: Identify - look up referential data from Redis cache.
+Step four: Validate - perform strict XSD schema validation against ISO 20022.
+Step five: Transform - apply XSLT transformation to generate the output format.
+Step six: Log - publish processing events to Kafka for audit.
+Step seven: Output - deliver to final destinations and initiate file transfers.
+
+What's crucial here is that each step includes comprehensive error handling, 
+performance metrics collection, detailed logging, and event publishing. If 
+something fails at any step, we know exactly what happened and can recover or 
+handle it appropriately. This pipeline ensures consistency, traceability, and 
+reliability across all payment flows.
+
+
+SLIDE 16: CACHING STRATEGY
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let me explain our caching strategy, which is critical for performance.
+
+We use Spring caching for referential data. Spring's caching abstraction is 
+powerful - it's annotation-driven and supports multiple cache providers 
+including Redis, Caffeine, or EhCache. The cache TTL is configurable, 
+defaulting to 3600 seconds or one hour. We implement a cache-aside pattern - 
+check the cache first, and if there's a miss, fetch from the referential 
+service and populate the cache.
+
+The cache automatically invalidates after the TTL expires, ensuring we don't 
+serve stale data. With Spring's abstraction, if the cache provider is 
+temporarily unavailable, we have a fallback to call the service directly - 
+the system remains operational.
+
+With Spring caching backed by Redis, our referential lookups take less than a 
+millisecond. Compare that to database queries which might take 10-50 milliseconds. 
+When you're processing thousands of messages per hour, these milliseconds add up 
+significantly.
+
+Additionally, this caching reduces load on our PostgreSQL database by 90% or 
+more, which improves overall system throughput and stability. It's a key 
+architectural decision that enables our high-performance requirements.
+
+
+SLIDE 17: SECTION - MULTI-FLOW ARCHITECTURE
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let's look at how our multi-flow architecture works in practice with a 
+concrete example.
+
+
+SLIDE 18: EXAMPLE - ICHSIC FLOW
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Here's the ICHSIC flow - Switzerland IN SEPA SIC - as a concrete example. But 
+remember, this is just one of potentially many flows in the system.
+
+Step one: Messages arrive from IBM MQ queues. The K-MQ-Starter Kamelet picks 
+them up and generates a unique flow occurrence ID from a database sequence. 
+It immediately archives the raw message to the NAS at a path like 
+/opt/nas/CH/IN/{flowOccurId}/.
+
+Step two: The K-Identification Kamelet queries the Spring cache for the flow 
+configuration. It looks up ICHSIC settings, gets country mappings, partner 
+configurations, and caches the results for future messages.
+
+Steps three through five: We validate the message against the Swiss PACS.008 
+schema, transform it using the appropriate XSLT stylesheet, publish summary 
+logs to Kafka, and if needed, trigger a CFT file transfer to partner systems.
+
+The important takeaway is that other flows - whether SEPA, SWIFT, or custom 
+formats - follow this exact same pattern. They just use different queue names, 
+different schemas, different stylesheets. The framework is the same, only the 
+configuration differs.
+
+
+SLIDE 19: SECTION - APACHE CAMEL & SPRING BOOT
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Now I want to dive deeper into two technologies that are absolutely central to 
+PIXEL-V2: Apache Camel and Spring Boot. Understanding these will help you 
+appreciate the power and flexibility of our architecture.
+
+
+SLIDE 20: APACHE CAMEL - ENTERPRISE INTEGRATION
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Apache Camel is the backbone of PIXEL-V2. So why did we choose Camel?
+
+First, it provides over 300 components out of the box - connectors for JMS, 
+HTTP, Kafka, FTP, databases, you name it. This means we don't write integration 
+code from scratch.
+
+Second, it implements Enterprise Integration Patterns - proven design patterns 
+for messaging systems documented by Gregor Hohpe. These patterns solve common 
+integration challenges.
+
+Third, Camel supports Kamelets, which are reusable, configurable route 
+templates. This is what we leverage heavily in PIXEL-V2.
+
+And fourth, Camel is cloud-native and lightweight, optimized for containers 
+and Kubernetes.
+
+In PIXEL-V2 specifically, we use Camel for content-based routing - dynamically 
+deciding where messages go based on their content. We use it for message 
+transformation across multiple formats. The error handling features give us 
+dead letter channels, retry policies, and circuit breakers. We leverage 
+parallel processing with thread pools for high throughput. And the aggregation 
+features help us with message splitting and combining for batch processing.
+
+The idempotency support prevents duplicate processing, which is critical in 
+financial systems.
+
+
+SLIDE 21: SPRING BOOT 3.4.1 - MODERN FRAMEWORK
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Spring Boot is our application framework. Why Spring Boot?
+
+Auto-configuration is huge - it automatically configures components based on 
+what's on the classpath. This eliminates boilerplate configuration code.
+
+It's production-ready out of the box, with built-in health checks, metrics 
+endpoints, and monitoring capabilities. The dependency management is simplified 
+through starter dependencies. And it has native support for cloud platforms and 
+containers.
+
+Spring Security integration gives us authentication and authorization.
+
+In PIXEL-V2, we use the Camel Spring Boot starter for seamless integration 
+between Spring and Camel. Our configuration management uses application.properties 
+with profiles for different environments - dev, test, production.
+
+The actuator endpoints expose /health and /metrics for monitoring. We use 
+Spring Data JPA for database access with PostgreSQL. Spring Data Redis handles 
+our caching layer. And the referential service uses Spring MVC for REST APIs.
+
+All of this comes together to create a cohesive, maintainable application 
+framework that developers can be productive with immediately.
+
+
+SLIDE 22: HAWTIO - REAL-TIME CAMEL MONITORING
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Hawtio is our window into what's happening in real-time. It's a lightweight 
+web console specifically designed for managing Java applications, with first-
+class support for Apache Camel.
+
+The route visualization feature shows all your Camel routes visually in 
+real-time. You can see messages flowing through the system. Message tracing 
+lets you follow a single message step-by-step through the entire route.
+
+The metrics dashboard displays performance statistics - throughput, latency, 
+error rates - all updated in real-time. You can access JMX beans for runtime 
+control. Thread management shows you thread pool usage and helps identify 
+bottlenecks.
+
+And here's a powerful feature - route control. You can start, stop, or suspend 
+routes dynamically without restarting the application. This is invaluable during 
+incidents or maintenance windows.
+
+In our Docker environment, you access Hawtio at http://localhost:8090/hawtio. 
+It's an essential tool for operators and developers to understand system 
+behavior and troubleshoot issues quickly.
+
+
+SLIDE 23: KAOTO - VISUAL CAMEL ROUTE DESIGNER
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Kaoto is a game-changer for Camel development. It's a visual, low-code 
+integration designer that lets you create Camel routes with drag-and-drop 
+simplicity.
+
+Imagine you need to create a new payment flow. Instead of writing YAML or Java 
+code from scratch, you open Kaoto, drag components onto a canvas, connect them, 
+configure their properties, and Kaoto automatically generates the code.
+
+You can browse all 300+ Camel components, search for what you need, and get 
+context-aware recommendations. The Kamelet designer lets you create custom 
+Kamelets visually.
+
+Kaoto automatically generates YAML or Java DSL code, which you can export to 
+Git-friendly formats for version control. It comes with a template library of 
+common integration patterns.
+
+For PIXEL-V2, Kaoto is invaluable for several use cases: Designing new payment 
+flows visually without deep Camel expertise. Rapid prototyping of integration 
+patterns. Documenting existing routes with visual diagrams. And onboarding new 
+developers - they can understand the flow visually before diving into code.
+
+The workflow is: design visually in Kaoto, export the generated code, commit 
+to Git, build with Maven, deploy to Docker, and monitor in Hawtio. It's a 
+complete development cycle.
+
+
+
+
+SLIDE 25: SECTION - INFRASTRUCTURE & DEPLOYMENT
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let's look at how all of this is deployed and managed in our infrastructure.
+
+
+SLIDE 26: DOCKER COMPOSE STACK
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Our complete infrastructure runs in Docker containers, orchestrated by Docker 
+Compose. This gives us consistency between development, testing, and production 
+environments.
+
+We have Zookeeper for Kafka coordination. Kafka itself runs on ports 9092 
+externally and 29092 internally for event streaming. PostgreSQL on port 5432 
+provides our database. Redis on port 6379 handles caching.
+
+IBM MQ is our enterprise message broker running on port 1414 for messaging and 
+9443 for the web console. Axway CFT handles file transfers on port 1761.
+
+The referential API runs on port 8099, exposing configuration REST APIs. Flow 
+applications - remember, we can have multiple flow modules - run as separate 
+services and can be scaled horizontally.
+
+Hawtio on port 8090 provides our Camel monitoring interface.
+
+All of these services run in the pixel-v2-network bridge network, which allows 
+them to communicate with each other using service names as hostnames. This 
+makes the configuration simple and maintainable.
+
+
+SLIDE 27: SECTION - SECURITY & COMPLIANCE
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Security and compliance are paramount in financial systems. Let's see how 
+PIXEL-V2 addresses these concerns.
+
+
+SLIDE 28: SECURITY & COMPLIANCE
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+On the left side, we have security features. Spring Security provides 
+authentication and authorization. We use password encryption for sensitive 
+credentials. Docker network isolation ensures services can only communicate 
+through defined channels. Service-level access control restricts what each 
+component can do.
+
+Redis requires authentication to prevent unauthorized cache access. IBM MQ uses 
+secure channels with mutual TLS and credentials. CFT encryption protects files 
+in transit and at rest.
+
+For data protection, PostgreSQL stores all configuration securely. NAS file 
+permissions ensure only authorized processes can read archived messages. All 
+connections use encryption.
+
+On the right side, we have compliance features. We're fully compliant with ISO 
+20022 standards. Kafka provides a complete, immutable audit trail of all 
+transactions. NAS message archiving ensures we can retrieve historical messages 
+for audits. We follow regulatory retention policies.
+
+Strict XSD validation ensures data quality and compliance from the first moment 
+a message enters the system. Our audit capabilities include event-driven 
+logging, transaction tracking with unique IDs, performance metrics for SLA 
+monitoring, and comprehensive error reporting.
+
+
+SLIDE 29: PROJECT STATISTICS
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let me give you some numbers to understand the scale of PIXEL-V2.
+
+We have two core modules - the technical framework and the referential service. 
+On top of that, we have multiple flow modules like flow-ch for ICHSIC, with 
+room to add more.
+
+We've built over 15 custom Kamelets that are reusable across all flows. Our 
+infrastructure comprises 9 Docker services including CFT.
+
+Technology-wise, we're on Java 21, the latest Long-Term Support version. 
+Spring Boot 3.4.1 and Apache Camel 4.1.0 are both recent stable releases. 
+PostgreSQL, Redis, and Kafka are all running the latest stable versions.
+
+This modern technology stack ensures we're not building on outdated foundations. 
+We have long-term support, active communities, and security updates.
+
+
+SLIDE 30: FUTURE ROADMAP
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Looking ahead, we have an exciting roadmap for PIXEL-V2.
+
+In the short term, our priority is adding more payment flows for international transfers, and others as business 
+needs arise. We'll optimize our caching strategies based on production metrics. 
+And we plan to fully integrate Kaoto for visual route design, making it easier 
+for teams to create new flows.
+
+Medium-term, we're expanding multi-country support for additional payment 
+schemes and regional requirements. We'll expand CFT usage for more file transfer 
+scenarios. And we're implementing circuit breaker patterns using Camel's 
+resilience features for better fault tolerance.
+
+Long-term, we're exploring AI and machine learning for fraud detection - 
+analyzing patterns in real-time to flag suspicious transactions. We're looking 
+at stream processing optimization with Kafka Streams for real-time analytics. 
+And we're investigating Camel Quarkus, which enables native compilation for 
+faster startup times and lower memory footprint, perfect for cloud environments.
+
+
+SLIDE 31: KEY TAKEAWAYS
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Let me summarize the key takeaways from this presentation:
+
+First, Apache Camel 4.1.0 gives us enterprise integration patterns out of the 
+box. It's the foundation that makes our multi-flow architecture possible.
+
+Second, Spring Boot 3.4.1 provides a modern, cloud-native framework that's 
+production-ready and developer-friendly.
+
+Third, Hawtio gives us real-time monitoring of our Camel routes, essential for 
+operations and troubleshooting.
+
+Fourth, Kaoto enables visual, low-code integration design, lowering the barrier 
+for creating new payment flows.
+
+Fifth, our integration stack of IBM MQ, Kafka, and CFT provides enterprise-grade 
+messaging and file transfer capabilities.
+
+We're compliant with ISO 20022 standards, which is non-negotiable in financial 
+services.
+
+Our Kamelet-based architecture is maintainable and promotes code reuse.
+
+And finally, everything is configuration-driven through Spring Boot profiles, 
+making it easy to adapt to different environments and requirements without code 
+changes.
+
+
+SLIDE 32: THANK YOU
+--------------------------------------------------------------------------------
+SPEAKER NOTES:
+Thank you for your attention! PIXEL-V2 represents a modern, scalable approach 
+to payment message processing. We've built it on proven technologies - Apache 
+Camel and Spring Boot - and designed it for flexibility and maintainability.
+
+I'm happy to take any questions you might have about the architecture, 
+implementation, or roadmap. Whether you're interested in the technical details, 
+integration patterns, or business applications, I'm here to discuss.
+
+Thank you!
+
+================================================================================
+END OF SPEAKER NOTES
+================================================================================
