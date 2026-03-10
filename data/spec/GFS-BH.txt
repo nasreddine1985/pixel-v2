@@ -1,0 +1,150 @@
+1	INTRODUCTION
+1.1	Overview
+The purpose of this document is to provide a description of functional processes related to the acquisition, processing and response of Bahrain Wages Protection System (WPS) payments flows. 
+Further in this document will be detailed the processing steps on PIXEL to manage the routing of WPS Payment flows to DOME and to archiving and reconciliation assets.
+1.1	Glossary
+Term	Description
+WPS 	Wages Protection System
+LMRA	Labor Marker Regulatory Authority
+EFTS	Electronic Fund transfers System. Bahrain low-value payment clearing channel
+Benefit	Bahrain Regulator company
+2	REQUIREMENTS
+2.1	Business requirements
+Currently in Bahrain, salaries are paid using an ordinary MT103 using EFTS, with a specific salary purpose code in tag 26T. 
+Regulator is introducing a new WPS system where payroll in Bahrain can only be paid through it. 
+This system will allow clients to upload the salary payment files to LMRA that will connect with WPS Benefit, BNPP WPS system should connect directly to Benefit, download salary files and send back status report.
+ 
+WPS Bahrain is mandatory system by the regulator, BNPP clients will not be able to pay their employees’ salaries if BNPP is non-compliant with the new WPS system.
+2.2	Macro Planning 
+Application	QA delivery	GO Live
+Regulator Go live date		Decembre 31st 
+BNPP proposed go live date to regulator	ASAP	June 2026
+2.3	Risks and Assumptions
+2.3.1	Scope
+o	Payment currency: BHD 
+o	Payment nature: Salary payments
+o	Country: Bahrain
+2.3.2	Risks
+o	Technical/Functional complexity
+o	Direct connection between BNPP to regulator
+o	Regulatory topic with short deadline
+o	Inability to process Salary Payments for BNPP Bahrain clients
+ 
+2.4	Technical requirements
+2.4.1	Requirements
+•	Flows routing
+•	Connectivity with WPS
+•	High Reachability with SLA: 1min for some Requests, detail below
+2.4.2	Expected volumetry
+•	Monthly Average Salary payments Volumes (Jan-June 2025): 3800 
+•	Monthly Peak Salary Payments Volumes (Jan-June 2025): 5289
+•	Daily Average Salary Files Volumes (Jan-June 2025): 5 Files
+•	Daily Peak Salary Files Volumes (Jan-June 2025): 20 Files
+ 
+Note : Above volumes are to be double checked and confirmed
+2.4.3	Availability 
+•	High: Salary payments need to be generated and sent before daily EFTS cut-off time.
+ 
+ 
+No	Request	Receive Cutoff time	Response Cutoff time	Liable Party
+1	Confirm receiving the account validation request	Once received from WPS	1 minute	WPS/ATLAS2
+2	Debit account validation	15:00 same business day	15:30 same business day	WPS/ATLAS2
+3	Confirm receiving the payroll file (all types)	Once received from WPS	1 minute	WPS/DOME
+4	EFTS payroll file bank /PSP validation status 	Once received from WPS	12:55 of the salary value date	WPS/DOME
+5	EFTS payroll file bank /PSP validation status 	Once received from WPS	14:00 of the salary value date	WPS/DOME
+6	EFTS payroll file employer approval status	12:55 same business day	13:55 same business day	WPS/DOME
+7	Payroll file payment processing failure (all types)	Time of employer approval	15:30 salary value date	WPS/DOME
+ 
+3	FUNCTIONAL WORKFLOW & ARCHITECTURE DETAILS
+3.1	System Description 
+	All banks are required to provide their client the service to pay salaries. The Sequence is the following: 
+•	BNP Clients will upload salary files on LMRA ‘Labor Market Regulatory Authority’ Portal
+•	LMRA system will forward the salary file to WPS Benefit. 
+•	WPS Benefit will process the Salary File: 
+	Request Account Status and Client ID validation 
+	Initiate the Payroll Request 
+	Get Payroll Status
+	Get account status
+	On US payments are subject to the same workflow 
+	Payments are then processed by DOME and settled on EFTS BAHRAIN (FAWRI).
+ 
+3.2	GUI & Complementary Information
+	No GUI is required for WPS Bahrain
+	Current Pixel existing GUI is not subject to evolution in regard to WPS
+ 
+	Salary File is integrated into Central Bank Portal (LMRA ‘Labor Market Regulatory Authority’ Portal)
+	Central bank request BNPP with Account Status and Client ID and generate Salary file directly from its ends
+	WPS Bahrain vendor solution is expected to manage connectivity of WPS Benefit and account controls with Atlas2 / (ITL cannot be ready in time)
+	No need for manual ops controls to confirm employer registration 
+	No need for manual verification of Salary file from WPS Benefit
+ 
+	Standard credit transfer process to apply to manage salary payment file
+•	Foreign Currency Salary payments (USD salary) => to be Settled on RTGS
+•	Client reporting: Specific Reporting available to the Client on LMRA portal (outside BNPP). 
+•	For accounting standard MT94X Atlas Reporting.
+ 
+	PSR MEA
+•	MTS deployment in Bahrain is end of 2026
+•	DOME deployment in Bahrain is end of 2025
+
+Processing details
+Requirements Rules:
+R1: Employer account validation by WPS Benefit
+R2: Payroll File Acquisition from WPS Benefit
+R3: Payroll file Approval/Rejection Status
+R4: Payroll file cancellation after approval
+R5: Payroll File payment processing [Dome]
+R6: Payment Status Update
+R7: Payroll file Cancelation/Return
+R8: Public keys exchange between BNPP and WPS APIs
+Rule 1: WPS Account Validation
+WPS will send a request to Pixel for Employer account validation.
+Pixel will forward the request to Atlas 2 API to approve or reject the debit account enrollment for payroll file.
+Pixel will receive response from Atlas 2 API and forward it to WPS
+Rule 2: Payroll File Acquisition
+Pixel will receive a payroll payment request from WPS
+Pixel must Route the original Payroll payment file to DOME API
+Pixel will generate Pain.001 using the payroll details received from WPS benefit and send it to DOME API
+Rule 3&4
+R3: Payroll file Approval/Rejection Status
+R4: Payroll file cancellation after approval
+The payment should be subject to Maker Checker workflow in EFTS
+Operator should be able to validate payment information against payroll file initiated by WPS[YG1] [YG2]
+Operator can Approve/Reject the payment in case of mismatch or mistake specifying the reason
+Rule 5: Payroll File Processing
+DOME will process the payment and generate an outgoing PACS.008 including the payroll file reference in the <RmtInf>
+BNPP must process the entire payroll salary file using Fawri, for both interbank and on-us salaries.
+DOME will send the outgoing Pacs.008 to EFTS as per current Fawri payments flow
+ 
+Rejection Use Case:
+DOME can reject the payment while Authorization/Booking if, before sending it to EFTS, if Atlas 2 detects that:
+Account status is dormant
+Account status is blocked
+Account status is closed
+ 
+Success Use Case:
+All EFTS accepted Fawri salary batches will be settled at the end of the clearing session.
+The Settlement Status must be related by DOME to Pixel
+Pixel shall report the success status to WPS
+ 
+Failure Use Case:
+Under the condition that the BNPP could not process the salary due to below reasons.
+EFTS rejected the batch
+EFTS is unavailable
+Technical issue when processing the salary
+Bank / PSP unavailable.
+Pixel shall report such failed status to WPS.
+Rule 6: Status Message Update
+Pixel must be able to receive file status/Payment status from Dome, and forward the status back to WPS, along with the error code.
+Rule7: Payment cancellation/Return
+Pixel should be able to manage Cancelled or Return payments Status
+Pixel must forward DOME Cancellation/Return Code to WPS
+Rule 8: Public keys exchange between BNPP and WPS APIs
+ 
+Pixel should use WPS public key to encrypt the AES key and embed the encrypted key in the request sent. (More Details in BENEFIT WPS – BANK/PSP API SPECIFICATIONS Document)
+Overall Cutoff and Response Times of WPS Messages
+Acknowledgements of Successful Validation and Receiving Messages
+[YG1]To Clarify whether this process is mandatory
+The payment should be checked against what exactly ? 
+[YG2]Checked with Mohammed, Benefit is allowing banks to skip this part
+OPS to sign off with client for STP processing

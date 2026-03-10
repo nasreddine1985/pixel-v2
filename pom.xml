@@ -15,6 +15,7 @@
         <module>technical-framework</module>
         <module>referential</module>
         <module>flow-ch</module>
+        <module>flow-bh</module>
     </modules>
 
     <properties>

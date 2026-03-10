@@ -1,0 +1,113 @@
+# Docker Compose addition for BH Flow
+# Add this to the main docker-compose.yml services section
+
+  # PIXEL-V2 BH Application (Bahrain WPS)
+  pixel-bh-app:
+    build:
+      context: ..
+      dockerfile: flow-bh/Dockerfile
+    hostname: pixel-bh-app
+    container_name: pixel-v2-bh-app
+    depends_on:
+      - kafka
+      - postgresql
+    ports:
+      - "8081:8081"
+    environment:
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql:5432/pixelv2
+      SPRING_DATASOURCE_USERNAME: pixelv2
+      SPRING_DATASOURCE_PASSWORD: pixelv2_secure_password
+      
+      # Kafka Configuration
+      CAMEL_COMPONENT_KAFKA_BROKERS: kafka:29092
+      PIXEL_KAFKA_BROKERS: kafka:29092
+      
+      # WPS Configuration
+      WPS_BENEFIT_HOST: wps-benefit
+      WPS_BENEFIT_PORT: 8082
+      ATLAS2_HOST: atlas2
+      ATLAS2_PORT: 8083
+      DOME_HOST: dome
+      DOME_PORT: 8084
+      EFTS_HOST: efts
+      EFTS_PORT: 8085
+      
+      # Referential Service
+      PIXEL_REFERENTIAL_SERVICE_URL: http://referential-service:8090/api
+      
+      # JVM Options
+      JAVA_OPTS: >
+        -XX:+UseG1GC
+        -XX:MaxRAMPercentage=75.0
+        -Dspring.profiles.active=prod
+    volumes:
+      - nas_bh_in:/opt/nas/BH/IN
+      - nas_bh_out:/opt/nas/BH/OUT
+      - nas_bh_archive:/opt/nas/BH/ARCHIVE
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Mock WPS Benefit System (for testing)
+  wps-benefit-mock:
+    image: mockserver/mockserver:latest
+    hostname: wps-benefit
+    container_name: pixel-v2-wps-benefit-mock
+    ports:
+      - "8082:1080"
+    environment:
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/wps-benefit-expectations.json
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+
+  # Mock ATLAS2 System (for testing)
+  atlas2-mock:
+    image: mockserver/mockserver:latest
+    hostname: atlas2
+    container_name: pixel-v2-atlas2-mock
+    ports:
+      - "8083:1080"
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+
+  # Mock DOME System (for testing)
+  dome-mock:
+    image: mockserver/mockserver:latest
+    hostname: dome
+    container_name: pixel-v2-dome-mock
+    ports:
+      - "8084:1080"
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+
+  # Mock EFTS System (for testing)
+  efts-mock:
+    image: mockserver/mockserver:latest
+    hostname: efts
+    container_name: pixel-v2-efts-mock
+    ports:
+      - "8085:1080"
+    networks:
+      - pixel-v2-network
+    restart: unless-stopped
+
+# Add these volumes to the volumes section
+volumes:
+  nas_bh_in:
+    driver: local
+  nas_bh_out:
+    driver: local
+  nas_bh_archive:
+    driver: local
+
+# Note: pixel-v2-network should already exist in main docker-compose.yml

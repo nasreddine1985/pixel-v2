@@ -70,8 +70,7 @@ trail. You can trace any message through its entire lifecycle, which is
 invaluable for troubleshooting and compliance.
 
 And finally, flexibility. All our flows and transformation rules are 
-configurable, so we can adapt to new requirements without code changes. Plus, 
-messages are automatically archived, meeting regulatory retention requirements.
+configurable, so we can adapt to new requirements without code changes. 
 
 
 SLIDE 5: SECTION - SYSTEM ARCHITECTURE
